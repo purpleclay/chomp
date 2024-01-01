@@ -14,7 +14,13 @@
       with pkgs;
       {
         devShells.default = mkShell {
-          buildInputs = [ go ];
+          buildInputs = [
+            git
+            go
+            gofumpt
+            golangci-lint
+            go-task
+          ];
         };
       }
     );

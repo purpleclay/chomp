@@ -100,3 +100,176 @@ func TestAny(t *testing.T) {
 		})
 	}
 }
+
+func TestNot(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		not   string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: "dark knight",
+			not:   "tighn",
+			rem:   "night",
+			ext:   "dark k",
+		},
+		{
+			name:  "Unicode",
+			input: "ダークナイト",
+			not:   "トイ",
+			rem:   "イト",
+			ext:   "ダークナ",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rem, ext, err := chomp.Not(tt.not)(tt.input)
+
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestUntil(t *testing.T) {
+	tests := []struct {
+		name  string
+		until string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			until: "jumps",
+			input: "the quick brown fox jumps over the lazy dog",
+			rem:   "jumps over the lazy dog",
+			ext:   "the quick brown fox ",
+		},
+		{
+			name:  "Unicode",
+			until: "の",
+			input: "素早い茶色のキツネが怠惰な犬を飛び越える",
+			rem:   "のキツネが怠惰な犬を飛び越える",
+			ext:   "素早い茶色",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rem, ext, err := chomp.Until(tt.until)(tt.input)
+
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestCrlf(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "LF",
+			input: "\nHello",
+			rem:   "Hello",
+			ext:   "\n",
+		},
+		{
+			name:  "CRLF",
+			input: "\r\nこんにちは",
+			rem:   "こんにちは",
+			ext:   "\r\n",
+		},
+		{
+			name:  "LFOnly",
+			input: "\n",
+			rem:   "",
+			ext:   "\n",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rem, ext, err := chomp.Crlf()(tt.input)
+
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestOneOf(t *testing.T) {
+	tests := []struct {
+		name  string
+		oneOf string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			oneOf: "!,eH",
+			input: "Hello, World!",
+			rem:   "ello, World!",
+			ext:   "H",
+		},
+		{
+			name:  "Unicode",
+			oneOf: "はおうこ、",
+			input: "こんにちは、おはよう",
+			rem:   "んにちは、おはよう",
+			ext:   "こ",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rem, ext, err := chomp.OneOf(tt.oneOf)(tt.input)
+
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestNoneOf(t *testing.T) {
+	tests := []struct {
+		name   string
+		noneOf string
+		input  string
+		rem    string
+		ext    string
+	}{
+		{
+			name:   "Ascii",
+			noneOf: "eqzygoqui",
+			input:  "the quick brown fox jumps over the lazy dog",
+			rem:    "he quick brown fox jumps over the lazy dog",
+			ext:    "t",
+		},
+		{
+			name:   "Unicode",
+			noneOf: "が早越ネをのる",
+			input:  "素早い茶色のキツネが怠惰な犬を飛び越える",
+			rem:    "早い茶色のキツネが怠惰な犬を飛び越える",
+			ext:    "素",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rem, ext, err := chomp.NoneOf(tt.noneOf)(tt.input)
+
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+			assert.NoError(t, err)
+		})
+	}
+}
