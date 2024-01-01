@@ -183,7 +183,7 @@ func NoneOf(str string) Combinator {
 	}
 }
 
-// Until will scan the input text for the first occurence of the provided series
+// Until will scan the input text for the first occurrence of the provided series
 // of characters. Everything until that point in the text will be matched.
 //
 //	chomp.Until("World")("Hello, World!")
