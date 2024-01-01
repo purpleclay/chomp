@@ -1,6 +1,6 @@
 module github.com/purpleclay/chomp
 
-go 1.21
+go 1.19
 
 require github.com/stretchr/testify v1.8.4
 
