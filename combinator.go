@@ -197,3 +197,50 @@ func Until(str string) Combinator {
 		return "", "", CombinatorParseError{Input: str, Type: "until"}
 	}
 }
+
+// While will scan the input text, testing each character against the provided
+// [Predicate]. Everything until the predicate returns false will be matched.
+//
+//	chomp.While(chomp.IsLetter)("Hello, World!")
+//	// (", World!", "Hello", nil)
+func While(p Predicate) Combinator {
+	return func(s string) (string, string, error) {
+		pos := 0
+		for _, c := range s {
+			if !p(c) {
+				break
+			}
+			pos += len(string(c))
+		}
+
+		if pos == 0 {
+			return "", "", CombinatorParseError{Type: "while"}
+		}
+
+		return s[pos:], s[:pos], nil
+	}
+}
+
+// WhileNot will scan the input test, testing each character against the provided
+// [Predicate]. Everything until the predicate returns true will be matched. This
+// is the inverse of [While].
+//
+//	chomp.WhileNot(chomp.IsDigit)("Hello, World!")
+//	// ("", "Hello, World!", nil)
+func WhileNot(p Predicate) Combinator {
+	return func(s string) (string, string, error) {
+		pos := 0
+		for _, c := range s {
+			if p(c) {
+				break
+			}
+			pos += len(string(c))
+		}
+
+		if pos == 0 {
+			return "", "", CombinatorParseError{Type: "whilenot"}
+		}
+
+		return s[pos:], s[:pos], nil
+	}
+}
