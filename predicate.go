@@ -33,9 +33,7 @@ var (
 	// within the Unicode [Nd] category.
 	//
 	// [Nd]: https://www.fileformat.info/info/unicode/category/Nd/list.htm
-	IsDigit = func(r rune) bool {
-		return unicode.IsDigit(r)
-	}
+	IsDigit = unicode.IsDigit
 
 	// IsLetter determines whether a rune is a letter. A rune is classed as a
 	// letter if it is between the ASCII range of 'a' and 'z' (including its
@@ -47,7 +45,5 @@ var (
 	// [Lt]: https://www.fileformat.info/info/unicode/category/Lt/list.htm
 	// [Lm]: https://www.fileformat.info/info/unicode/category/Lm/list.htm
 	// [Lo]: https://www.fileformat.info/info/unicode/category/Lo/list.htm
-	IsLetter = func(r rune) bool {
-		return unicode.IsLetter(r)
-	}
+	IsLetter = unicode.IsLetter
 )
