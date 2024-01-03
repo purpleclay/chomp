@@ -62,9 +62,9 @@ func TestTag(t *testing.T) {
 }
 
 func TestCombinatorError(t *testing.T) {
-	_, _, err := chomp.Tag("missing")("does not contain text")
+	_, _, err := chomp.Tag("missing")("hello, world!")
 
-	require.EqualError(t, err, "tag combinator failed to parse text using input 'missing'")
+	require.EqualError(t, err, "tag combinator failed to parse text 'hello, world!' with input 'missing'")
 }
 
 func TestAny(t *testing.T) {

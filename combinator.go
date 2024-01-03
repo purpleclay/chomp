@@ -30,23 +30,38 @@ import (
 // Combinator is a higher-order function capable of parsing text under a defined
 // condition. Combinators can be combined to form more complex parsers. Upon success,
 // a combinator will return both the unparsed and parsed text. All combinators are
-// strict and must parse its input. Any failure to do so will raise a [CombinatorParseError].
+// strict and must parse its input. Any failure to do so should raise a [CombinatorParseError].
 type Combinator func(string) (string, string, error)
+
+const truncateErrAt = 20
 
 // CombinatorParseError defines an error that is raised when a combinator
 // fails to parse the input text under its expected condition.
 type CombinatorParseError struct {
+	// Input to the [Combinator]. This can be empty, as a combinator may
+	// not require any input to parse the text.
 	Input string
-	Type  string
+
+	// Text that was being parsed by the [Combinator]. This will be truncated
+	// in the error message.
+	Text string
+
+	// Type of [Combinator] that failed.
+	Type string
 }
 
 // Error returns a friendly string representation of the current error.
 func (e CombinatorParseError) Error() string {
+	text := e.Text
+	if len(text) > truncateErrAt {
+		text = fmt.Sprintf("%s...(truncated)", text[:truncateErrAt])
+	}
+
 	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("%s combinator failed to parse text", e.Type))
+	buf.WriteString(fmt.Sprintf("%s combinator failed to parse text '%s'", e.Type, text))
 
 	if e.Input != "" {
-		buf.WriteString(fmt.Sprintf(" using input '%s'", e.Input))
+		buf.WriteString(fmt.Sprintf(" with input '%s'", e.Input))
 	}
 
 	return buf.String()
@@ -63,7 +78,7 @@ func Tag(str string) Combinator {
 			return s[len(str):], str, nil
 		}
 
-		return s, "", CombinatorParseError{Input: str, Type: "tag"}
+		return s, "", CombinatorParseError{Input: str, Text: s, Type: "tag"}
 	}
 }
 
@@ -90,7 +105,7 @@ func Any(str string) Combinator {
 		}
 
 		if pos == 0 {
-			return s, "", CombinatorParseError{Input: str, Type: "any"}
+			return s, "", CombinatorParseError{Input: str, Text: s, Type: "any"}
 		}
 
 		return s[pos:], s[:pos], nil
@@ -119,7 +134,7 @@ func Not(str string) Combinator {
 		}
 
 		if pos == 0 {
-			return s, "", CombinatorParseError{Input: str, Type: "not"}
+			return s, "", CombinatorParseError{Input: str, Text: s, Type: "not"}
 		}
 
 		return s[pos:], s[:pos], nil
@@ -137,7 +152,7 @@ func Crlf() Combinator {
 			return s[idx+1:], s[:idx+1], nil
 		}
 
-		return "", "", CombinatorParseError{Type: "crlf"}
+		return "", "", CombinatorParseError{Text: s, Type: "crlf"}
 	}
 }
 
@@ -157,7 +172,7 @@ func OneOf(str string) Combinator {
 			}
 		}
 
-		return "", "", CombinatorParseError{Input: str, Type: "oneof"}
+		return "", "", CombinatorParseError{Input: str, Text: s, Type: "one_of"}
 	}
 }
 
@@ -179,7 +194,7 @@ func NoneOf(str string) Combinator {
 			return s[pos:], s[:pos], nil
 		}
 
-		return "", "", CombinatorParseError{Input: str, Type: "noneof"}
+		return "", "", CombinatorParseError{Input: str, Text: s, Type: "none_of"}
 	}
 }
 
@@ -194,7 +209,7 @@ func Until(str string) Combinator {
 			return s[idx:], s[:idx], nil
 		}
 
-		return "", "", CombinatorParseError{Input: str, Type: "until"}
+		return "", "", CombinatorParseError{Input: str, Text: s, Type: "until"}
 	}
 }
 
@@ -214,7 +229,7 @@ func While(p Predicate) Combinator {
 		}
 
 		if pos == 0 {
-			return "", "", CombinatorParseError{Type: "while"}
+			return "", "", CombinatorParseError{Text: s, Type: "while"}
 		}
 
 		return s[pos:], s[:pos], nil
@@ -238,7 +253,7 @@ func WhileNot(p Predicate) Combinator {
 		}
 
 		if pos == 0 {
-			return "", "", CombinatorParseError{Type: "whilenot"}
+			return "", "", CombinatorParseError{Text: s, Type: "while_not"}
 		}
 
 		return s[pos:], s[:pos], nil
