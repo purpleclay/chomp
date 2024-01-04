@@ -236,7 +236,7 @@ func While(p Predicate) Combinator {
 	}
 }
 
-// WhileNot will scan the input test, testing each character against the provided
+// WhileNot will scan the input text, testing each character against the provided
 // [Predicate]. Everything until the predicate returns true will be matched. This
 // is the inverse of [While].
 //
@@ -257,5 +257,90 @@ func WhileNot(p Predicate) Combinator {
 		}
 
 		return s[pos:], s[:pos], nil
+	}
+}
+
+// Delimited will match a series of combinators against the input text. The left
+// and right combinators are used to match a delimited sequence and are discarded.
+// Only the text between the delimiters is extracted.
+//
+//	chomp.Delimited(
+//		chomp.Tag("'"),
+//		chomp.Tag("Hello, World!"),
+//		chomp.Tag("'"))("'Hello, World!'")
+//	// ("", "Hello, World!", nil)
+func Delimited(left, str, right Combinator) Combinator {
+	return func(s string) (string, string, error) {
+		rem, _, err := left(s)
+		if err != nil {
+			return s, "", err
+		}
+
+		rem, ext, err := str(rem)
+		if err != nil {
+			return rem, "", err
+		}
+
+		rem, _, err = right(rem)
+		if err != nil {
+			return rem, "", err
+		}
+
+		return rem, ext, nil
+	}
+}
+
+// QuoteDouble will match any text delimited (or surrounded) by a pair
+// of "double quotes". The delimiters are discarded.
+//
+//	chomp.DoubleQuote()(`"Hello, World!"`)
+//	// ("", "Hello, World!", nil)
+func QuoteDouble() Combinator {
+	return func(s string) (string, string, error) {
+		return Delimited(Tag("\""), Until("\""), Tag("\""))(s)
+	}
+}
+
+// QuoteSingle will match any text delimited (or surrounded) by a pair
+// of 'single quotes'. The delimiters are discarded.
+//
+//	chomp.QuoteSingle()("'Hello, World!'")
+//	// ("", "Hello, World!", nil)
+func QuoteSingle() Combinator {
+	return func(s string) (string, string, error) {
+		return Delimited(Tag("'"), Until("'"), Tag("'"))(s)
+	}
+}
+
+// BracketSquare will match any text delimited (or surrounded) by a pair
+// of [square brackets]. The delimiters are discarded.
+//
+//	chomp.BracketSquare()("[Hello, World!]")
+//	// ("", "Hello, World!", nil)
+func BracketSquare() Combinator {
+	return func(s string) (string, string, error) {
+		return Delimited(Tag("["), Until("]"), Tag("]"))(s)
+	}
+}
+
+// Parentheses will match any text delimited (or surrounded) by a pair
+// of (parentheses). The delimiters are discarded.
+//
+//	chomp.Parentheses()("(Hello, World!)")
+//	// ("", "Hello, World!", nil)
+func Parentheses() Combinator {
+	return func(s string) (string, string, error) {
+		return Delimited(Tag("("), Until(")"), Tag(")"))(s)
+	}
+}
+
+// BracketAngled will match any text delimited (or surrounded) by a pair
+// of <angled brackets>. The delimiters are discarded.
+//
+//	chomp.BracketAngled()("<Hello, World!>")
+//	// ("", "Hello, World!", nil)
+func BracketAngled() Combinator {
+	return func(s string) (string, string, error) {
+		return Delimited(Tag("<"), Until(">"), Tag(">"))(s)
 	}
 }

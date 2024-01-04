@@ -335,3 +335,40 @@ func TestWhileNot(t *testing.T) {
 		})
 	}
 }
+
+func TestDelim(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		delim []string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: "#Hello and Good Morning@",
+			delim: []string{"#", "Hello and Good Morning", "@"},
+			rem:   "",
+			ext:   "Hello and Good Morning",
+		},
+		{
+			name:  "Unicode",
+			input: "┃こんにちは、おはよう║",
+			delim: []string{"┃", "こんにちは、おはよう", "║"},
+			rem:   "",
+			ext:   "こんにちは、おはよう",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rem, ext, err := chomp.Delimited(
+				chomp.Tag(tt.delim[0]),
+				chomp.Tag(tt.delim[1]),
+				chomp.Tag(tt.delim[2]))(tt.input)
+
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+			assert.NoError(t, err)
+		})
+	}
+}
