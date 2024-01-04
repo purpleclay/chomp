@@ -55,3 +55,14 @@ func TestSepPair(t *testing.T) {
 	assert.Equal(t, "World", ext[1])
 	assert.NoError(t, err)
 }
+
+func TestRepeat(t *testing.T) {
+	rem, ext, err := chomp.Repeat(chomp.QuoteDouble(), 3)(`"Batman""ジョーカー""Two Face""ベイン"`)
+
+	assert.Equal(t, `"ベイン"`, rem)
+	require.Len(t, ext, 3)
+	assert.Equal(t, "Batman", ext[0])
+	assert.Equal(t, "ジョーカー", ext[1])
+	assert.Equal(t, "Two Face", ext[2])
+	assert.NoError(t, err)
+}

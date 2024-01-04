@@ -103,3 +103,28 @@ func SepPair(c1, sep, c2 Combinator) Parser {
 		return rem, []string{out1, out2}, nil
 	}
 }
+
+// Repeat will scan the input text and repeat the [Combinator] the defined number
+// of times. Each combinator must match, with the output of each contained in
+// the returned slice.
+//
+//	chomp.Repeat(chomp.Parentheses(), 2)("(Hello)(World)(!)")
+//	// ("(!)", []string{"(Hello)", "(World)"}, nil)
+func Repeat(c Combinator, n int) Parser {
+	return func(s string) (string, []string, error) {
+		var ext []string
+		var err error
+
+		rem := s
+		for i := 0; i < n; i++ {
+			var out string
+			if rem, out, err = c(rem); err != nil {
+				return rem, nil, ParserError{Err: err, Type: "repeat"}
+			}
+
+			ext = append(ext, out)
+		}
+
+		return rem, ext, nil
+	}
+}
