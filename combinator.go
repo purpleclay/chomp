@@ -27,7 +27,7 @@ import (
 	"strings"
 )
 
-// Result ...
+// Result is the expected output from a [Combinator]
 type Result interface {
 	string | []string
 }
