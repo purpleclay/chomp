@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 Purple Clay
+Copyright (c) 2023 - 2024 Purple Clay
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,6 @@ import (
 
 	"github.com/purpleclay/chomp"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestTag(t *testing.T) {
@@ -59,12 +58,6 @@ func TestTag(t *testing.T) {
 			assert.NoError(t, err)
 		})
 	}
-}
-
-func TestCombinatorError(t *testing.T) {
-	_, _, err := chomp.Tag("missing")("hello, world!")
-
-	require.EqualError(t, err, "tag combinator failed to parse text 'hello, world!' with input 'missing'")
 }
 
 func TestAny(t *testing.T) {
@@ -266,105 +259,6 @@ func TestNoneOf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rem, ext, err := chomp.NoneOf(tt.noneOf)(tt.input)
-
-			assert.Equal(t, tt.rem, rem)
-			assert.Equal(t, tt.ext, ext)
-			assert.NoError(t, err)
-		})
-	}
-}
-
-func TestWhile(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-		rem   string
-		ext   string
-	}{
-		{
-			name:  "Ascii",
-			input: "Happy New Year. Welcome 2024",
-			rem:   " New Year. Welcome 2024",
-			ext:   "Happy",
-		},
-		{
-			name:  "Unicode",
-			input: "あけましておめでとう。ようこそ 2024 年",
-			rem:   "。ようこそ 2024 年",
-			ext:   "あけましておめでとう",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			rem, ext, err := chomp.While(chomp.IsLetter)(tt.input)
-
-			assert.Equal(t, tt.rem, rem)
-			assert.Equal(t, tt.ext, ext)
-			assert.NoError(t, err)
-		})
-	}
-}
-
-func TestWhileNot(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-		rem   string
-		ext   string
-	}{
-		{
-			name:  "Ascii",
-			input: "Happy New Year. Welcome 2024",
-			rem:   "2024",
-			ext:   "Happy New Year. Welcome ",
-		},
-		{
-			name:  "Unicode",
-			input: "あけましておめでとう。ようこそ 2024 年",
-			rem:   "2024 年",
-			ext:   "あけましておめでとう。ようこそ ",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			rem, ext, err := chomp.WhileNot(chomp.IsDigit)(tt.input)
-
-			assert.Equal(t, tt.rem, rem)
-			assert.Equal(t, tt.ext, ext)
-			assert.NoError(t, err)
-		})
-	}
-}
-
-func TestDelim(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-		delim []string
-		rem   string
-		ext   string
-	}{
-		{
-			name:  "Ascii",
-			input: "#Hello and Good Morning@",
-			delim: []string{"#", "Hello and Good Morning", "@"},
-			rem:   "",
-			ext:   "Hello and Good Morning",
-		},
-		{
-			name:  "Unicode",
-			input: "┃こんにちは、おはよう║",
-			delim: []string{"┃", "こんにちは、おはよう", "║"},
-			rem:   "",
-			ext:   "こんにちは、おはよう",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			rem, ext, err := chomp.Delimited(
-				chomp.Tag(tt.delim[0]),
-				chomp.Tag(tt.delim[1]),
-				chomp.Tag(tt.delim[2]))(tt.input)
 
 			assert.Equal(t, tt.rem, rem)
 			assert.Equal(t, tt.ext, ext)

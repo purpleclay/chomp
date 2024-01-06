@@ -47,3 +47,50 @@ var (
 	// [Lo]: https://www.fileformat.info/info/unicode/category/Lo/list.htm
 	IsLetter = unicode.IsLetter
 )
+
+// While will scan the input text, testing each character against the provided
+// [Predicate]. Everything until the predicate returns false will be matched.
+//
+//	chomp.While(chomp.IsLetter)("Hello, World!")
+//	// (", World!", "Hello", nil)
+func While(p Predicate) Combinator[string] {
+	return func(s string) (string, string, error) {
+		pos := 0
+		for _, c := range s {
+			if !p(c) {
+				break
+			}
+			pos += len(string(c))
+		}
+
+		if pos == 0 {
+			return "", "", CombinatorParseError{Text: s, Type: "while"}
+		}
+
+		return s[pos:], s[:pos], nil
+	}
+}
+
+// WhileNot will scan the input text, testing each character against the provided
+// [Predicate]. Everything until the predicate returns true will be matched. This
+// is the inverse of [While].
+//
+//	chomp.WhileNot(chomp.IsDigit)("Hello, World!")
+//	// ("", "Hello, World!", nil)
+func WhileNot(p Predicate) Combinator[string] {
+	return func(s string) (string, string, error) {
+		pos := 0
+		for _, c := range s {
+			if p(c) {
+				break
+			}
+			pos += len(string(c))
+		}
+
+		if pos == 0 {
+			return "", "", CombinatorParseError{Text: s, Type: "while_not"}
+		}
+
+		return s[pos:], s[:pos], nil
+	}
+}

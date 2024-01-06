@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 Purple Clay
+Copyright (c) 2023 - 2024 Purple Clay
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -40,12 +40,6 @@ func TestPair(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestParserError(t *testing.T) {
-	_, _, err := chomp.Pair(chomp.Tag("Goodbye"), chomp.Tag(" World"))("Hello, World!")
-
-	assert.EqualError(t, err, "pair parser failed. tag combinator failed to parse text 'Hello, World!' with input 'Goodbye'")
-}
-
 func TestSepPair(t *testing.T) {
 	rem, ext, err := chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World"))("Hello, World!")
 
@@ -65,4 +59,41 @@ func TestRepeat(t *testing.T) {
 	assert.Equal(t, "ジョーカー", ext[1])
 	assert.Equal(t, "Two Face", ext[2])
 	assert.NoError(t, err)
+}
+
+func TestDelimited(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		delim []string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: "#Hello and Good Morning@",
+			delim: []string{"#", "Hello and Good Morning", "@"},
+			rem:   "",
+			ext:   "Hello and Good Morning",
+		},
+		{
+			name:  "Unicode",
+			input: "┃こんにちは、おはよう║",
+			delim: []string{"┃", "こんにちは、おはよう", "║"},
+			rem:   "",
+			ext:   "こんにちは、おはよう",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rem, ext, err := chomp.Delimited(
+				chomp.Tag(tt.delim[0]),
+				chomp.Tag(tt.delim[1]),
+				chomp.Tag(tt.delim[2]))(tt.input)
+
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+			assert.NoError(t, err)
+		})
+	}
 }
