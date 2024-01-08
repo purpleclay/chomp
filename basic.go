@@ -169,3 +169,16 @@ func Until(str string) Combinator[string] {
 		return "", "", CombinatorParseError{Input: str, Text: s, Type: "until"}
 	}
 }
+
+// Opt allows a combinator to be optional. Any error returned by the underlying
+// combinator will be swallowed. The parsed text will not be modified if the
+// underlying combinator did not run.
+//
+//	chomp.Opt(chomp.Tag("Hey"))("Hello, World!")
+//	// ("Hello, World!", "", nil)
+func Opt[T Result](c Combinator[T]) Combinator[T] {
+	return func(s string) (string, T, error) {
+		rem, out, _ := c(s)
+		return rem, out, nil
+	}
+}
