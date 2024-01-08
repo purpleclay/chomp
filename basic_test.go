@@ -266,3 +266,11 @@ func TestNoneOf(t *testing.T) {
 		})
 	}
 }
+
+func TestOpt(t *testing.T) {
+	rem, ext, err := chomp.Opt(chomp.Tag("the"))("dark knight")
+
+	assert.Equal(t, "dark knight", rem)
+	assert.Equal(t, "", ext)
+	assert.NoError(t, err)
+}
