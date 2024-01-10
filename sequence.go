@@ -202,3 +202,51 @@ func BracketAngled() Combinator[string] {
 		return Delimited(Tag("<"), Until(">"), Tag(">"))(s)
 	}
 }
+
+// First will match the input text against a series of combinators. Matching
+// stops as soon as the first combinator succeeds. One combinator must match.
+// For better performance, try and order the combinators from most to least
+// likely to match.
+//
+//	chomp.First(
+//		chomp.Tag("Good Morning"),
+//		chomp.Tag("Hello"))("Good Morning, World!")
+//	// (" ,World!", "Good Morning", nil)
+func First[T Result](c ...Combinator[T]) Combinator[T] {
+	return func(s string) (string, T, error) {
+		for _, comb := range c {
+			if rem, ext, err := comb(s); err == nil {
+				return rem, ext, nil
+			}
+		}
+
+		var out T
+		return s, out, CombinatorParseError{Text: s, Type: "first"}
+	}
+}
+
+// All will match the input text against a series of combinators. All
+// combinators must match in the order provided.
+//
+//	chomp.All(
+//		chomp.Tag("Hello"),
+//		chomp.Until("W"),
+//		chomp.Tag("World!"))("Hello, World!")
+//	// ("", []string{"Hello", ", ", "World!"}, nil)
+func All[T Result](c ...Combinator[T]) Combinator[[]string] {
+	return func(s string) (string, []string, error) {
+		var ext []string
+		var err error
+
+		rem := s
+		for _, comb := range c {
+			var out T
+			if rem, out, err = comb(rem); err != nil {
+				return rem, nil, ParserError{Err: err, Type: "all"}
+			}
+			ext = combine(ext, out)
+		}
+
+		return rem, ext, nil
+	}
+}
