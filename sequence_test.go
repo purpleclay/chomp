@@ -97,3 +97,25 @@ func TestDelimited(t *testing.T) {
 		})
 	}
 }
+
+func TestFirst(t *testing.T) {
+	rem, ext, err := chomp.First(chomp.Tag("Light"), chomp.Tag("Dark"))("Dark Knight")
+
+	assert.Equal(t, " Knight", rem)
+	assert.Equal(t, "Dark", ext)
+	assert.NoError(t, err)
+}
+
+func TestAll(t *testing.T) {
+	rem, ext, err := chomp.All(
+		chomp.QuoteDouble(),
+		chomp.Until("("),
+		chomp.Parentheses())(`"Hello and Good Morning" (こんにちは、おはよう)`)
+
+	assert.Empty(t, rem)
+	require.Len(t, ext, 3)
+	assert.Equal(t, "Hello and Good Morning", ext[0])
+	assert.Equal(t, " ", ext[1])
+	assert.Equal(t, "こんにちは、おはよう", ext[2])
+	assert.NoError(t, err)
+}

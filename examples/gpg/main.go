@@ -27,8 +27,14 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/purpleclay/chomp"
+)
+
+var (
+	underline = lipgloss.NewStyle().Underline(true)
 )
 
 type GpgPrivateKey struct {
@@ -36,6 +42,23 @@ type GpgPrivateKey struct {
 	UserEmail    string
 	SecretKey    GpgKeyDetails
 	SecretSubKey GpgKeyDetails
+}
+
+func (d GpgKeyDetails) String() string {
+	var buf strings.Builder
+	buf.WriteString(fmt.Sprintf("fingerprint:     %s\n", d.Fingerprint))
+	buf.WriteString(fmt.Sprintf("keygrip:         %s\n", d.KeyGrip))
+	buf.WriteString(fmt.Sprintf("key_id:          %s\n", d.KeyID))
+	buf.WriteString(fmt.Sprintf("created_on:      %d (%s)\n", d.CreationDate, unixToRFC3339(int64(d.CreationDate))))
+	if d.ExpirationDate > 0 {
+		buf.WriteString(fmt.Sprintf("expires_on:      %d\n", d.ExpirationDate)) // Formatted time
+	}
+
+	return buf.String()
+}
+
+func unixToRFC3339(unix int64) string {
+	return time.Unix(unix, 0).Format(time.RFC3339)
 }
 
 type GpgKeyDetails struct {
@@ -48,23 +71,11 @@ type GpgKeyDetails struct {
 
 func (k GpgPrivateKey) String() string {
 	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("fingerprint:     %s\n", k.SecretKey.Fingerprint))
-	buf.WriteString(fmt.Sprintf("keygrip:         %s\n", k.SecretKey.KeyGrip))
-	buf.WriteString(fmt.Sprintf("key_id:          %s\n", k.SecretKey.KeyID))
-	buf.WriteString(fmt.Sprintf("created_on:      %d\n", k.SecretKey.CreationDate))
-	if k.SecretKey.ExpirationDate > 0 {
-		buf.WriteString(fmt.Sprintf("expires_on:      %d\n", k.SecretKey.ExpirationDate))
-	}
-
 	buf.WriteString(fmt.Sprintf("user:            %s <%s>\n", k.UserName, k.UserEmail))
-
-	buf.WriteString(fmt.Sprintf("sub_fingerprint: %s\n", k.SecretSubKey.Fingerprint))
-	buf.WriteString(fmt.Sprintf("sub_keygrip:     %s\n", k.SecretSubKey.KeyGrip))
-	buf.WriteString(fmt.Sprintf("sub_key_id:      %s\n", k.SecretSubKey.KeyID))
-	buf.WriteString(fmt.Sprintf("created_on:      %d\n", k.SecretSubKey.CreationDate))
-	if k.SecretSubKey.ExpirationDate > 0 {
-		buf.WriteString(fmt.Sprintf("expires_on:      %d\n", k.SecretSubKey.ExpirationDate))
-	}
+	buf.WriteString(underline.Render("\nsecret_key:") + "\n")
+	buf.WriteString(k.SecretKey.String())
+	buf.WriteString(underline.Render("\nsecret_sub_key:") + "\n")
+	buf.WriteString(k.SecretSubKey.String())
 
 	return buf.String()
 }
@@ -72,75 +83,66 @@ func (k GpgPrivateKey) String() string {
 func Parse(str string) (GpgPrivateKey, error) {
 	key := GpgPrivateKey{}
 
-	rem, sec, err := secretKey()(str)
-	if err != nil {
+	var err error
+	rem := str
+	if rem, key.SecretKey, err = secretKey(rem); err != nil {
 		return key, err
 	}
-	crtDate, _ := strconv.Atoi(sec[1])
-	expDate, _ := strconv.Atoi(sec[2])
 
-	key.SecretKey = GpgKeyDetails{
-		CreationDate:   crtDate,
-		ExpirationDate: expDate,
-		KeyID:          sec[0],
-	}
-
-	rem, fpr, err := fingerprint()(rem)
-	if err != nil {
+	var userExt []string
+	if rem, userExt, err = user()(rem); err != nil {
 		return key, err
 	}
-	key.SecretKey.Fingerprint = fpr
+	key.UserName = userExt[0]
+	key.UserEmail = userExt[1]
 
-	rem, grp, err := keygrip()(rem)
-	if err != nil {
+	if rem, key.SecretSubKey, err = secretKey(rem); err != nil {
 		return key, err
 	}
-	key.SecretKey.KeyGrip = grp
-
-	rem, usr, err := user()(rem)
-	if err != nil {
-		return key, err
-	}
-	key.UserName = usr[0]
-	key.UserEmail = usr[1]
-
-	rem, ssb, err := secretSubKey()(rem)
-	if err != nil {
-		return key, err
-	}
-	crtDate, _ = strconv.Atoi(ssb[1])
-	expDate, _ = strconv.Atoi(ssb[2])
-
-	key.SecretSubKey = GpgKeyDetails{
-		CreationDate:   crtDate,
-		ExpirationDate: expDate,
-		KeyID:          ssb[0],
-	}
-
-	rem, fpr, err = fingerprint()(rem)
-	if err != nil {
-		return key, err
-	}
-	key.SecretSubKey.Fingerprint = fpr
-
-	rem, grp, err = keygrip()(rem)
-	if err != nil {
-		return key, err
-	}
-	key.SecretSubKey.KeyGrip = grp
 
 	return key, nil
 }
 
-func secretKey() chomp.Combinator[[]string] {
+func secretKey(in string) (string, GpgKeyDetails, error) {
+	rem, keyExt, err := key()(in)
+	if err != nil {
+		return rem, GpgKeyDetails{}, err
+	}
+
+	rem, fprExt, err := fingerprint()(rem)
+	if err != nil {
+		return rem, GpgKeyDetails{}, err
+	}
+
+	rem, grpExt, err := keygrip()(rem)
+	if err != nil {
+		return rem, GpgKeyDetails{}, err
+	}
+
+	cdate, _ := strconv.Atoi(keyExt[1])
+	edate, _ := strconv.Atoi(keyExt[2])
+
+	return rem, GpgKeyDetails{
+		CreationDate:   cdate,
+		ExpirationDate: edate,
+		Fingerprint:    fprExt,
+		KeyID:          keyExt[0],
+		KeyGrip:        grpExt,
+	}, nil
+}
+
+func key() chomp.Combinator[[]string] {
 	return func(s string) (string, []string, error) {
 		// sec:-:4096:1:AAC7E54CBD73F690:1664450926:::-:::scESC:::+:::23::0:
+		// ssb:-:4096:1:17441D4227A0B812:1664450926::::::e:::+:::23:
 		var rem string
 		var err error
 
-		if rem, _, err = chomp.Pair(
-			chomp.Tag("sec"),
-			chomp.Repeat(colon(), 4))(s); err != nil {
+		if rem, _, err = chomp.First(chomp.Tag("sec"), chomp.Tag("ssb"))(s); err != nil {
+			return rem, nil, err
+		}
+
+		if rem, _, err = chomp.Repeat(colon(), 4)(rem); err != nil {
 			return rem, nil, err
 		}
 
@@ -177,31 +179,6 @@ func eol() chomp.Combinator[string] {
 		}
 
 		return rem, "", nil
-	}
-}
-
-func secretSubKey() chomp.Combinator[[]string] {
-	return func(s string) (string, []string, error) {
-		// ssb:-:4096:1:17441D4227A0B812:1664450926::::::e:::+:::23:
-		var rem string
-		var err error
-
-		if rem, _, err = chomp.Pair(
-			chomp.Tag("ssb"),
-			chomp.Repeat(colon(), 4))(s); err != nil {
-			return rem, nil, err
-		}
-
-		var ext []string
-		if rem, ext, err = chomp.Repeat(colon(), 3)(rem); err != nil {
-			return rem, nil, err
-		}
-
-		if rem, _, err = eol()(rem); err != nil {
-			return rem, nil, err
-		}
-
-		return rem, ext, nil
 	}
 }
 
