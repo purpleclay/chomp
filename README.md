@@ -50,7 +50,7 @@ The true power of `chomp` comes from the ability to build parsers by chaining (_
 
 Take a look at one of the examples of how to write a parser combinator.
 
-1. [GPG Private Key parser]()
+1. [GPG Private Key parser](https://github.com/purpleclay/chomp/blob/main/examples/gpg/main.go)
 
 ## Why use Chomp?
 
