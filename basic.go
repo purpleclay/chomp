@@ -22,7 +22,10 @@ SOFTWARE.
 
 package chomp
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // Tag must match a series of characters at the beginning of the input text,
 // in the exact order and case provided.
@@ -180,5 +183,49 @@ func Opt[T Result](c Combinator[T]) Combinator[T] {
 	return func(s string) (string, T, error) {
 		rem, out, _ := c(s)
 		return rem, out, nil
+	}
+}
+
+// S wraps the result of the inner combinator within a string slice.
+// Combinators of differing return types can be successfully chained
+// together while using this conversion combinator.
+//
+//	chomp.S(chomp.Until(","))("Hello, World!")
+//	// (", World!", []string{"Hello"}, nil)
+func S(c Combinator[string]) Combinator[[]string] {
+	return func(s string) (string, []string, error) {
+		rem, ext, err := c(s)
+		if err != nil {
+			return rem, nil, err
+		}
+
+		return rem, []string{ext}, err
+	}
+}
+
+// I extracts and returns a single string from the result of the inner combinator.
+// Combinators of differing return types can be successfully chained together while
+// using this conversion combinator.
+//
+//	chomp.I(chomp.SepPair(
+//		chomp.Tag("Hello"),
+//		chomp.Tag(", "),
+//		chomp.Tag("World")), 1)("Hello, World!")
+//	// ("!", "World", nil)
+func I(c Combinator[[]string], i int) Combinator[string] {
+	return func(s string) (string, string, error) {
+		rem, ext, err := c(s)
+		if err != nil {
+			return rem, "", err
+		}
+
+		if i < 0 || i >= len(ext) {
+			return rem, "", ParserError{
+				Err:  fmt.Errorf("index %d is out of bounds within string slice of %d elements", i, len(ext)),
+				Type: "i",
+			}
+		}
+
+		return rem, ext[i], nil
 	}
 }

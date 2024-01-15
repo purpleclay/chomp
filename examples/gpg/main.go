@@ -51,7 +51,7 @@ func (d GpgKeyDetails) String() string {
 	buf.WriteString(fmt.Sprintf("key_id:          %s\n", d.KeyID))
 	buf.WriteString(fmt.Sprintf("created_on:      %d (%s)\n", d.CreationDate, unixToRFC3339(int64(d.CreationDate))))
 	if d.ExpirationDate > 0 {
-		buf.WriteString(fmt.Sprintf("expires_on:      %d\n", d.ExpirationDate)) // Formatted time
+		buf.WriteString(fmt.Sprintf("expires_on:      %d (%s)\n", d.ExpirationDate, unixToRFC3339(int64(d.ExpirationDate))))
 	}
 
 	return buf.String()
@@ -138,11 +138,9 @@ func key() chomp.Combinator[[]string] {
 		var rem string
 		var err error
 
-		if rem, _, err = chomp.First(chomp.Tag("sec"), chomp.Tag("ssb"))(s); err != nil {
-			return rem, nil, err
-		}
-
-		if rem, _, err = chomp.Repeat(colon(), 4)(rem); err != nil {
+		if rem, _, err = chomp.Pair(
+			chomp.First(chomp.Tag("sec"), chomp.Tag("ssb")),
+			chomp.Repeat(colon(), 4))(s); err != nil {
 			return rem, nil, err
 		}
 
@@ -254,11 +252,11 @@ func user() chomp.Combinator[[]string] {
 }
 
 func main() {
-	colonFmt := `sec:-:4096:1:AAC7E54CBD73F690:1664450926:::-:::scESC:::+:::23::0:
+	colonFmt := `sec:-:4096:1:AAC7E54CBD73F690:1664450926:1695986926::-:::scESC:::+:::23::0:
 fpr:::::::::28BF65E18407FD2966565284AAC7E54CBD73F690:
 grp:::::::::12E86CE47CEB942D2A65B4D02106657BA8D0C92B:
 uid:-::::1664450926::E6F81442C4BEE48D9ED3E6EE4CAC21231D3C25EB::albert.einstein <albert.einstein@emcsqua.red>::::::::::0:
-ssb:-:4096:1:17441D4227A0B812:1664450926::::::e:::+:::23:
+ssb:-:4096:1:17441D4227A0B812:1664450926:1695986926:::::e:::+:::23:
 fpr:::::::::26965E00791A52ECC33AE88917441D4227A0B812:
 grp:::::::::603DAFFC5AAE42C4B8BFCC99DD7CEDD5C443FFA0:
 `

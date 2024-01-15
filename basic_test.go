@@ -27,6 +27,7 @@ import (
 
 	"github.com/purpleclay/chomp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTag(t *testing.T) {
@@ -272,5 +273,24 @@ func TestOpt(t *testing.T) {
 
 	assert.Equal(t, "dark knight", rem)
 	assert.Equal(t, "", ext)
+	assert.NoError(t, err)
+}
+
+func TestS(t *testing.T) {
+	rem, ext, err := chomp.S(chomp.Tag("hello"))("hello and good morning")
+
+	assert.Equal(t, " and good morning", rem)
+	require.Len(t, ext, 1)
+	assert.Equal(t, "hello", ext[0])
+	assert.NoError(t, err)
+}
+
+func TestI(t *testing.T) {
+	rem, ext, err := chomp.I(
+		chomp.Repeat(chomp.All(chomp.Until(" "), chomp.Tag(" ")), 3),
+		2)("hello and good morning")
+
+	assert.Equal(t, "morning", rem)
+	assert.Equal(t, "and", ext)
 	assert.NoError(t, err)
 }
