@@ -31,5 +31,5 @@ enabled = true
     import_root = "github.com/purpleclay/chomp"
 
 [[analyzers]]
-name = "secret"
+name = "secrets"
 enabled = true
