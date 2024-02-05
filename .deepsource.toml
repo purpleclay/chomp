@@ -20,7 +20,7 @@
 version = 1
 
 test_patterns = [
-  "**/*_test.go"
+  "*_test.go"
 ]
 
 [[analyzers]]
