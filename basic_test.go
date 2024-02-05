@@ -294,3 +294,18 @@ func TestI(t *testing.T) {
 	assert.Equal(t, "and", ext)
 	assert.NoError(t, err)
 }
+
+func TestCombinatorError(t *testing.T) {
+	_, _, err := chomp.OneOf("!h")("Happy Monday")
+
+	assert.EqualError(t, err, "(one_of) combinator failed to parse text 'Happy Monday' with input '!h'")
+}
+
+func TestParserCombinatorError(t *testing.T) {
+	_, _, err := chomp.All(
+		chomp.Tag("the legend of batman"),
+		chomp.Tag(":"),
+		chomp.Tag("marvel"))("the legend of batman:dc:9781801260336:£19.99")
+
+	assert.EqualError(t, err, "(all) parser failed. (tag) combinator failed to parse text 'dc:9781801260336:£19.99' with input 'marvel'")
+}

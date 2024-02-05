@@ -38,7 +38,7 @@ type Result interface {
 // strict and must parse its input. Any failure to do so should raise a [CombinatorParseError].
 type Combinator[T Result] func(string) (string, T, error)
 
-const truncateErrAt = 20
+const truncateErrAt = 50
 
 // CombinatorParseError defines an error that is raised when a combinator
 // fails to parse the input text under its expected condition.
@@ -63,7 +63,7 @@ func (e CombinatorParseError) Error() string {
 	}
 
 	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("%s combinator failed to parse text '%s'", e.Type, text))
+	buf.WriteString(fmt.Sprintf("(%s) combinator failed to parse text '%s'", e.Type, text))
 
 	if e.Input != "" {
 		buf.WriteString(fmt.Sprintf(" with input '%s'", e.Input))
@@ -84,7 +84,7 @@ type ParserError struct {
 
 // Error returns a friendly string representation of the current error.
 func (e ParserError) Error() string {
-	return fmt.Sprintf("%s parser failed. %v", e.Type, e.Err)
+	return fmt.Sprintf("(%s) parser failed. %v", e.Type, e.Err)
 }
 
 // Unwrap returns the inner [CombinatorParseError].
