@@ -329,6 +329,26 @@ func TestI(t *testing.T) {
 	assert.Equal(t, "and", ext)
 }
 
+func TestPrefixed(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Prefixed(chomp.Tag(`"`), chomp.Tag("Hello"))(`"Hello, World"`)
+
+	require.NoError(t, err)
+	assert.Equal(t, `, World"`, rem)
+	assert.Equal(t, "Hello", ext)
+}
+
+func TestSuffixed(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Suffixed(chomp.Tag(","), chomp.Tag("Hello"))("Hello, World")
+
+	require.NoError(t, err)
+	assert.Equal(t, " World", rem)
+	assert.Equal(t, "Hello", ext)
+}
+
 func TestCombinatorError(t *testing.T) {
 	t.Parallel()
 
