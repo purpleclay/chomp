@@ -98,17 +98,50 @@ func SepPair[T, U, V Result](c1 Combinator[T], sep Combinator[U], c2 Combinator[
 //
 //	chomp.Repeat(chomp.Parentheses(), 2)("(Hello)(World)(!)")
 //	// ("(!)", []string{"(Hello)", "(World)"}, nil)
-func Repeat[T Result](c Combinator[T], n int) Combinator[[]string] {
+func Repeat[T Result](c Combinator[T], n uint) Combinator[[]string] {
 	return func(s string) (string, []string, error) {
 		var ext []string
 		var err error
 
 		rem := s
-		for i := 0; i < n; i++ {
+		for i := uint(0); i < n; i++ {
 			var out T
 			if rem, out, err = c(rem); err != nil {
 				return rem, nil, ParserError{Err: err, Type: "repeat"}
 			}
+			ext = combine(ext, out)
+		}
+
+		return rem, ext, nil
+	}
+}
+
+// RepeatRange will scan the input text and repeat the [Combinator] between
+// a minimum and maximum number of times. Each combinator must match, with
+// the output of each contained in the returned slice. The minimum number of
+// times must be executed for this combinator to be successful.
+//
+//	chomp.RepeatRange(chomp.OneOf("Hleo"), 1, 8)("Hello, World!")
+//	// (", World!", []string{"H", "e", "l", "l", "o"}, nil)
+func RepeatRange[T Result](c Combinator[T], n, m uint) Combinator[[]string] {
+	return func(s string) (string, []string, error) {
+		var ext []string
+		var err error
+
+		if n > m {
+			n, m = m, n
+		}
+
+		rem := s
+		for i := uint(0); i < m; i++ {
+			var out T
+			if rem, out, err = c(rem); err != nil {
+				if i+1 > n {
+					break
+				}
+				return rem, nil, ParserError{Err: err, Type: "repeat_range"}
+			}
+
 			ext = combine(ext, out)
 		}
 

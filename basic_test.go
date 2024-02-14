@@ -31,6 +31,8 @@ import (
 )
 
 func TestTag(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		input string
@@ -51,17 +53,21 @@ func TestTag(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			rem, tag, err := chomp.Tag(tt.tag)(tt.input)
 
+			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
 			assert.Equal(t, tt.tag, tag)
-			assert.NoError(t, err)
 		})
 	}
 }
 
 func TestAny(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		input string
@@ -85,17 +91,21 @@ func TestAny(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			rem, ext, err := chomp.Any(tt.any)(tt.input)
 
+			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
 			assert.Equal(t, tt.ext, ext)
-			assert.NoError(t, err)
 		})
 	}
 }
 
 func TestNot(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		input string
@@ -119,17 +129,21 @@ func TestNot(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			rem, ext, err := chomp.Not(tt.not)(tt.input)
 
+			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
 			assert.Equal(t, tt.ext, ext)
-			assert.NoError(t, err)
 		})
 	}
 }
 
 func TestUntil(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		until string
@@ -153,17 +167,21 @@ func TestUntil(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			rem, ext, err := chomp.Until(tt.until)(tt.input)
 
+			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
 			assert.Equal(t, tt.ext, ext)
-			assert.NoError(t, err)
 		})
 	}
 }
 
 func TestCrlf(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		input string
@@ -190,17 +208,21 @@ func TestCrlf(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			rem, ext, err := chomp.Crlf()(tt.input)
 
+			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
 			assert.Equal(t, tt.ext, ext)
-			assert.NoError(t, err)
 		})
 	}
 }
 
 func TestOneOf(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		oneOf string
@@ -224,17 +246,21 @@ func TestOneOf(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			rem, ext, err := chomp.OneOf(tt.oneOf)(tt.input)
 
+			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
 			assert.Equal(t, tt.ext, ext)
-			assert.NoError(t, err)
 		})
 	}
 }
 
 func TestNoneOf(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name   string
 		noneOf string
@@ -258,50 +284,62 @@ func TestNoneOf(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			rem, ext, err := chomp.NoneOf(tt.noneOf)(tt.input)
 
+			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
 			assert.Equal(t, tt.ext, ext)
-			assert.NoError(t, err)
 		})
 	}
 }
 
 func TestOpt(t *testing.T) {
+	t.Parallel()
+
 	rem, ext, err := chomp.Opt(chomp.Tag("the"))("dark knight")
 
+	require.NoError(t, err)
 	assert.Equal(t, "dark knight", rem)
 	assert.Equal(t, "", ext)
-	assert.NoError(t, err)
 }
 
 func TestS(t *testing.T) {
+	t.Parallel()
+
 	rem, ext, err := chomp.S(chomp.Tag("hello"))("hello and good morning")
 
+	require.NoError(t, err)
 	assert.Equal(t, " and good morning", rem)
 	require.Len(t, ext, 1)
 	assert.Equal(t, "hello", ext[0])
-	assert.NoError(t, err)
 }
 
 func TestI(t *testing.T) {
+	t.Parallel()
+
 	rem, ext, err := chomp.I(
 		chomp.Repeat(chomp.All(chomp.Until(" "), chomp.Tag(" ")), 3),
 		2)("hello and good morning")
 
+	require.NoError(t, err)
 	assert.Equal(t, "morning", rem)
 	assert.Equal(t, "and", ext)
-	assert.NoError(t, err)
 }
 
 func TestCombinatorError(t *testing.T) {
+	t.Parallel()
+
 	_, _, err := chomp.OneOf("!h")("Happy Monday")
 
 	assert.EqualError(t, err, "(one_of) combinator failed to parse text 'Happy Monday' with input '!h'")
 }
 
 func TestParserCombinatorError(t *testing.T) {
+	t.Parallel()
+
 	_, _, err := chomp.All(
 		chomp.Tag("the legend of batman"),
 		chomp.Tag(":"),
