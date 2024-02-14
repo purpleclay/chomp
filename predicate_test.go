@@ -27,9 +27,12 @@ import (
 
 	"github.com/purpleclay/chomp"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWhile(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		input string
@@ -50,17 +53,21 @@ func TestWhile(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			rem, ext, err := chomp.While(chomp.IsLetter)(tt.input)
 
+			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
 			assert.Equal(t, tt.ext, ext)
-			assert.NoError(t, err)
 		})
 	}
 }
 
 func TestWhileNot(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		input string
@@ -81,12 +88,14 @@ func TestWhileNot(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			rem, ext, err := chomp.WhileNot(chomp.IsDigit)(tt.input)
 
+			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
 			assert.Equal(t, tt.ext, ext)
-			assert.NoError(t, err)
 		})
 	}
 }

@@ -31,37 +31,58 @@ import (
 )
 
 func TestPair(t *testing.T) {
+	t.Parallel()
+
 	rem, ext, err := chomp.Pair(chomp.Tag("Hello,"), chomp.Tag(" World"))("Hello, World!")
 
+	require.NoError(t, err)
 	assert.Equal(t, "!", rem)
 	require.Len(t, ext, 2)
 	assert.Equal(t, "Hello,", ext[0])
 	assert.Equal(t, " World", ext[1])
-	assert.NoError(t, err)
 }
 
 func TestSepPair(t *testing.T) {
+	t.Parallel()
+
 	rem, ext, err := chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World"))("Hello, World!")
 
+	require.NoError(t, err)
 	assert.Equal(t, "!", rem)
 	require.Len(t, ext, 2)
 	assert.Equal(t, "Hello", ext[0])
 	assert.Equal(t, "World", ext[1])
-	assert.NoError(t, err)
 }
 
 func TestRepeat(t *testing.T) {
+	t.Parallel()
+
 	rem, ext, err := chomp.Repeat(chomp.QuoteDouble(), 3)(`"Batman""ジョーカー""Two Face""ベイン"`)
 
+	require.NoError(t, err)
 	assert.Equal(t, `"ベイン"`, rem)
 	require.Len(t, ext, 3)
 	assert.Equal(t, "Batman", ext[0])
 	assert.Equal(t, "ジョーカー", ext[1])
 	assert.Equal(t, "Two Face", ext[2])
-	assert.NoError(t, err)
+}
+
+func TestRepeatRange(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.RepeatRange(
+		chomp.Pair(chomp.Until(","), chomp.Opt(chomp.Tag(","))), 1, 3)("Batman,Joker,")
+
+	require.NoError(t, err)
+	assert.Empty(t, rem)
+	require.Len(t, ext, 4)
+	assert.Equal(t, "Batman", ext[0])
+	assert.Equal(t, "Joker", ext[2])
 }
 
 func TestDelimited(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		input string
@@ -85,37 +106,43 @@ func TestDelimited(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			rem, ext, err := chomp.Delimited(
 				chomp.Tag(tt.delim[0]),
 				chomp.Tag(tt.delim[1]),
 				chomp.Tag(tt.delim[2]))(tt.input)
 
+			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
 			assert.Equal(t, tt.ext, ext)
-			assert.NoError(t, err)
 		})
 	}
 }
 
 func TestFirst(t *testing.T) {
+	t.Parallel()
+
 	rem, ext, err := chomp.First(chomp.Tag("Light"), chomp.Tag("Dark"))("Dark Knight")
 
+	require.NoError(t, err)
 	assert.Equal(t, " Knight", rem)
 	assert.Equal(t, "Dark", ext)
-	assert.NoError(t, err)
 }
 
 func TestAll(t *testing.T) {
+	t.Parallel()
+
 	rem, ext, err := chomp.All(
 		chomp.QuoteDouble(),
 		chomp.Until("("),
 		chomp.Parentheses())(`"Hello and Good Morning" (こんにちは、おはよう)`)
 
+	require.NoError(t, err)
 	assert.Empty(t, rem)
 	require.Len(t, ext, 3)
 	assert.Equal(t, "Hello and Good Morning", ext[0])
 	assert.Equal(t, " ", ext[1])
 	assert.Equal(t, "こんにちは、おはよう", ext[2])
-	assert.NoError(t, err)
 }
