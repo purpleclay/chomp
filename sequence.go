@@ -107,7 +107,11 @@ func Repeat[T Result](c Combinator[T], n uint) Combinator[[]string] {
 		for i := uint(0); i < n; i++ {
 			var out T
 			if rem, out, err = c(rem); err != nil {
-				return rem, nil, ParserError{Err: err, Type: "repeat"}
+				return rem, nil, RangedParserError{
+					Err:  err,
+					Exec: RangeExecution(i, n),
+					Type: "repeat",
+				}
 			}
 			ext = combine(ext, out)
 		}
@@ -139,9 +143,12 @@ func RepeatRange[T Result](c Combinator[T], n, m uint) Combinator[[]string] {
 				if i+1 > n {
 					break
 				}
-				return rem, nil, ParserError{Err: err, Type: "repeat_range"}
+				return rem, nil, RangedParserError{
+					Err:  err,
+					Exec: RangeExecution(i, n, m),
+					Type: "repeat_range",
+				}
 			}
-
 			ext = combine(ext, out)
 		}
 
@@ -278,6 +285,56 @@ func All[T Result](c ...Combinator[T]) Combinator[[]string] {
 				return rem, nil, ParserError{Err: err, Type: "all"}
 			}
 			ext = combine(ext, out)
+		}
+
+		return rem, ext, nil
+	}
+}
+
+// Many will scan the input text and match the [Combinator] a minimum of one
+// time. The combinator will repeatedly be executed until the the first failed
+// match. This is the equivalent of calling [ManyN] with an argument of 1.
+//
+//	chomp.Many(one.Of("Ho"))("Hello, World!")
+//	// ("ello, World!", []string{"H"}, nil)
+func Many[T Result](c Combinator[T]) Combinator[[]string] {
+	return func(s string) (string, []string, error) {
+		return ManyN(c, 1)(s)
+	}
+}
+
+// ManyN will scan the input text and match the [Combinator] a minimum number
+// of times. The combinator will repeatedly be executed until the first failed
+// match. The minimum number of times must be executed for this combinator to
+// be successful.
+//
+//	chomp.ManyN(chomp.OneOf("W"), 0)("Hello, World!")
+//	// ("Hello, World!", nil, nil)
+func ManyN[T Result](c Combinator[T], n uint) Combinator[[]string] {
+	return func(s string) (string, []string, error) {
+		var ext []string
+		var err error
+		var count uint
+
+		rem := s
+		for {
+			var out T
+			var tmpRem string
+
+			if tmpRem, out, err = c(rem); err != nil {
+				break
+			}
+			rem = tmpRem
+			ext = combine(ext, out)
+			count++
+		}
+
+		if count < n {
+			return rem, nil, RangedParserError{
+				Err:  err,
+				Exec: RangeExecution(count, n),
+				Type: "many_n",
+			}
 		}
 
 		return rem, ext, nil
