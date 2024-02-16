@@ -27,7 +27,7 @@ import (
 	"strings"
 )
 
-// Result is the expected output from a [Combinator]
+// Result is the expected output from a [Combinator].
 type Result interface {
 	string | []string
 }
@@ -73,7 +73,7 @@ func (e CombinatorParseError) Error() string {
 }
 
 // ParserError defines an error that is raised when a parser
-// fails to parse the input text due to a failed [Combinator]
+// fails to parse the input text due to a failed [Combinator].
 type ParserError struct {
 	// Err contains the [CombinatorParseError] that caused the parser to fail.
 	Err error
@@ -89,5 +89,75 @@ func (e ParserError) Error() string {
 
 // Unwrap returns the inner [CombinatorParseError].
 func (e ParserError) Unwrap() error {
+	return e.Err
+}
+
+// RangedParserError defines an error that is raised when a ranged parser
+// fails to parse the input text due to a failed [Combinator] within the
+// expected execution range.
+type RangedParserError struct {
+	// Err contains the [CombinatorParseError] that caused the parser to fail.
+	Err error
+
+	// Range contains the execution details of the ranged parser.
+	Exec RangedParserExec
+
+	// Type of [Parser] that failed.
+	Type string
+}
+
+// RangedParserExec details how a ranged [Combinator] was exeucted.
+type RangedParserExec struct {
+	// Min is the minimum number of expected executions.
+	Min uint
+
+	// Max is the maximum number of possible executions.
+	Max uint
+
+	// Count contains the number of executions.
+	Count uint
+}
+
+// String returns a string representation of a [RangedParserExec].
+func (e RangedParserExec) String() string {
+	var buf strings.Builder
+	buf.WriteString(fmt.Sprintf("[count: %d", e.Count))
+	if e.Min > 0 {
+		buf.WriteString(fmt.Sprintf(" min: %d", e.Min))
+	}
+
+	if e.Max > 0 {
+		buf.WriteString(fmt.Sprintf(" max: %d", e.Max))
+	}
+	buf.WriteString("]")
+	return buf.String()
+}
+
+// RangeExecution ...
+func RangeExecution(i ...uint) RangedParserExec {
+	exec := RangedParserExec{}
+
+	switch len(i) {
+	case 1:
+		exec.Count = i[0]
+	case 2:
+		exec.Count = i[0]
+		exec.Min = i[1]
+	case 3:
+		exec.Count = i[0]
+		exec.Min = i[1]
+		exec.Max = i[2]
+	}
+
+	return exec
+}
+
+// Error returns a friendly string representation of the current error.
+func (e RangedParserError) Error() string {
+	return fmt.Sprintf("(%s) parser failed %s. %v", e.Type, e.Exec, e.Err)
+}
+
+// Unwrap returns the inner [CombinatorParseError].
+func (e RangedParserError) Unwrap() error {
 	return e.Err
 }

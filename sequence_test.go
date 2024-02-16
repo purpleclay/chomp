@@ -146,3 +146,50 @@ func TestAll(t *testing.T) {
 	assert.Equal(t, " ", ext[1])
 	assert.Equal(t, "こんにちは、おはよう", ext[2])
 }
+
+func TestMany(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Many(chomp.OneOf("はんにこち"))("こんにちは、おはよう")
+
+	require.NoError(t, err)
+	assert.Equal(t, "、おはよう", rem)
+	require.Len(t, ext, 5)
+	assert.Equal(t, "こ", ext[0])
+	assert.Equal(t, "ん", ext[1])
+	assert.Equal(t, "に", ext[2])
+	assert.Equal(t, "ち", ext[3])
+	assert.Equal(t, "は", ext[4])
+}
+
+func TestManyNoMatches(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.Many(chomp.OneOf("eHl"))("Good Morning")
+
+	require.EqualError(t, err, "(many_n) parser failed [count: 0 min: 1]. (one_of) combinator failed to parse text 'Good Morning' with input 'eHl'")
+}
+
+func TestManyN(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.ManyN(chomp.OneOf("eHl"), 2)("Hello and Good Morning")
+
+	require.NoError(t, err)
+	assert.Equal(t, "o and Good Morning", rem)
+	require.Len(t, ext, 4)
+	assert.Equal(t, "H", ext[0])
+	assert.Equal(t, "e", ext[1])
+	assert.Equal(t, "l", ext[2])
+	assert.Equal(t, "l", ext[3])
+}
+
+func TestManyNZeroMatches(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.ManyN(chomp.OneOf("eHl"), 0)("Good Morning")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Good Morning", rem)
+	assert.Empty(t, ext)
+}
