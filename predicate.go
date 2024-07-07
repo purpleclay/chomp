@@ -42,7 +42,7 @@ func While(p Predicate) Combinator[string] {
 		}
 
 		if pos == 0 {
-			return "", "", CombinatorParseError{Text: s, Type: "while"}
+			return s, "", CombinatorParseError{Text: s, Type: "while"}
 		}
 
 		return s[pos:], s[:pos], nil
@@ -66,7 +66,7 @@ func WhileNot(p Predicate) Combinator[string] {
 		}
 
 		if pos == 0 {
-			return "", "", CombinatorParseError{Text: s, Type: "while_not"}
+			return s, "", CombinatorParseError{Text: s, Type: "while_not"}
 		}
 
 		return s[pos:], s[:pos], nil
