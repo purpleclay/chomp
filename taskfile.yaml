@@ -1,0 +1,40 @@
+version: "3"
+
+tasks:
+  default:
+    desc: Runs all of the default tasks
+    cmds:
+      - task: ci
+
+  ci:
+    desc: Run all CI tasks
+    cmds:
+      - task: deps
+      - task: unit-test
+      - task: lint
+
+  deps:
+    desc: Install all dependencies
+    cmds:
+      - go mod tidy
+
+  unit-test:
+    desc: Run the unit tests
+    vars:
+      TEST_FORMAT: '{{default "" .TEST_FORMAT}}'
+      COVER_PROFILE: '{{default "coverage.out" .COVER_PROFILE}}'
+      TEST_OPTIONS: '{{default "-short -vet=off -shuffle=on" .TEST_OPTIONS}}'
+    cmds:
+      - go test {{.TEST_OPTIONS}} -covermode=atomic -coverprofile={{.COVER_PROFILE}} {{.TEST_FORMAT}} ./...
+
+  lint:
+    desc: Lint the code using golangci-lint
+    vars:
+      REPORT_FORMAT: '{{default "colored-line-number" .REPORT_FORMAT}}'
+    cmds:
+      - golangci-lint run --timeout 5m0s --out-format {{.REPORT_FORMAT}}
+
+  format:
+    desc: Format the code using gofumpt
+    cmds:
+      - gofumpt -w -l .
