@@ -111,7 +111,14 @@ func (e RangedParserExec) String() string {
 	return buf.String()
 }
 
-// RangeExecution ...
+// RangeExecution is a utility method for setting a [RangedParserExec].
+//   - With one argument, the [RangeParserExec.Count] is set.
+//   - With two arguments, the [RangeParserExec.Count] and [RangeParserExec.Min]
+//     are set.
+//   - With three arguments, the [RangeParserExec.Count]], [RangeParserExec.Min]
+//     and [RangeParserExec.Max] are set.
+//   - If four or more arguments are provided, a default [RangedParserExec] will
+//     be returned.
 func RangeExecution(i ...uint) RangedParserExec {
 	exec := RangedParserExec{}
 
