@@ -90,7 +90,7 @@ func Crlf() Combinator[string] {
 			return s[idx+1:], s[:idx+1], nil
 		}
 
-		return "", "", CombinatorParseError{Text: s, Type: "crlf"}
+		return s, "", CombinatorParseError{Text: s, Type: "crlf"}
 	}
 }
 
@@ -110,7 +110,7 @@ func OneOf(str string) Combinator[string] {
 			}
 		}
 
-		return "", "", CombinatorParseError{Input: str, Text: s, Type: "one_of"}
+		return s, "", CombinatorParseError{Input: str, Text: s, Type: "one_of"}
 	}
 }
 
@@ -132,7 +132,7 @@ func NoneOf(str string) Combinator[string] {
 			return s[pos:], s[:pos], nil
 		}
 
-		return "", "", CombinatorParseError{Input: str, Text: s, Type: "none_of"}
+		return s, "", CombinatorParseError{Input: str, Text: s, Type: "none_of"}
 	}
 }
 
@@ -147,7 +147,7 @@ func Until(str string) Combinator[string] {
 			return s[idx:], s[:idx], nil
 		}
 
-		return "", "", CombinatorParseError{Input: str, Text: s, Type: "until"}
+		return s, "", CombinatorParseError{Input: str, Text: s, Type: "until"}
 	}
 }
 
