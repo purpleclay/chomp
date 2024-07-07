@@ -6,7 +6,7 @@
 !README.md
 !LICENSE
 !CODE_OF_CONDUCT.md
-!Taskfile.yaml
+!taskfile.yaml
 !.deepsource.toml
 !.golangci.yaml
 !.goreleaser.yaml
