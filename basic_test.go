@@ -345,3 +345,46 @@ func TestParserCombinatorError(t *testing.T) {
 
 	assert.EqualError(t, err, "(all) parser failed. (tag) combinator failed to parse text 'dc:9781801260336:£19.99' with input 'marvel'")
 }
+
+func TestEol(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name: "LF",
+			input: `Hello, World!
+It's a great day`,
+			rem: "It's a great day",
+			ext: "Hello, World!",
+		},
+		{
+			name:  "NoLF",
+			input: "こんにちは、おはよう",
+			rem:   "",
+			ext:   "こんにちは、おはよう",
+		},
+		{
+			name: "EmptyLineBeforeLF",
+			input: `
+こんにちは、おはよう`,
+			rem: "こんにちは、おはよう",
+			ext: "",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Eol()(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}

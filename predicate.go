@@ -45,6 +45,16 @@ func (isAlphanumeric) String() string {
 	return "is_alphanumeric"
 }
 
+type isLineEnding struct{}
+
+func (isLineEnding) Match(r rune) bool {
+	return r == '\n' || r == '\r'
+}
+
+func (isLineEnding) String() string {
+	return "is_line_ending"
+}
+
 var (
 	// IsDigit determines whether a rune is a decimal digit. A rune is classed
 	// as a digit if it is between the ASCII range of '0' or '9', or it belongs
@@ -69,6 +79,10 @@ var (
 	// or a letter. This is a convenience method that wraps both the
 	// existing [IsDigit] and [IsLetter] predicates
 	IsAlphanumeric = isAlphanumeric{}
+
+	// IsLineEnding deterines whether a rune is one of the following ASCII
+	// line ending characters '\r' or '\n'
+	IsLineEnding = isLineEnding{}
 )
 
 // While will scan the input text, testing each character against the provided

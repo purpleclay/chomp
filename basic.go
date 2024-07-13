@@ -250,3 +250,15 @@ func Suffixed(suf, c Combinator[string]) Combinator[string] {
 		return rem, ext, nil
 	}
 }
+
+// Eol will scan the text until it encounters any ASCII line ending characters
+// identified by the [IsLineEnding] predicate. All text before the line ending
+// will be returned. The line ending, if detected, will be discarded.
+//
+//	chomp.Eol()(`Hello, World!\nIt's a great day!`)
+//	// ("It's a great day!", "Hello, World!", nil)
+func Eol() Combinator[string] {
+	return func(s string) (string, string, error) {
+		return Suffixed(Opt(Crlf()), WhileNotN(IsLineEnding, 0))(s)
+	}
+}
