@@ -17,31 +17,31 @@ type Predicate interface {
 
 type isDigit struct{}
 
-func (p isDigit) Match(r rune) bool {
+func (isDigit) Match(r rune) bool {
 	return unicode.IsDigit(r)
 }
 
-func (p isDigit) String() string {
+func (isDigit) String() string {
 	return "is_digit"
 }
 
 type isLetter struct{}
 
-func (p isLetter) Match(r rune) bool {
+func (isLetter) Match(r rune) bool {
 	return unicode.IsLetter(r)
 }
 
-func (p isLetter) String() string {
+func (isLetter) String() string {
 	return "is_letter"
 }
 
 type isAlphanumeric struct{}
 
-func (p isAlphanumeric) Match(r rune) bool {
+func (isAlphanumeric) Match(r rune) bool {
 	return unicode.IsDigit(r) || unicode.IsLetter(r)
 }
 
-func (p isAlphanumeric) String() string {
+func (isAlphanumeric) String() string {
 	return "is_alphanumeric"
 }
 
