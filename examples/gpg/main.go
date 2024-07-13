@@ -125,7 +125,7 @@ func key() chomp.Combinator[[]string] {
 			return rem, nil, err
 		}
 
-		if rem, _, err = eol()(rem); err != nil {
+		if rem, _, err = chomp.Eol()(rem); err != nil {
 			return rem, nil, err
 		}
 
@@ -145,17 +145,6 @@ func colon() chomp.Combinator[string] {
 	}
 }
 
-func eol() chomp.Combinator[string] {
-	return func(s string) (string, string, error) {
-		rem, _, err := chomp.Pair(chomp.Until("\n"), chomp.Crlf())(s)
-		if err != nil {
-			return rem, "", err
-		}
-
-		return rem, "", nil
-	}
-}
-
 func fingerprint() chomp.Combinator[string] {
 	return func(s string) (string, string, error) {
 		// fpr:::::::::28BF65E18407FD2966565284AAC7E54CBD73F690:
@@ -171,7 +160,7 @@ func fingerprint() chomp.Combinator[string] {
 			return rem, "", err
 		}
 
-		if rem, _, err = eol()(rem); err != nil {
+		if rem, _, err = chomp.Eol()(rem); err != nil {
 			return rem, "", err
 		}
 		return rem, fpr, nil
@@ -193,7 +182,7 @@ func keygrip() chomp.Combinator[string] {
 			return rem, "", err
 		}
 
-		if rem, _, err = eol()(rem); err != nil {
+		if rem, _, err = chomp.Eol()(rem); err != nil {
 			return rem, "", err
 		}
 		return rem, grp, nil
@@ -220,7 +209,7 @@ func user() chomp.Combinator[[]string] {
 			return rem, nil, err
 		}
 
-		if rem, _, err = eol()(rem); err != nil {
+		if rem, _, err = chomp.Eol()(rem); err != nil {
 			return rem, nil, err
 		}
 		return rem, ext, nil
