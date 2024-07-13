@@ -276,9 +276,7 @@ func All[T Result](c ...Combinator[T]) Combinator[[]string] {
 //	chomp.Many(one.Of("Ho"))("Hello, World!")
 //	// ("ello, World!", []string{"H"}, nil)
 func Many[T Result](c Combinator[T]) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
-		return ManyN(c, 1)(s)
-	}
+	return ManyN(c, 1)
 }
 
 // ManyN will scan the input text and match the [Combinator] a minimum number

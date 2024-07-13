@@ -11,9 +11,7 @@ import (
 	"github.com/purpleclay/chomp"
 )
 
-var (
-	underline = lipgloss.NewStyle().Underline(true)
-)
+var underline = lipgloss.NewStyle().Underline(true)
 
 type GpgPrivateKey struct {
 	UserName     string
