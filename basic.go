@@ -213,10 +213,10 @@ func I(c Combinator[[]string], i int) Combinator[string] {
 // if successful. Both combinators must match.
 //
 //	chomp.Prefixed(
-//		chomp.Tag(`"`),
-//		chomp.Tag("Hello"))(`"Hello, World!"`)
+//		chomp.Tag("Hello"),
+//		chomp.Tag(`"`))(`"Hello, World!"`)
 //	// (`, World!"`, "Hello", nil)
-func Prefixed(pre, c Combinator[string]) Combinator[string] {
+func Prefixed(c, pre Combinator[string]) Combinator[string] {
 	return func(s string) (string, string, error) {
 		rem, _, err := pre(s)
 		if err != nil {
@@ -232,10 +232,10 @@ func Prefixed(pre, c Combinator[string]) Combinator[string] {
 // combinators must match.
 //
 //	chomp.Suffixed(
-//		chomp.Tag(", "),
-//		chomp.Tag("Hello"))("Hello, World!")
+//		chomp.Tag("Hello"),
+//		chomp.Tag(", "))("Hello, World!")
 //	// ("World!", "Hello", nil)
-func Suffixed(suf, c Combinator[string]) Combinator[string] {
+func Suffixed(c, suf Combinator[string]) Combinator[string] {
 	return func(s string) (string, string, error) {
 		rem, ext, err := c(s)
 		if err != nil {
@@ -259,7 +259,7 @@ func Suffixed(suf, c Combinator[string]) Combinator[string] {
 //	// ("It's a great day!", "Hello, World!", nil)
 func Eol() Combinator[string] {
 	return func(s string) (string, string, error) {
-		return Suffixed(Opt(Crlf()), WhileNotN(IsLineEnding, 0))(s)
+		return Suffixed(WhileNotN(IsLineEnding, 0), Opt(Crlf()))(s)
 	}
 }
 
