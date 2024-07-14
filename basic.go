@@ -262,3 +262,20 @@ func Eol() Combinator[string] {
 		return Suffixed(Opt(Crlf()), WhileNotN(IsLineEnding, 0))(s)
 	}
 }
+
+// Peek will scan the text and apply the parser without consuming any of the input.
+// Useful if you need to lookahead.
+//
+//	chomp.Peek(chomp.Tag("Hello"))("Hello, World!")
+//	// ("Hello, World!", "Hello", nil)
+//
+//	chomp.Peek(
+//		chomp.Many(chomp.Suffixed(chomp.Tag(" "), chomp.Until(" "))),
+//	)("Hello and Good Morning!")
+//	// ("Hello and Good Morning!", []string{"Hello", "and", "Good"}, nil)
+func Peek[T Result](c Combinator[T]) Combinator[T] {
+	return func(s string) (string, T, error) {
+		_, ext, err := c(s)
+		return s, ext, err
+	}
+}

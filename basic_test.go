@@ -388,3 +388,23 @@ It's a great day`,
 		})
 	}
 }
+
+func TestPeek(t *testing.T) {
+	t.Parallel()
+	rem, ext, err := chomp.Peek(chomp.Tag("Hello"))("Hello and Good Morning!")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Hello and Good Morning!", rem)
+	assert.Equal(t, "Hello", ext)
+}
+
+func TestPeekUsingSequence(t *testing.T) {
+	t.Parallel()
+	rem, ext, err := chomp.Peek(
+		chomp.Many(chomp.Suffixed(chomp.Tag(" "), chomp.Until(" "))),
+	)("Hello and Good Morning!")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Hello and Good Morning!", rem)
+	assert.Equal(t, []string{"Hello", "and", "Good"}, ext)
+}
