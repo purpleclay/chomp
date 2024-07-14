@@ -310,7 +310,7 @@ func TestI(t *testing.T) {
 func TestPrefixed(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Prefixed(chomp.Tag(`"`), chomp.Tag("Hello"))(`"Hello, World"`)
+	rem, ext, err := chomp.Prefixed(chomp.Tag("Hello"), chomp.Tag(`"`))(`"Hello, World"`)
 
 	require.NoError(t, err)
 	assert.Equal(t, `, World"`, rem)
@@ -320,7 +320,7 @@ func TestPrefixed(t *testing.T) {
 func TestSuffixed(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Suffixed(chomp.Tag(","), chomp.Tag("Hello"))("Hello, World")
+	rem, ext, err := chomp.Suffixed(chomp.Tag("Hello"), chomp.Tag(","))("Hello, World")
 
 	require.NoError(t, err)
 	assert.Equal(t, " World", rem)
@@ -401,7 +401,7 @@ func TestPeek(t *testing.T) {
 func TestPeekUsingSequence(t *testing.T) {
 	t.Parallel()
 	rem, ext, err := chomp.Peek(
-		chomp.Many(chomp.Suffixed(chomp.Tag(" "), chomp.Until(" "))),
+		chomp.Many(chomp.Suffixed(chomp.Until(" "), chomp.Tag(" "))),
 	)("Hello and Good Morning!")
 
 	require.NoError(t, err)
