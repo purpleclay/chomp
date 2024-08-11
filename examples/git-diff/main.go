@@ -3,9 +3,25 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/purpleclay/chomp"
+)
+
+const (
+	// git diff header delimiter > @@ ... @@
+	hdrDelim = "@@"
+	// prefix for lines added
+	addPrefix = "+"
+	// prefix for lines removed
+	remPrefix = "-"
+)
+
+var (
+	red   = lipgloss.NewStyle().Foreground(lipgloss.Color("#b34139"))
+	green = lipgloss.NewStyle().Foreground(lipgloss.Color("#29b337"))
 )
 
 type FileDiff struct {
@@ -30,25 +46,31 @@ type DiffChunk struct {
 
 func (d DiffChunk) String() string {
 	var buf strings.Builder
-	buf.WriteString(d.Added.String())
-	buf.WriteString(d.Removed.String())
+
+	buf.WriteString("(")
+	buf.WriteString(red.Render("-"))
+	buf.WriteString(fmt.Sprintf("%d,%d ", d.Removed.LineNo, d.Removed.Count))
+	buf.WriteString(green.Render("+"))
+	buf.WriteString(fmt.Sprintf("%d,%d", d.Added.LineNo, d.Added.Count))
+	buf.WriteString(")\n")
+
+	if d.Removed.Change != "" {
+		buf.WriteString(red.Render(d.Removed.Change))
+		buf.WriteString("\n")
+	}
+
+	if d.Added.Change != "" {
+		buf.WriteString(green.Render(d.Added.Change))
+		buf.WriteString("\n")
+	}
 
 	return buf.String()
 }
 
-// TODO: temporarily convert these into strings, and then look into a map function
 type DiffChange struct {
 	LineNo int
 	Count  int
 	Change string
-}
-
-func (d DiffChange) String() string {
-	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("line: %d count: %d\n", d.LineNo, d.Count))
-	buf.WriteString(fmt.Sprintf("changed:\n%s", d.Change))
-
-	return buf.String()
 }
 
 func Parse(in string) (FileDiff, error) {
@@ -57,7 +79,7 @@ func Parse(in string) (FileDiff, error) {
 		return FileDiff{}, err
 	}
 
-	rem, _, err = chomp.Until("@@")(rem)
+	rem, _, err = chomp.Until(hdrDelim)(rem)
 	if err != nil {
 		return FileDiff{}, err
 	}
@@ -95,19 +117,43 @@ func diffPath() chomp.Combinator[string] {
 }
 
 func diffChunks(in string) ([]DiffChunk, error) {
-	_, chunks, err := chomp.Many(diffChunk())(in)
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println(chunks)
+	_, chunks, err := chomp.Map(chomp.Many(diffChunk()),
+		func(in []string) []DiffChunk {
+			var diffChunks []DiffChunk
 
-	// TODO: convert chunks into []DiffChunk > need a map function
-	return []DiffChunk{
-		{
-			Added:   DiffChange{},
-			Removed: DiffChange{},
+			for i := 0; i+5 < len(in); i += 6 {
+				// 0: removed line
+				// 1: removed count
+				// 2: added line
+				// 3: added count
+				// 4: removed lines
+				// 5: added lines
+				chunk := DiffChunk{
+					Removed: DiffChange{
+						LineNo: mustInt(in[i]),
+						Count:  mustInt(in[i+1]),
+						Change: in[i+4],
+					},
+					Added: DiffChange{
+						LineNo: mustInt(in[i+2]),
+						Count:  mustInt(in[i+3]),
+						Change: in[i+5],
+					},
+				}
+
+				diffChunks = append(diffChunks, chunk)
+			}
+
+			return diffChunks
 		},
-	}, nil
+	)(in)
+
+	return chunks, err
+}
+
+func mustInt(in string) int {
+	out, _ := strconv.Atoi(in)
+	return out
 }
 
 func diffChunk() chomp.Combinator[[]string] {
@@ -124,57 +170,47 @@ func diffChunk() chomp.Combinator[[]string] {
 
 		var changes []string
 		rem, changes, err = chomp.Delimited(
-			chomp.Tag("@@ "),
-			chomp.SepPair(diffChunkHeaderChange("-"), chomp.Tag(" "), diffChunkHeaderChange("+")),
+			chomp.Tag(hdrDelim+" "),
+			chomp.SepPair(diffChunkHeaderChange(remPrefix), chomp.Tag(" "), diffChunkHeaderChange(addPrefix)),
 			chomp.Eol(),
 		)(s)
 		if err != nil {
 			return rem, nil, err
 		}
 
-		// TODO: need to convert string values into int (chomp provides a conversion function) > must
-		// TODO: constrain these by the values from the change header
+		var removed string
+		rem, removed, err = chomp.Map(
+			chomp.ManyN(chomp.Prefixed(chomp.Eol(), chomp.Tag(remPrefix)), 0),
+			func(in []string) string { return strings.Join(in, "\n") },
+		)(rem)
+		if err != nil {
+			return rem, nil, err
+		}
 
-		var removed []string
-		rem, removed, err = chomp.ManyN(chomp.Prefixed(chomp.Eol(), chomp.Tag("-")), 0)(rem)
+		var added string
+		rem, added, err = chomp.Map(
+			chomp.ManyN(chomp.Prefixed(chomp.Eol(), chomp.Tag(addPrefix)), 0),
+			func(in []string) string { return strings.Join(in, "\n") },
+		)(rem)
+		if err != nil {
+			return rem, nil, err
+		}
 
-		var added []string
-		rem, added, err = chomp.ManyN(chomp.Prefixed(chomp.Eol(), chomp.Tag("+")), 0)(rem)
-
-		return rem, append(changes, strings.Join(removed, "\n"), strings.Join(added, "\n")), nil
+		return rem, append(changes, removed, added), nil
 	}
 }
 
 func diffChunkHeaderChange(prefix string) chomp.Combinator[[]string] {
 	return func(s string) (string, []string, error) {
-		var rem string
-		var err error
-
-		// TODO: this can be condensed
-
-		rem, _, err = chomp.Tag(prefix)(s)
+		rem, _, err := chomp.Tag(prefix)(s)
 		if err != nil {
 			return rem, nil, err
 		}
 
-		var line string
-		rem, line, err = chomp.While(chomp.IsDigit)(rem)
-		if err != nil {
-			return rem, nil, err
-		}
-
-		rem, _, err = chomp.Peek(chomp.Tag(","))(rem)
-		if err != nil {
-			return rem, []string{line, "1"}, nil
-		}
-
-		var changed string
-		rem, changed, err = chomp.Prefixed(chomp.While(chomp.IsDigit), chomp.Tag(","))(rem)
-		if err != nil {
-			return rem, nil, err
-		}
-
-		return rem, []string{line, changed}, nil
+		return chomp.All(
+			chomp.While(chomp.IsDigit),
+			chomp.Opt(chomp.Prefixed(chomp.While(chomp.IsDigit), chomp.Tag(","))),
+		)(rem)
 	}
 }
 
