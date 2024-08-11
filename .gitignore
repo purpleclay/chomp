@@ -11,15 +11,17 @@
 !.golangci.yaml
 !.goreleaser.yaml
 !.github/**/*
+!.zed/*
+
+# Allow Nix flake
+!.envrc
 !flake.nix
 !flake.lock
-!.zed/*
 
 # Allow Go files
 !*.go
 !go.sum
 !go.mod
-!go.work
 
 # Recurse through sub-directories applying the same patterns
 !*/
