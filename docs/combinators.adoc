@@ -251,129 +251,182 @@ TODO
 |Usage
 |Output
 
-| Pair
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Pair[Pair]
+
+Will scan the input text and match each combinator in turn. Both combinators must match. The result of each will be returned in the slice in execution order
 |
 [source,go]
 ----
+chomp.Pair(
+    chomp.Tag("Hello,"),
+    chomp.Tag(" World"))("Hello, World!")
 ----
 |
 ....
+rem: "!"
+ext: ["Hello,", " World"]
 ....
 
-| SepPair
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#SepPair[SepPair]
+
+Will scan the input text and match each combinator in turn. All combinators must match. The result of the separator combinator is discarded and not included within the returned slice.
 |
 [source,go]
 ----
+chomp.SepPair(
+    chomp.Tag("Hello"),
+    chomp.Tag(", "),
+    chomp.Tag("World"))("Hello, World!")
 ----
 |
 ....
+rem: "!"
+ext: ["Hello", "World"]
 ....
 
-| Repeat
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Repeat[Repeat]
 |
 [source,go]
 ----
 ----
 |
 ....
+rem:
+ext:
 ....
 
-| RepeatRange
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#RepeatRange[RepeatRange]
 |
 [source,go]
 ----
 ----
 |
 ....
+rem:
+ext:
 ....
 
-| Delimited
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Delimited[Delimited]
 |
 [source,go]
 ----
 ----
 |
 ....
+rem:
+ext:
 ....
 
-| QuoteDouble
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#QuoteDouble[QuoteDouble]
 |
 [source,go]
 ----
 ----
 |
 ....
+rem:
+ext:
 ....
 
-| QuoteSingle
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#QuoteSingle[QuoteSingle]
 |
 [source,go]
 ----
 ----
 |
 ....
+rem:
+ext:
 ....
 
-| BracketSquare
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#BracketSquare[BracketSquare]
 |
 [source,go]
 ----
 ----
 |
 ....
+rem:
+ext:
 ....
 
-| Parentheses
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Parentheses[Parentheses]
 |
 [source,go]
 ----
 ----
 |
 ....
+rem:
+ext:
 ....
 
-| BracketAngled
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#BracketAngled[BracketAngled]
 |
 [source,go]
 ----
 ----
 |
 ....
+rem:
+ext:
 ....
 
-| First
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#First[First]
 |
 [source,go]
 ----
 ----
 |
 ....
+rem:
+ext:
 ....
 
-| All
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#All[All]
 |
 [source,go]
 ----
 ----
 |
 ....
+rem:
+ext:
 ....
 
-| Many
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Many[Many]
 |
 [source,go]
 ----
 ----
 |
 ....
+rem:
+ext:
 ....
 
-| ManyN
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#ManyN[ManyN]
 |
 [source,go]
 ----
 ----
 |
 ....
+rem:
+ext:
 ....
 |===
