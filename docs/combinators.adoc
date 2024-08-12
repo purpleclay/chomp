@@ -212,7 +212,9 @@ Will scan the input text, testing each character against the provided predicate.
 |
 [source,go]
 ----
-chomp.WhileNotNM(chomp.IsLetter, 1, 8)("20240709 was a great day")
+chomp.WhileNotNM(
+  chomp.IsLetter, 1, 8,
+)("20240709 was a great day")
 ----
 |
 ....
