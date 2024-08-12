@@ -8,7 +8,7 @@ A glossary of all combinators available within `chomp` and their intended use.
 |===
 |Combinator
 |Usage
-|Output
+|Result
 |Comment
 
 |tag
@@ -17,7 +17,11 @@ A glossary of all combinators available within `chomp` and their intended use.
 ----
 chomp.Tag("Hello")("Hello, World!")
 ----
-|`(", World!", "Hello", nil)`
+|
+....
+rem: ", World!"
+ext: "Hello"
+....
 |Must match a series of characters at the beginning of the input text, in the exact order and case provided
 |===
 
