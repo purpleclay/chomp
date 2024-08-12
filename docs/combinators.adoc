@@ -5,12 +5,11 @@ A glossary of all combinators available within `chomp` and their intended use.
 
 == Basic combinators
 
-[%header,cols="1a,1a,1a,1"]
+[%header,cols="1a,1a,1a"]
 |===
 |Combinator
 |Usage
-|Result
-|Comment
+|Output
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Tag:[Tag]
@@ -25,9 +24,10 @@ chomp.Tag("Hello")("Hello, World!")
 rem: ", World!"
 ext: "Hello"
 ....
-|Must match a series of characters at the beginning of the input text, in the exact order and case provided
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#Any:[Any]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Any:[Any]
+Must match at least one character at the beginning of the input text, from the provided sequence. Parsing immediately stops upon the first unmatched character
 |
 [source,go]
 ----
@@ -38,9 +38,10 @@ chomp.Any("eH")("Hello, World!")
 rem: "llo, World!"
 ext: "He"
 ....
-|Must match at least one character at the beginning of the input text, from the provided sequence. Parsing immediately stops upon the first unmatched character.
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#Not:[Not]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Not:[Not]
+Must not match at least one character at the beginning of the input text from the provided sequence. Parsing immediately stops upon the first matched character
 |
 [source,go]
 ----
@@ -51,9 +52,10 @@ chomp.Not("ol")("Hello, World!")
 rem: "llo, World!"
 ext: "He"
 ....
-|Must not match at least one character at the beginning of the input text from the provided sequence. Parsing immediately stops upon the first matched character.
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#Crlf:[Crlf]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Crlf:[Crlf]
+Must match either a `CR (\r)` or `CRLF (\r\n)` line ending
 |
 [source,go]
 ----
@@ -64,9 +66,10 @@ chomp.Crlf()("\r\nHello")
 rem: "Hello"
 ext: "\r\n"
 ....
-|Must match either a `CR (\r)` or `CRLF (\r\n)` line ending.
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#OneOf:[OneOf]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#OneOf:[OneOf]
+Must match a single character at the beginning of the text from the provided sequence
 |
 [source,go]
 ----
@@ -77,9 +80,10 @@ chomp.OneOf("!,eH")("Hello, World!")
 rem: "ello, World!"
 ext: "H"
 ....
-|Must match a single character at the beginning of the text from the provided sequence.
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#NoneOf:[NoneOf]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#NoneOf:[NoneOf]
+Must not match a single character at the beginning of the text from the provided sequence
 |
 [source,go]
 ----
@@ -90,9 +94,10 @@ chomp.NoneOf("loWrd!e")("Hello, World!")
 rem: "ello, World!"
 ext: "H"
 ....
-|Must not match a single character at the beginning of the text from the provided sequence.
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#Until:[Until]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Until:[Until]
+Will scan the input text for the first occurrence of the provided series of characters. Everything until that point in the text will be matched
 |
 [source,go]
 ----
@@ -103,9 +108,10 @@ chomp.Until("World")("Hello, World!")
 rem: "World!"
 ext: "Hello, "
 ....
-|Will scan the input text for the first occurrence of the provided series of characters. Everything until that point in the text will be matched.
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#Eol:[Eol]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Eol:[Eol]
+Will scan the text until it encounters any ASCII line ending characters identified by the [IsLineEnding] predicate. All text before the line ending will be returned. The line ending, if detected, will be discarded
 |
 [source,go]
 ----
@@ -116,7 +122,6 @@ chomp.Eol()(`Hello, World!\nIt's a great day!`)
 rem: "It's a great day!"
 ext: "Hello, World!"
 ....
-|Will scan the text until it encounters any ASCII line ending characters identified by the [IsLineEnding] predicate. All text before the line ending will be returned. The line ending, if detected, will be discarded.
 |===
 
 == Predicate combinators
