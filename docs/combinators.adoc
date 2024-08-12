@@ -4,13 +4,12 @@ A glossary of all combinators available within `chomp` and their intended use.
 
 == Basic combinators
 
-[%header,cols="1,1a,1a,1a,1"]
+[%header,cols="1,1a,1a,1"]
 |===
-|combinator
-|usage
-|input
-|output
-|comment
+|Combinator
+|Usage
+|Output
+|Comment
 
 |tag
 |
@@ -18,8 +17,7 @@ A glossary of all combinators available within `chomp` and their intended use.
 ----
 chomp.Tag("Hello")("Hello, World!")
 ----
-|`Hello, World!`
-|`Hello`
+|`(", World!", "Hello", nil)`
 |Must match a series of characters at the beginning of the input text, in the exact order and case provided
 |===
 
