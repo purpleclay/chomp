@@ -15,6 +15,7 @@ TODO
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Tag:[Tag]
+
 Must match a series of characters at the beginning of the input text, in the exact order and case provided
 |
 [source,go]
@@ -29,6 +30,7 @@ ext: "Hello"
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Any:[Any]
+
 Must match at least one character at the beginning of the input text, from the provided sequence. Parsing immediately stops upon the first unmatched character
 |
 [source,go]
@@ -43,6 +45,7 @@ ext: "He"
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Not:[Not]
+
 Must not match at least one character at the beginning of the input text from the provided sequence. Parsing immediately stops upon the first matched character
 |
 [source,go]
@@ -57,6 +60,7 @@ ext: "He"
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Crlf:[Crlf]
+
 Must match either a `CR (\r)` or `CRLF (\r\n)` line ending
 |
 [source,go]
@@ -71,6 +75,7 @@ ext: "\r\n"
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#OneOf:[OneOf]
+
 Must match a single character at the beginning of the text from the provided sequence
 |
 [source,go]
@@ -85,6 +90,7 @@ ext: "H"
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#NoneOf:[NoneOf]
+
 Must not match a single character at the beginning of the text from the provided sequence
 |
 [source,go]
@@ -99,6 +105,7 @@ ext: "H"
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Until:[Until]
+
 Will scan the input text for the first occurrence of the provided series of characters. Everything until that point in the text will be matched
 |
 [source,go]
@@ -113,6 +120,7 @@ ext: "Hello, "
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Eol:[Eol]
+
 Will scan the text until it encounters any ASCII line ending characters identified by the [IsLineEnding] predicate. All text before the line ending will be returned. The line ending, if detected, will be discarded
 |
 [source,go]
@@ -138,6 +146,7 @@ TODO
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#While:[While]
+
 Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns false will be matched. A minimum of one character must be returned
 |
 [source,go]
@@ -152,6 +161,7 @@ ext: "Hello"
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#WhileN:[WhileN]
+
 Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns false will be matched. A minimum of `n` characters must be returned. If `n` is zero, this becomes an [.underline]#optional combinator#
 |
 [source,go]
@@ -166,6 +176,7 @@ ext: "Hello"
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#WhileNM:[WhileNM]
+
 Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns false will be matched. A minimum of `n` and upto a maximum of `m` characters must be returned. If `n` is zero, this becomes an [.underline]#optional combinator#
 |
 [source,go]
@@ -180,6 +191,7 @@ ext: "Hello"
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#WhileNot:[WhileNot]
+
 Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns true will be matched. This is the inverse of [While]. A minimum of one character must be returned.
 |
 [source,go]
@@ -194,6 +206,7 @@ ext: "Hello, World!"
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#WhileNotN:[WhileNotN]
+
 Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns true will be matched. This is the inverse of [WhileN]. A minimum of `n` characters must be returned. If `n` is zero, this becomes an optional combinator
 |
 [source,go]
@@ -208,6 +221,7 @@ ext: "Hello, World!"
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#WhileNotNM:[WhileNotNM]
+
 Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns true will be matched. This is the inverse of [WhileNM]. A minimum of `n` and upto a maximum of `m` characters must be returned. If `n` is zero, this becomes an optional combinator
 |
 [source,go]
