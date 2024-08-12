@@ -227,7 +227,7 @@ Will scan the input text, testing each character against the provided predicate.
 [source,go]
 ----
 chomp.WhileNotNM(
-  chomp.IsLetter, 1, 8,
+    chomp.IsLetter, 1, 8,
 )("20240709 was a great day")
 ----
 |
@@ -288,145 +288,189 @@ ext: ["Hello", "World"]
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Repeat[Repeat]
+
+Will scan the input text and repeat the [Combinator] the defined number of times. Each combinator must match, with the output of each contained in the returned slice
 |
 [source,go]
 ----
+chomp.Repeat(chomp.Parentheses(), 2)("(Hello)(World)(!)")
 ----
 |
 ....
-rem:
-ext:
+rem: "(!)"
+ext: ["(Hello)", "(World)"]
 ....
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#RepeatRange[RepeatRange]
+
+Will scan the input text and repeat the [Combinator] between a minimum and maximum number of times. Each combinator must match, with the output of each contained in the returned slice. The minimum number of times must be executed for this combinator to be successful
 |
 [source,go]
 ----
+chomp.RepeatRange(chomp.OneOf("Hleo"), 1, 8)("Hello, World!")
 ----
 |
 ....
-rem:
-ext:
+rem: ", World!"
+ext: ["H", "e", "l", "l", "o"]
 ....
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Delimited[Delimited]
+
+Will match a series of combinators against the input text. The left and right combinators are used to match a delimited sequence and are discarded. Only the text between the delimiters is extracted
 |
 [source,go]
 ----
+chomp.Delimited(
+    chomp.Tag("'"),
+    chomp.Tag("Hello, World!"),
+    chomp.Tag("'"))("'Hello, World!'")
 ----
 |
 ....
-rem:
-ext:
+rem: ""
+ext: "Hello, World!"
 ....
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#QuoteDouble[QuoteDouble]
+
+Will match any text delimited (or surrounded) by a pair of "double quotes". The delimiters are discarded
 |
 [source,go]
 ----
+chomp.DoubleQuote()(`"Hello, World!"`)
 ----
 |
 ....
-rem:
-ext:
+rem: ""
+ext: "Hello, World!"
 ....
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#QuoteSingle[QuoteSingle]
+
+Will match any text delimited (or surrounded) by a pair of 'single quotes'. The delimiters are discarded
 |
 [source,go]
 ----
+chomp.QuoteSingle()("'Hello, World!'")
 ----
 |
 ....
-rem:
-ext:
+rem: ""
+ext: "Hello, World!"
 ....
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#BracketSquare[BracketSquare]
+
+Will match any text delimited (or surrounded) by a pair of [square brackets]. The delimiters are discarded
 |
 [source,go]
 ----
+chomp.BracketSquare()("[Hello, World!]")
 ----
 |
 ....
-rem:
-ext:
+rem: ""
+ext: "Hello, World!"
 ....
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Parentheses[Parentheses]
+
+Will match any text delimited (or surrounded) by a pair of (parentheses). The delimiters are discarded
 |
 [source,go]
 ----
+chomp.Parentheses()("(Hello, World!)")
 ----
 |
 ....
-rem:
-ext:
+rem: ""
+ext: "Hello, World!"
 ....
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#BracketAngled[BracketAngled]
+
+Will match any text delimited (or surrounded) by a pair of <angled brackets>. The delimiters are discarded
 |
 [source,go]
 ----
+chomp.BracketAngled()("<Hello, World!>")
 ----
 |
 ....
-rem:
-ext:
+rem: ""
+ext: "Hello, World!"
 ....
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#First[First]
+
+Will match the input text against a series of combinators. Matching stops as soon as the first combinator succeeds. One combinator must match. For better performance, try and order the combinators from most to least likely to match
 |
 [source,go]
 ----
+chomp.First(
+    chomp.Tag("Good Morning"),
+    chomp.Tag("Hello"))("Good Morning, World!")
 ----
 |
 ....
-rem:
-ext:
+rem: " ,World!"
+ext: "Good Morning"
 ....
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#All[All]
+
+Will match the input text against a series of combinators. All combinators must match in the order provided
 |
 [source,go]
 ----
+chomp.All(
+    chomp.Tag("Hello"),
+    chomp.Until("W"),
+    chomp.Tag("World!"))("Hello, World!")
 ----
 |
 ....
-rem:
-ext:
+rem: ""
+ext: ["Hello", ", ", "World!"]
 ....
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Many[Many]
+
+Will scan the input text and match the [Combinator] a minimum of one time. The combinator will repeatedly be executed until the the first failed match. This is the equivalent of calling [ManyN] with an argument of 1
 |
 [source,go]
 ----
+chomp.Many(one.Of("Ho"))("Hello, World!")
 ----
 |
 ....
-rem:
-ext:
+rem: "ello, World!"
+ext: ["H"]
 ....
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#ManyN[ManyN]
+
+Will scan the input text and match the [Combinator] a minimum number of times. The combinator will repeatedly be executed until the first failed match. The minimum number of times must be executed for this combinator to be successful
 |
 [source,go]
 ----
+chomp.ManyN(chomp.OneOf("W"), 0)("Hello, World!")
 ----
 |
 ....
-rem:
-ext:
+rem: "Hello, World!"
+ext: []
 ....
 |===
