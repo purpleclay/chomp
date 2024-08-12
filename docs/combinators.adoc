@@ -1,0 +1,16 @@
+= Available combinators and their uses
+
+A glossary of all combinators available within `chomp` and their intended use.
+
+== Basic combinators
+
+[cols="1,1,1,1,1"]
+|combinator|usage|input|output|comment
+
+== Predicate combinators
+
+TODO
+
+== Sequence combinators
+
+TODO

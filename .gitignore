@@ -12,6 +12,7 @@
 !.goreleaser.yaml
 !.github/**/*
 !.zed/*
+!docs/*.adoc
 
 # Allow Nix flake
 !.envrc
