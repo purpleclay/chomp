@@ -4,7 +4,7 @@ A glossary of all combinators available within `chomp` and their intended use.
 
 == Basic combinators
 
-[%header,cols="1,1,1,1,1"]
+[%header,cols="1,1a,1a,1a,1"]
 |===
 |combinator
 |usage
