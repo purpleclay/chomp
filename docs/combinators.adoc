@@ -7,7 +7,7 @@ A glossary of all combinators available within `chomp` and their intended use.
 
 TODO
 
-[%header,cols="1a,1a,1a",stripes=none]
+[%header,cols="1a,1a,1a"]
 |===
 |Combinator
 |Usage
@@ -136,7 +136,9 @@ TODO
 |Usage
 |Output
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#While:[While]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#While:[While]
+Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns false will be matched. A minimum of one character must be returned
 |
 [source,go]
 ----
@@ -148,7 +150,9 @@ rem:
 ext:
 ....
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#WhileN:[WhileN]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#WhileN:[WhileN]
+Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns false will be matched. A minimum of `n` characters must be returned. If `n` is zero, this becomes an [.underline]#optional combinator#
 |
 [source,go]
 ----
@@ -160,7 +164,9 @@ rem:
 ext:
 ....
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#WhileNM:[WhileNM]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#WhileNM:[WhileNM]
+Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns false will be matched. A minimum of `n` and upto a maximum of `m` characters must be returned. If `n` is zero, this becomes an [.underline]#optional combinator#
 |
 [source,go]
 ----
