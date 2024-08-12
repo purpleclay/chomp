@@ -5,7 +5,9 @@ A glossary of all combinators available within `chomp` and their intended use.
 
 == Basic combinators
 
-[%header,cols="1a,1a,1a"]
+TODO
+
+[%header,cols="1a,1a"]
 |===
 |Combinator
 |Usage
@@ -127,6 +129,85 @@ ext: "Hello, World!"
 == Predicate combinators
 
 TODO
+
+[%header,cols="1a,1a,1a"]
+|===
+|Combinator
+|Usage
+|Output
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#While:[While]
+|
+[source,go]
+----
+chomp.While(chomp.IsLetter)("Hello, World!")
+----
+|
+....
+rem:
+ext:
+....
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#WhileN:[WhileN]
+|
+[source,go]
+----
+chomp.WhileN(chomp.IsLetter, 1)("Hello, World!")
+----
+|
+....
+rem:
+ext:
+....
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#WhileNM:[WhileNM]
+|
+[source,go]
+----
+chomp.WhileNM(chomp.IsLetter, 1, 8)("Hello, World!")
+----
+|
+....
+rem:
+ext:
+....
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#WhileNot:[WhileNot]
+|
+[source,go]
+----
+chomp.WhileNot(chomp.IsDigit)("Hello, World!")
+----
+|
+....
+rem:
+ext:
+....
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#WhileNotN:[WhileNotN]
+|
+[source,go]
+----
+chomp.WhileNotN(chomp.IsDigit, 1)("Hello, World!")
+----
+|
+....
+rem:
+ext:
+....
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#WhileNotNM:[WhileNotNM]
+|
+[source,go]
+----
+chomp.WhileNotNM(chomp.IsLetter, 1, 8)("20240709 was a great day")
+----
+|
+....
+rem:
+ext:
+....
+|===
 
 == Sequence combinators
 
