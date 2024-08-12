@@ -1,4 +1,5 @@
 = Available combinators and how to use them
+:hardbreaks-option:
 
 A glossary of all combinators available within `chomp` and their intended use.
 
