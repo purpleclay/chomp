@@ -146,8 +146,8 @@ chomp.While(chomp.IsLetter)("Hello, World!")
 ----
 |
 ....
-rem:
-ext:
+rem: ", World!"
+ext: "Hello"
 ....
 
 |
@@ -160,8 +160,8 @@ chomp.WhileN(chomp.IsLetter, 1)("Hello, World!")
 ----
 |
 ....
-rem:
-ext:
+rem: ", World!"
+ext: "Hello"
 ....
 
 |
@@ -174,11 +174,13 @@ chomp.WhileNM(chomp.IsLetter, 1, 8)("Hello, World!")
 ----
 |
 ....
-rem:
-ext:
+rem: ", World!"
+ext: "Hello"
 ....
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#WhileNot:[WhileNot]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#WhileNot:[WhileNot]
+Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns true will be matched. This is the inverse of [While]. A minimum of one character must be returned.
 |
 [source,go]
 ----
@@ -186,11 +188,13 @@ chomp.WhileNot(chomp.IsDigit)("Hello, World!")
 ----
 |
 ....
-rem:
-ext:
+rem: ""
+ext: "Hello, World!"
 ....
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#WhileNotN:[WhileNotN]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#WhileNotN:[WhileNotN]
+Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns true will be matched. This is the inverse of [WhileN]. A minimum of `n` characters must be returned. If `n` is zero, this becomes an optional combinator
 |
 [source,go]
 ----
@@ -198,11 +202,13 @@ chomp.WhileNotN(chomp.IsDigit, 1)("Hello, World!")
 ----
 |
 ....
-rem:
-ext:
+rem: ""
+ext: "Hello, World!"
 ....
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#WhileNotNM:[WhileNotNM]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#WhileNotNM:[WhileNotNM]
+Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns true will be matched. This is the inverse of [WhileNM]. A minimum of `n` and upto a maximum of `m` characters must be returned. If `n` is zero, this becomes an optional combinator
 |
 [source,go]
 ----
@@ -210,8 +216,8 @@ chomp.WhileNotNM(chomp.IsLetter, 1, 8)("20240709 was a great day")
 ----
 |
 ....
-rem:
-ext:
+rem: " was a great day"
+ext: "20240709"
 ....
 |===
 
