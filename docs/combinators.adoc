@@ -11,7 +11,7 @@ A glossary of all combinators available within `chomp` and their intended use.
 |Result
 |Comment
 
-|tag
+|https://pkg.go.dev/github.com/purpleclay/chomp#Tag:[tag]
 |
 [source,go]
 ----
