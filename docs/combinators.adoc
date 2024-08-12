@@ -7,7 +7,7 @@ A glossary of all combinators available within `chomp` and their intended use.
 
 TODO
 
-[%header,cols="1a,1a"]
+[%header,cols="1a,1a,1a"]
 |===
 |Combinator
 |Usage
