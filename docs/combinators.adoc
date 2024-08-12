@@ -1,5 +1,6 @@
 = Available combinators and how to use them
 :hardbreaks-option:
+:table-stripes: none
 
 A glossary of all combinators available within `chomp` and their intended use.
 
