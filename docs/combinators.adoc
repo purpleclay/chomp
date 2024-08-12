@@ -1,4 +1,4 @@
-= Available combinators and their uses
+= Available combinators and how to use them
 
 A glossary of all combinators available within `chomp` and their intended use.
 
@@ -11,7 +11,7 @@ A glossary of all combinators available within `chomp` and their intended use.
 |Result
 |Comment
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#Tag:[tag]
+|https://pkg.go.dev/github.com/purpleclay/chomp#Tag:[Tag]
 |
 [source,go]
 ----
@@ -23,6 +23,32 @@ rem: ", World!"
 ext: "Hello"
 ....
 |Must match a series of characters at the beginning of the input text, in the exact order and case provided
+
+|Any
+|
+[source,go]
+----
+chomp.Any("eH")("Hello, World!")
+----
+|
+....
+rem: "llo, World!"
+ext: "He"
+....
+|Must match at least one character at the beginning of the input text, from the provided sequence. Parsing immediately stops upon the first unmatched character.
+
+|Not
+|
+[source,go]
+----
+chomp.Not("ol")("Hello, World!")
+----
+|
+....
+rem: "llo, World!"
+ext: "He"
+....
+|Must not match at least one character at the beginning of the input text from the provided sequence. Parsing immediately stops upon the first matched character.
 |===
 
 == Predicate combinators
