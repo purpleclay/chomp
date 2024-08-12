@@ -13,7 +13,6 @@ A glossary of all combinators available within `chomp` and their intended use.
 
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Tag:[Tag]
-+
 Must match a series of characters at the beginning of the input text, in the exact order and case provided
 |
 [source,go]
