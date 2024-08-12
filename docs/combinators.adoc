@@ -244,3 +244,136 @@ TODO
 == Sequence combinators
 
 TODO
+
+[%header,cols="1a,1a,1a"]
+|===
+|Combinator
+|Usage
+|Output
+
+| Pair
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| SepPair
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| Repeat
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| RepeatRange
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| Delimited
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| QuoteDouble
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| QuoteSingle
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| BracketSquare
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| Parentheses
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| BracketAngled
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| First
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| All
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| Many
+|
+[source,go]
+----
+----
+|
+....
+....
+
+| ManyN
+|
+[source,go]
+----
+----
+|
+....
+....
+|===

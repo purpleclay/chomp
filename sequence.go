@@ -50,17 +50,17 @@ func SepPair[T, U, V Result](c1 Combinator[T], sep Combinator[U], c2 Combinator[
 	return func(s string) (string, []string, error) {
 		rem, out1, err := c1(s)
 		if err != nil {
-			return rem, nil, ParserError{Err: err, Type: "pair_sep"}
+			return rem, nil, ParserError{Err: err, Type: "sep_pair"}
 		}
 
 		rem, _, err = sep(rem)
 		if err != nil {
-			return rem, nil, ParserError{Err: err, Type: "pair_sep"}
+			return rem, nil, ParserError{Err: err, Type: "sep_pair"}
 		}
 
 		rem, out2, err := c2(rem)
 		if err != nil {
-			return rem, nil, ParserError{Err: err, Type: "pair_sep"}
+			return rem, nil, ParserError{Err: err, Type: "sep_pair"}
 		}
 
 		var ext []string
