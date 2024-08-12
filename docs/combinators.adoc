@@ -4,14 +4,17 @@ A glossary of all combinators available within `chomp` and their intended use.
 
 == Basic combinators
 
-[%header,cols="1,1a,1a,2"]
+[%header,cols="1,1a,1a,1"]
 |===
 |Combinator
 |Usage
 |Result
 |Comment
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#Tag:[Tag]
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Tag:[Tag]
++
+Must match a series of characters at the beginning of the input text, in the exact order and case provided
 |
 [source,go]
 ----
