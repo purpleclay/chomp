@@ -243,6 +243,11 @@ ext: "20240709"
 
 TODO
 
+- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsDigit]`
+- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLetter]`
+- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsAlphanumeric]`
+- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLineEnding]`
+
 == Sequence combinators
 
 TODO
