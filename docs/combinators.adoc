@@ -487,7 +487,7 @@ rem: "Hello, World!"
 ext: []
 ....
 
-|Prefixed
+|https://pkg.go.dev/github.com/purpleclay/chomp#Prefixed:[Prefixed]
 
 Will firstly scan the input text for a defined prefix and discard it. The remaining input text will be matched against the [Combinator] and returned if successful. Both combinators must match
 |
@@ -503,7 +503,7 @@ rem: `, World!"`
 ext: "Hello"
 ....
 
-|Suffixed
+|https://pkg.go.dev/github.com/purpleclay/chomp#Suffixed:[Suffixed]
 
 Will firstly scan the input text and match it against the [Combinator]. The remaining text will be scanned for a defined suffix and discarded. Both combinators must match
 |
