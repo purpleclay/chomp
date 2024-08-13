@@ -212,7 +212,8 @@ Will scan the input text, testing each character against the provided predicate.
 |
 [source,go]
 ----
-chomp.WhileNotN(chomp.IsDigit, 1)("Hello, World!")
+chomp.WhileNotN(
+    chomp.IsDigit, 1)("Hello, World!")
 ----
 |
 ....
@@ -469,7 +470,8 @@ Will scan the input text and match the [Combinator] a minimum number of times. T
 |
 [source,go]
 ----
-chomp.ManyN(chomp.OneOf("W"), 0)("Hello, World!")
+chomp.ManyN(
+    chomp.OneOf("W"), 0)("Hello, World!")
 ----
 |
 ....
