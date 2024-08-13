@@ -243,10 +243,10 @@ ext: "20240709"
 
 TODO
 
-- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsDigit]`
-- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLetter]`
-- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsAlphanumeric]`
-- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLineEnding]`
+- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsDigit]`: Determines whether a rune is a decimal digit. A rune is classed as a digit if it is between the ASCII range of '0' or '9', or it belongs within the Unicode [Nd] category.
+- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLetter]`: Determines whether a rune is a letter. A rune is classed as a letter if it is between the ASCII range of 'a' and 'z' (including its uppercase equivalents), or it belongs within any of the Unicode letter categories: [Lu] [LI] [Lt] [Lm] [Lo].
+- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsAlphanumeric]`: Determines whether a rune is either a decimal digit or a letter. This is a convenience method that wraps both the existing `IsDigit` and `IsLetter` predicates.
+- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLineEnding]`: deterines whether a rune is one of the following ASCII line ending characters `'\r'` or `'\n'`.
 
 == Sequence combinators
 
