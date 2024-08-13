@@ -181,7 +181,8 @@ Will scan the input text, testing each character against the provided predicate.
 |
 [source,go]
 ----
-chomp.WhileNM(chomp.IsLetter, 1, 8)("Hello, World!")
+chomp.WhileNM(
+    chomp.IsLetter, 1, 8)("Hello, World!")
 ----
 |
 ....
@@ -293,7 +294,8 @@ Will scan the input text and repeat the [Combinator] the defined number of times
 |
 [source,go]
 ----
-chomp.Repeat(chomp.Parentheses(), 2)("(Hello)(World)(!)")
+chomp.Repeat(
+    chomp.Parentheses(), 2)("(Hello)(World)(!)")
 ----
 |
 ....
@@ -308,7 +310,8 @@ Will scan the input text and repeat the [Combinator] between a minimum and maxim
 |
 [source,go]
 ----
-chomp.RepeatRange(chomp.OneOf("Hleo"), 1, 8)("Hello, World!")
+chomp.RepeatRange(
+    chomp.OneOf("Hleo"), 1, 8)("Hello, World!")
 ----
 |
 ....
