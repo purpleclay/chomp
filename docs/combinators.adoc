@@ -3,9 +3,9 @@
 
 A glossary of all combinators available within `chomp` and their intended use.
 
-- <<basic_combinators>>
+- <<basic_combinators,Basic combinators>>
 
-== Basic combinators
+== Basic combinators [[basic_combinators]]
 
 [%header,cols="1a,1a,1a"]
 |===
