@@ -3,11 +3,11 @@
 
 A glossary of all combinators available within `chomp` and their intended use.
 
-- <<basic_combinators>>
-- <<predicate_combinators>>
--- <<available_predicates>>
-- <<modifier_combinators>>
-- <<ready-made_parsers>>
+* <<basic_combinators>>
+* <<predicate_combinators>>
+** <<available_predicates>>
+* <<modifier_combinators>>
+* <<ready-made_parsers>>
 
 == Basic combinators [[basic_combinators]]
 
@@ -213,10 +213,10 @@ ext: "20240709"
 
 === Available predicates [[available_predicates]]
 
-- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsDigit]`: Determines whether a rune is a decimal digit. A rune is classed as a digit if it is between the ASCII range of `'0'` or `'9'`, or it belongs within the Unicode https://www.fileformat.info/info/unicode/category/Nd/list.htm[Nd] category.
-- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLetter]`: Determines whether a rune is a letter. A rune is classed as a letter if it is between the ASCII range of `'a'` and `'z'` (_including its uppercase equivalents_), or it belongs within any of the Unicode letter categories: https://www.fileformat.info/info/unicode/category/Lu/list.htm[Lu] https://www.fileformat.info/info/unicode/category/Ll/list.htm[LI] https://www.fileformat.info/info/unicode/category/Lt/list.htm[Lt] https://www.fileformat.info/info/unicode/category/Lm/list.htm[Lm] https://www.fileformat.info/info/unicode/category/Lo/list.htm[Lo].
-- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsAlphanumeric]`: Determines whether a rune is either a decimal digit or a letter. This is a convenience method that wraps both the existing `IsDigit` and `IsLetter` predicates.
-- `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLineEnding]`: deterines whether a rune is one of the following ASCII line ending characters `'\r'` or `'\n'`.
+* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsDigit]`: Determines whether a rune is a decimal digit. A rune is classed as a digit if it is between the ASCII range of `'0'` or `'9'`, or it belongs within the Unicode https://www.fileformat.info/info/unicode/category/Nd/list.htm[Nd] category.
+* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLetter]`: Determines whether a rune is a letter. A rune is classed as a letter if it is between the ASCII range of `'a'` and `'z'` (_including its uppercase equivalents_), or it belongs within any of the Unicode letter categories: https://www.fileformat.info/info/unicode/category/Lu/list.htm[Lu] https://www.fileformat.info/info/unicode/category/Ll/list.htm[LI] https://www.fileformat.info/info/unicode/category/Lt/list.htm[Lt] https://www.fileformat.info/info/unicode/category/Lm/list.htm[Lm] https://www.fileformat.info/info/unicode/category/Lo/list.htm[Lo].
+* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsAlphanumeric]`: Determines whether a rune is either a decimal digit or a letter. This is a convenience method that wraps both the existing `IsDigit` and `IsLetter` predicates.
+* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLineEnding]`: deterines whether a rune is one of the following ASCII line ending characters `'\r'` or `'\n'`.
 
 == Sequence combinators [[sequence_combinators]]
 
