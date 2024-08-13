@@ -316,3 +316,46 @@ func ManyN[T Result](c Combinator[T], n uint) Combinator[[]string] {
 		return rem, ext, nil
 	}
 }
+
+// Prefixed will firstly scan the input text for a defined prefix and discard it.
+// The remaining input text will be matched against the [Combinator] and returned
+// if successful. Both combinators must match.
+//
+//	chomp.Prefixed(
+//		chomp.Tag("Hello"),
+//		chomp.Tag(`"`))(`"Hello, World!"`)
+//	// (`, World!"`, "Hello", nil)
+func Prefixed(c, pre Combinator[string]) Combinator[string] {
+	return func(s string) (string, string, error) {
+		rem, _, err := pre(s)
+		if err != nil {
+			return rem, "", err
+		}
+
+		return c(rem)
+	}
+}
+
+// Suffixed will firstly scan the input text and match it against the [Combinator].
+// The remaining text will be scanned for a defined suffix and discarded. Both
+// combinators must match.
+//
+//	chomp.Suffixed(
+//		chomp.Tag("Hello"),
+//		chomp.Tag(", "))("Hello, World!")
+//	// ("World!", "Hello", nil)
+func Suffixed(c, suf Combinator[string]) Combinator[string] {
+	return func(s string) (string, string, error) {
+		rem, ext, err := c(s)
+		if err != nil {
+			return rem, "", err
+		}
+
+		rem, _, err = suf(rem)
+		if err != nil {
+			return rem, "", err
+		}
+
+		return rem, ext, nil
+	}
+}

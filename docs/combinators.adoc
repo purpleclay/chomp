@@ -61,21 +61,6 @@ ext: "He"
 ....
 
 |
-https://pkg.go.dev/github.com/purpleclay/chomp#Crlf[Crlf]
-
-Must match either a `CR (\r)` or `CRLF (\r\n)` line ending
-|
-[source,go]
-----
-chomp.Crlf()("\r\nHello")
-----
-|
-....
-rem: "Hello"
-ext: "\r\n"
-....
-
-|
 https://pkg.go.dev/github.com/purpleclay/chomp#OneOf[OneOf]
 
 Must match a single character at the beginning of the text from the provided sequence
@@ -118,21 +103,6 @@ chomp.Until("World")("Hello, World!")
 ....
 rem: "World!"
 ext: "Hello, "
-....
-
-|
-https://pkg.go.dev/github.com/purpleclay/chomp#Eol[Eol]
-
-Will scan the text until it encounters any ASCII line ending characters identified by the [IsLineEnding] predicate. All text before the line ending will be returned. The line ending, if detected, will be discarded
-|
-[source,go]
-----
-chomp.Eol()(`Hello, World!\nIt's a great day!`)
-----
-|
-....
-rem: "It's a great day!"
-ext: "Hello, World!"
 ....
 |===
 
@@ -608,5 +578,46 @@ chomp.Opt(chomp.Tag("Hey"))("Hello, World!")
 ....
 rem: "Hello, World!"
 ext: ""
+....
+|===
+
+== Ready-made parsers
+
+TODO
+
+[%header,cols="1a,1a,1a"]
+|===
+|Combinator
+|Usage
+|Output
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Crlf[Crlf]
+
+Must match either a `CR (\r)` or `CRLF (\r\n)` line ending
+|
+[source,go]
+----
+chomp.Crlf()("\r\nHello")
+----
+|
+....
+rem: "Hello"
+ext: "\r\n"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Eol[Eol]
+
+Will scan the text until it encounters any ASCII line ending characters identified by the [IsLineEnding] predicate. All text before the line ending will be returned. The line ending, if detected, will be discarded
+|
+[source,go]
+----
+chomp.Eol()(`Hello, World!\nIt's a great day!`)
+----
+|
+....
+rem: "It's a great day!"
+ext: "Hello, World!"
 ....
 |===

@@ -171,3 +171,23 @@ func TestManyNZeroMatches(t *testing.T) {
 	assert.Equal(t, "Good Morning", rem)
 	assert.Empty(t, ext)
 }
+
+func TestPrefixed(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Prefixed(chomp.Tag("Hello"), chomp.Tag(`"`))(`"Hello, World"`)
+
+	require.NoError(t, err)
+	assert.Equal(t, `, World"`, rem)
+	assert.Equal(t, "Hello", ext)
+}
+
+func TestSuffixed(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Suffixed(chomp.Tag("Hello"), chomp.Tag(","))("Hello, World")
+
+	require.NoError(t, err)
+	assert.Equal(t, " World", rem)
+	assert.Equal(t, "Hello", ext)
+}
