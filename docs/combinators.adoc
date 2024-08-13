@@ -296,7 +296,8 @@ Will scan the input text and repeat the [Combinator] the defined number of times
 [source,go]
 ----
 chomp.Repeat(
-    chomp.Parentheses(), 2)("(Hello)(World)(!)")
+    chomp.Parentheses(), 2,
+)("(Hello)(World)(!)")
 ----
 |
 ....
@@ -312,7 +313,8 @@ Will scan the input text and repeat the [Combinator] between a minimum and maxim
 [source,go]
 ----
 chomp.RepeatRange(
-    chomp.OneOf("Hleo"), 1, 8)("Hello, World!")
+    chomp.OneOf("Hleo"), 1, 8,
+)("Hello, World!")
 ----
 |
 ....
@@ -422,7 +424,8 @@ Will match the input text against a series of combinators. Matching stops as soo
 ----
 chomp.First(
     chomp.Tag("Good Morning"),
-    chomp.Tag("Hello"))("Good Morning, World!")
+    chomp.Tag("Hello"),
+)("Good Morning, World!")
 ----
 |
 ....
