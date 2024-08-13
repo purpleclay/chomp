@@ -540,7 +540,10 @@ Map the result of a [Combinator] to any other type
 ----
 chomp.Map(
     chomp.While(chomp.IsDigit),
-    func (in string) int { return len(in) })("123456")
+    func (in string) int {
+        return len(in)
+    },
+)("123456")
 ----
 |
 ....
