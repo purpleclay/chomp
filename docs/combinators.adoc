@@ -3,6 +3,8 @@
 
 A glossary of all combinators available within `chomp` and their intended use.
 
+TODO: index
+
 == Basic combinators
 
 TODO
@@ -487,7 +489,7 @@ rem: "Hello, World!"
 ext: []
 ....
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#Prefixed:[Prefixed]
+|https://pkg.go.dev/github.com/purpleclay/chomp#Prefixed[Prefixed]
 
 Will firstly scan the input text for a defined prefix and discard it. The remaining input text will be matched against the [Combinator] and returned if successful. Both combinators must match
 |
@@ -503,7 +505,7 @@ rem: `, World!"`
 ext: "Hello"
 ....
 
-|https://pkg.go.dev/github.com/purpleclay/chomp#Suffixed:[Suffixed]
+|https://pkg.go.dev/github.com/purpleclay/chomp#Suffixed[Suffixed]
 
 Will firstly scan the input text and match it against the [Combinator]. The remaining text will be scanned for a defined suffix and discarded. Both combinators must match
 |
@@ -530,48 +532,78 @@ TODO
 |Usage
 |Output
 
-|Map
+|https://pkg.go.dev/github.com/purpleclay/chomp#Map[Map]
+
+Map the result of a [Combinator] to any other type
 |
 [source,go]
 ----
+chomp.Map(
+    chomp.While(chomp.IsDigit),
+    func (in string) int { return len(in) })("123456")
 ----
 |
 ....
+rem: ""
+ext: 6
 ....
 
-|S
+|https://pkg.go.dev/github.com/purpleclay/chomp#S[S]
+
+Wraps the result of the inner combinator within a string slice. Combinators of differing return types can be successfully chained together while using this conversion combinator
 |
 [source,go]
 ----
+chomp.S(chomp.Until(","))("Hello, World!")
 ----
 |
 ....
+rem: ", World!"
+ext: ["Hello"]
 ....
 
-|I
+|https://pkg.go.dev/github.com/purpleclay/chomp#I[I]
+
+Extracts and returns a single string from the result of the inner combinator. Combinators of differing return types can be successfully chained together while using this conversion combinator
 |
 [source,go]
 ----
+chomp.I(chomp.SepPair(
+    chomp.Tag("Hello"),
+    chomp.Tag(", "),
+    chomp.Tag("World")), 1)("Hello, World!")
 ----
 |
 ....
+rem: "!"
+ext: "World"
 ....
 
-|Peek
+|https://pkg.go.dev/github.com/purpleclay/chomp#Peek[Peek]
+
+Will scan the text and apply the parser without consuming any of the input. Useful if you need to lookahead
 |
 [source,go]
 ----
+chomp.Peek(chomp.Tag("Hello"))("Hello, World!")
 ----
 |
 ....
+rem: "Hello, World!"
+ext: "Hello"
 ....
 
-|Opt
+|https://pkg.go.dev/github.com/purpleclay/chomp#Opt[Opt]
+
+Allows a combinator to be optional. Any error returned by the underlying combinator will be swallowed. The parsed text will not be modified if the underlying combinator did not run
 |
 [source,go]
 ----
+chomp.Opt(chomp.Tag("Hey"))("Hello, World!")
 ----
 |
 ....
+rem: "Hello, World!"
+ext: ""
 ....
 |===

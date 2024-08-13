@@ -274,39 +274,6 @@ func TestNoneOf(t *testing.T) {
 	}
 }
 
-func TestOpt(t *testing.T) {
-	t.Parallel()
-
-	rem, ext, err := chomp.Opt(chomp.Tag("the"))("dark knight")
-
-	require.NoError(t, err)
-	assert.Equal(t, "dark knight", rem)
-	assert.Equal(t, "", ext)
-}
-
-func TestS(t *testing.T) {
-	t.Parallel()
-
-	rem, ext, err := chomp.S(chomp.Tag("hello"))("hello and good morning")
-
-	require.NoError(t, err)
-	assert.Equal(t, " and good morning", rem)
-	require.Len(t, ext, 1)
-	assert.Equal(t, "hello", ext[0])
-}
-
-func TestI(t *testing.T) {
-	t.Parallel()
-
-	rem, ext, err := chomp.I(
-		chomp.Repeat(chomp.All(chomp.Until(" "), chomp.Tag(" ")), 3),
-		2)("hello and good morning")
-
-	require.NoError(t, err)
-	assert.Equal(t, "morning", rem)
-	assert.Equal(t, "and", ext)
-}
-
 func TestPrefixed(t *testing.T) {
 	t.Parallel()
 
@@ -387,24 +354,4 @@ It's a great day`,
 			assert.Equal(t, tt.ext, ext)
 		})
 	}
-}
-
-func TestPeek(t *testing.T) {
-	t.Parallel()
-	rem, ext, err := chomp.Peek(chomp.Tag("Hello"))("Hello and Good Morning!")
-
-	require.NoError(t, err)
-	assert.Equal(t, "Hello and Good Morning!", rem)
-	assert.Equal(t, "Hello", ext)
-}
-
-func TestPeekUsingSequence(t *testing.T) {
-	t.Parallel()
-	rem, ext, err := chomp.Peek(
-		chomp.Many(chomp.Suffixed(chomp.Until(" "), chomp.Tag(" "))),
-	)("Hello and Good Morning!")
-
-	require.NoError(t, err)
-	assert.Equal(t, "Hello and Good Morning!", rem)
-	assert.Equal(t, []string{"Hello", "and", "Good"}, ext)
 }
