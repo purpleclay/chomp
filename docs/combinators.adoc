@@ -1,7 +1,9 @@
 = Available combinators and how to use them
 :hardbreaks-option:
 
-A glossary of all combinators available within `chomp` and their intended use.
+`chomp` provides a large number of combinators for parsing text. The following is a glossary containing all available combinators and their intended use.
+
+As `chomp` is designed to return a tuple containing the `(remaining text [rem], extracted text [ext], error)`, all errors are omitted from this glossary for brevity.
 
 * <<basic_combinators>>
 * <<predicate_combinators>>
@@ -20,7 +22,7 @@ A glossary of all combinators available within `chomp` and their intended use.
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Tag[Tag]
 
-Must match a series of characters at the beginning of the input text, in the exact order and case provided
+Must match a series of characters at the beginning of the input text in the exact order and case provided
 |
 [source,go]
 ----
@@ -35,7 +37,7 @@ ext: "Hello"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Any[Any]
 
-Must match at least one character at the beginning of the input text, from the provided sequence. Parsing immediately stops upon the first unmatched character
+Must match at least one character from the provided sequence at the beginning of the input text. Parsing stops upon the first unmatched character
 |
 [source,go]
 ----
@@ -50,7 +52,7 @@ ext: "He"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Not[Not]
 
-Must not match at least one character at the beginning of the input text from the provided sequence. Parsing immediately stops upon the first matched character
+Must not match at least one character at the beginning of the input text from the provided sequence. Parsing stops upon the first matched character
 |
 [source,go]
 ----
@@ -119,7 +121,7 @@ ext: "Hello, "
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#While[While]
 
-Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns false will be matched. A minimum of one character must be returned
+Will scan the input text, testing each character against the provided predicate. The predicate must match at least one character
 |
 [source,go]
 ----
@@ -134,7 +136,7 @@ ext: "Hello"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#WhileN[WhileN]
 
-Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns false will be matched. A minimum of `n` characters must be returned. If `n` is zero, this becomes an [.underline]#optional combinator#
+Will scan the input text, testing each character against the provided predicate. The predicate must match at least `n` characters. If `n` is zero, this becomes an optional combinator
 |
 [source,go]
 ----
@@ -149,7 +151,7 @@ ext: "Hello"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#WhileNM[WhileNM]
 
-Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns false will be matched. A minimum of `n` and upto a maximum of `m` characters must be returned. If `n` is zero, this becomes an [.underline]#optional combinator#
+Will scan the input text, testing each character against the provided predicate. The predicate must match a minimum of `n` and upto a maximum of `m` characters. If `n` is zero, this becomes an optional combinator
 |
 [source,go]
 ----
@@ -165,7 +167,7 @@ ext: "Hello"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#WhileNot[WhileNot]
 
-Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns true will be matched. This is the inverse of [While]. A minimum of one character must be returned.
+Will scan the input text, testing each character against the provided predicate. The predicate must not match at least one character. It has the inverse behavior of While
 |
 [source,go]
 ----
@@ -180,7 +182,7 @@ ext: "Hello, World!"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#WhileNotN[WhileNotN]
 
-Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns true will be matched. This is the inverse of [WhileN]. A minimum of `n` characters must be returned. If `n` is zero, this becomes an optional combinator
+Will scan the input text, testing each character against the provided predicate. The predicate must not match at least `n` characters. If `n` is zero, this becomes an optional combinator. It has the inverse behavior of WhileN
 |
 [source,go]
 ----
@@ -196,7 +198,7 @@ ext: "Hello, World!"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#WhileNotNM[WhileNotNM]
 
-Will scan the input text, testing each character against the provided predicate. Everything until the predicate returns true will be matched. This is the inverse of [WhileNM]. A minimum of `n` and upto a maximum of `m` characters must be returned. If `n` is zero, this becomes an optional combinator
+Will scan the input text, testing each character against the provided predicate. The predicate must not match a minimum of `n` and upto a maximum of `m` characters. If `n` is zero, this becomes an optional combinator. It has the inverse behavior of WhileNM
 |
 [source,go]
 ----
@@ -213,10 +215,10 @@ ext: "20240709"
 
 === Available predicates [[available_predicates]]
 
-* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsDigit]`: Determines whether a rune is a decimal digit. A rune is classed as a digit if it is between the ASCII range of `'0'` or `'9'`, or it belongs within the Unicode https://www.fileformat.info/info/unicode/category/Nd/list.htm[Nd] category.
-* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLetter]`: Determines whether a rune is a letter. A rune is classed as a letter if it is between the ASCII range of `'a'` and `'z'` (_including its uppercase equivalents_), or it belongs within any of the Unicode letter categories: https://www.fileformat.info/info/unicode/category/Lu/list.htm[Lu] https://www.fileformat.info/info/unicode/category/Ll/list.htm[LI] https://www.fileformat.info/info/unicode/category/Lt/list.htm[Lt] https://www.fileformat.info/info/unicode/category/Lm/list.htm[Lm] https://www.fileformat.info/info/unicode/category/Lo/list.htm[Lo].
-* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsAlphanumeric]`: Determines whether a rune is either a decimal digit or a letter. This is a convenience method that wraps both the existing `IsDigit` and `IsLetter` predicates.
-* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLineEnding]`: deterines whether a rune is one of the following ASCII line ending characters `'\r'` or `'\n'`.
+* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsDigit]`: Determines whether a rune is a decimal digit. A rune is classed as a digit if it is between the ASCII range of `'0'` or `'9'`, or if it belongs within the Unicode https://www.fileformat.info/info/unicode/category/Nd/list.htm[Nd] category.
+* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLetter]`: Determines if a rune is a letter. A rune is classed as a letter if it is between the ASCII range of `'a'` and `'z'` (_including its uppercase equivalents_), or it belongs within any of the Unicode letter categories: https://www.fileformat.info/info/unicode/category/Lu/list.htm[Lu] https://www.fileformat.info/info/unicode/category/Ll/list.htm[LI] https://www.fileformat.info/info/unicode/category/Lt/list.htm[Lt] https://www.fileformat.info/info/unicode/category/Lm/list.htm[Lm] https://www.fileformat.info/info/unicode/category/Lo/list.htm[Lo].
+* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsAlphanumeric]`: Determines whether a rune is a decimal digit or a letter. This convenience method wraps the existing `IsDigit` and `IsLetter` predicates.
+* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLineEnding]`: Determines whether a rune is one of the following ASCII line ending characters `'\r'` or `'\n'`.
 
 == Sequence combinators [[sequence_combinators]]
 
@@ -229,7 +231,7 @@ ext: "20240709"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Pair[Pair]
 
-Will scan the input text and match each combinator in turn. Both combinators must match. The result of each will be returned in the slice in execution order
+Will scan the input text and match each combinator in turn. Both combinators must match
 |
 [source,go]
 ----
@@ -246,7 +248,7 @@ ext: ["Hello,", " World"]
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#SepPair[SepPair]
 
-Will scan the input text and match each combinator in turn. All combinators must match. The result of the separator combinator is discarded and not included within the returned slice.
+Will scan the input text and match each combinator, discarding the separator's output. All combinators must match
 |
 [source,go]
 ----
@@ -264,7 +266,7 @@ ext: ["Hello", "World"]
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Repeat[Repeat]
 
-Will scan the input text and repeat the [Combinator] the defined number of times. Each combinator must match, with the output of each contained in the returned slice
+Will scan the input text and match the combinator the defined number of times. Every execution must match
 |
 [source,go]
 ----
@@ -281,7 +283,7 @@ ext: ["(Hello)", "(World)"]
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#RepeatRange[RepeatRange]
 
-Will scan the input text and repeat the [Combinator] between a minimum and maximum number of times. Each combinator must match, with the output of each contained in the returned slice. The minimum number of times must be executed for this combinator to be successful
+Will scan the input text and match the combinator between a minimum and maximum number of times. It must match the expected minimum number of times
 |
 [source,go]
 ----
@@ -298,7 +300,7 @@ ext: ["H", "e", "l", "l", "o"]
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Delimited[Delimited]
 
-Will match a series of combinators against the input text. The left and right combinators are used to match a delimited sequence and are discarded. Only the text between the delimiters is extracted
+Will match a series of combinators against the input text. All must match, with the delimiters being discarded
 |
 [source,go]
 ----
@@ -316,7 +318,7 @@ ext: "Hello, World!"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#QuoteDouble[QuoteDouble]
 
-Will match any text delimited (or surrounded) by a pair of "double quotes". The delimiters are discarded
+Will match any text delimited (_or surrounded_) by a pair of "double quotes"
 |
 [source,go]
 ----
@@ -331,7 +333,7 @@ ext: "Hello, World!"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#QuoteSingle[QuoteSingle]
 
-Will match any text delimited (or surrounded) by a pair of 'single quotes'. The delimiters are discarded
+Will match any text delimited (_or surrounded_) by a pair of 'single quotes'
 |
 [source,go]
 ----
@@ -346,7 +348,7 @@ ext: "Hello, World!"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#BracketSquare[BracketSquare]
 
-Will match any text delimited (or surrounded) by a pair of [square brackets]. The delimiters are discarded
+Will match any text delimited (_or surrounded_) by a pair of [square brackets]
 |
 [source,go]
 ----
@@ -361,7 +363,7 @@ ext: "Hello, World!"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Parentheses[Parentheses]
 
-Will match any text delimited (or surrounded) by a pair of (parentheses). The delimiters are discarded
+Will match any text delimited (_or surrounded_) by a pair of (parentheses)
 |
 [source,go]
 ----
@@ -376,7 +378,7 @@ ext: "Hello, World!"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#BracketAngled[BracketAngled]
 
-Will match any text delimited (or surrounded) by a pair of <angled brackets>. The delimiters are discarded
+Will match any text delimited (_or surrounded_) by a pair of <angled brackets>
 |
 [source,go]
 ----
@@ -427,7 +429,7 @@ ext: ["Hello", ", ", "World!"]
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Many[Many]
 
-Will scan the input text and match the [Combinator] a minimum of one time. The combinator will repeatedly be executed until the the first failed match. This is the equivalent of calling [ManyN] with an argument of 1
+Will scan the input text, and it must match the combinator at least once. This combinator is greedy and will continuously execute until the first failed match. It is the equivalent of calling ManyN with an argument of 1
 |
 [source,go]
 ----
@@ -442,7 +444,7 @@ ext: ["H"]
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#ManyN[ManyN]
 
-Will scan the input text and match the [Combinator] a minimum number of times. The combinator will repeatedly be executed until the first failed match. The minimum number of times must be executed for this combinator to be successful
+Will scan the input text and match the combinator a minimum number of times. This combinator is greedy and will continuously execute until the first failed match
 |
 [source,go]
 ----
@@ -457,7 +459,7 @@ ext: []
 
 |https://pkg.go.dev/github.com/purpleclay/chomp#Prefixed[Prefixed]
 
-Will firstly scan the input text for a defined prefix and discard it. The remaining input text will be matched against the [Combinator] and returned if successful. Both combinators must match
+Will scan the input text for a defined prefix and discard it before matching the remaining text against the combinator. Both combinators must match
 |
 [source,go]
 ----
@@ -473,7 +475,7 @@ ext: "Hello"
 
 |https://pkg.go.dev/github.com/purpleclay/chomp#Suffixed[Suffixed]
 
-Will firstly scan the input text and match it against the [Combinator]. The remaining text will be scanned for a defined suffix and discarded. Both combinators must match
+Will scan the input text against the combinator before matching a suffix and discarding it. Both combinators must match
 |
 [source,go]
 ----
@@ -498,7 +500,7 @@ ext: "Hello"
 
 |https://pkg.go.dev/github.com/purpleclay/chomp#Map[Map]
 
-Map the result of a [Combinator] to any other type
+Map the result of a combinator to any other type
 |
 [source,go]
 ----
@@ -548,7 +550,7 @@ ext: "World"
 
 |https://pkg.go.dev/github.com/purpleclay/chomp#Peek[Peek]
 
-Will scan the text and apply the parser without consuming any of the input. Useful if you need to lookahead
+Will scan the text and apply the parser without consuming any input. Useful if you need to look ahead
 |
 [source,go]
 ----
@@ -562,7 +564,7 @@ ext: "Hello"
 
 |https://pkg.go.dev/github.com/purpleclay/chomp#Opt[Opt]
 
-Allows a combinator to be optional. Any error returned by the underlying combinator will be swallowed. The parsed text will not be modified if the underlying combinator did not run
+Allows a combinator to be optional by discarding its returned error and not modifying the input text upon failure
 |
 [source,go]
 ----
@@ -601,7 +603,7 @@ ext: "\r\n"
 |
 https://pkg.go.dev/github.com/purpleclay/chomp#Eol[Eol]
 
-Will scan the text until it encounters any ASCII line ending characters identified by the [IsLineEnding] predicate. All text before the line ending will be returned. The line ending, if detected, will be discarded
+Will scan and return any text before any ASCII line ending characters. Line endings are discarded
 |
 [source,go]
 ----
