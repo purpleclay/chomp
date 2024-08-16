@@ -83,9 +83,7 @@ image::https://img.shields.io/github/actions/workflow/status/purpleclay/chomp/ci
 endif::[]
 
 
-ifdef::status[]
 image:https://img.shields.io/gem/v/asciidoctor.svg[Latest Release, link={url-rubygem}]
 image:https://img.shields.io/badge/rubydoc.info-{release-version}-blue.svg[library (API) docs,link=https://www.rubydoc.info/gems/asciidoctor/{release-version}]
 image:https://github.com/asciidoctor/asciidoctor/workflows/CI/badge.svg[Build Status (GitHub Actions),link={url-repo}/actions]
 image:https://img.shields.io/badge/zulip-join_chat-brightgreen.svg[Project Chat (Zulip),link={url-chat}]
-endif::[]
