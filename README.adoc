@@ -1,4 +1,12 @@
 = Chomp
+ifdef::env-github[]
+:status:
+:caution-caption: :fire:
+:important-caption: :exclamation:
+:note-caption: :paperclip:
+:tip-caption: :bulb:
+:warning-caption: :warning:
+endif::[]
 
 A parser combinator library for chomping strings (_a rune at a time_) in Go. A more intuitive way to parse text without having to write a single regex. Happy to chomp both ASCII and Unicode (_it all tastes the same_).
 
@@ -72,4 +80,12 @@ Take a look at one of the examples of how to write a parser combinator.
 ifdef::status[]
 image::https://img.shields.io/github/actions/workflow/status/purpleclay/chomp/ci.yml?style=flat-square&logo=go["Build Status", link=https://github.com/purpleclay/chomp/actions?workflow=ci]
 image::https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square["License MIT", link=/LICENSE]
+endif::[]
+
+
+ifdef::status[]
+image:https://img.shields.io/gem/v/asciidoctor.svg[Latest Release, link={url-rubygem}]
+image:https://img.shields.io/badge/rubydoc.info-{release-version}-blue.svg[library (API) docs,link=https://www.rubydoc.info/gems/asciidoctor/{release-version}]
+image:https://github.com/asciidoctor/asciidoctor/workflows/CI/badge.svg[Build Status (GitHub Actions),link={url-repo}/actions]
+image:https://img.shields.io/badge/zulip-join_chat-brightgreen.svg[Project Chat (Zulip),link={url-chat}]
 endif::[]
