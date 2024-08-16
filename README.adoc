@@ -68,3 +68,5 @@ Take a look at one of the examples of how to write a parser combinator.
 [![Go Report Card](https://goreportcard.com/badge/github.com/purpleclay/chomp?style=flat-square)](https://goreportcard.com/report/github.com/purpleclay/chomp)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/purpleclay/chomp.svg?style=flat-square)](go.mod)
 [![DeepSource](https://app.deepsource.com/gh/purpleclay/chomp.svg/?label=active+issues&show_trend=false&token=DFB8RRar8iHJrVaNF7e9JaVm)](https://app.deepsource.com/gh/purpleclay/chomp/)
+
+image::https://img.shields.io/github/actions/workflow/status/purpleclay/chomp/ci.yml?style=flat-square&logo=go["Build Status", link=https://github.com/purpleclay/chomp/actions?workflow=ci]
