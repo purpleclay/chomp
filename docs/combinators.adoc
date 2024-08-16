@@ -1,0 +1,617 @@
+= Available combinators and how to use them
+:hardbreaks-option:
+
+`chomp` provides a large number of combinators for parsing text. The following is a glossary containing all available combinators and their intended use.
+
+As `chomp` is designed to return a tuple containing the `(remaining text [rem], extracted text [ext], error)`, all errors are omitted from this glossary for brevity.
+
+* <<basic_combinators>>
+* <<predicate_combinators>>
+** <<available_predicates>>
+* <<modifier_combinators>>
+* <<ready-made_parsers>>
+
+== Basic combinators [[basic_combinators]]
+
+[%header,cols="1a,1a,1a"]
+|===
+|Combinator
+|Usage
+|Output
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Tag[Tag]
+
+Must match a series of characters at the beginning of the input text in the exact order and case provided
+|
+[source,go]
+----
+chomp.Tag("Hello")("Hello, World!")
+----
+|
+....
+rem: ", World!"
+ext: "Hello"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Any[Any]
+
+Must match at least one character from the provided sequence at the beginning of the input text. Parsing stops upon the first unmatched character
+|
+[source,go]
+----
+chomp.Any("eH")("Hello, World!")
+----
+|
+....
+rem: "llo, World!"
+ext: "He"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Not[Not]
+
+Must not match at least one character at the beginning of the input text from the provided sequence. Parsing stops upon the first matched character
+|
+[source,go]
+----
+chomp.Not("ol")("Hello, World!")
+----
+|
+....
+rem: "llo, World!"
+ext: "He"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#OneOf[OneOf]
+
+Must match a single character at the beginning of the text from the provided sequence
+|
+[source,go]
+----
+chomp.OneOf("!,eH")("Hello, World!")
+----
+|
+....
+rem: "ello, World!"
+ext: "H"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#NoneOf[NoneOf]
+
+Must not match a single character at the beginning of the text from the provided sequence
+|
+[source,go]
+----
+chomp.NoneOf("loWrd!e")("Hello, World!")
+----
+|
+....
+rem: "ello, World!"
+ext: "H"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Until[Until]
+
+Will scan the input text for the first occurrence of the provided series of characters. Everything until that point in the text will be matched
+|
+[source,go]
+----
+chomp.Until("World")("Hello, World!")
+----
+|
+....
+rem: "World!"
+ext: "Hello, "
+....
+|===
+
+== Predicate combinators [[predicate_combinators]]
+
+[%header,cols="1a,1a,1a"]
+|===
+|Combinator
+|Usage
+|Output
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#While[While]
+
+Will scan the input text, testing each character against the provided predicate. The predicate must match at least one character
+|
+[source,go]
+----
+chomp.While(chomp.IsLetter)("Hello, World!")
+----
+|
+....
+rem: ", World!"
+ext: "Hello"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#WhileN[WhileN]
+
+Will scan the input text, testing each character against the provided predicate. The predicate must match at least `n` characters. If `n` is zero, this becomes an optional combinator
+|
+[source,go]
+----
+chomp.WhileN(chomp.IsLetter, 1)("Hello, World!")
+----
+|
+....
+rem: ", World!"
+ext: "Hello"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#WhileNM[WhileNM]
+
+Will scan the input text, testing each character against the provided predicate. The predicate must match a minimum of `n` and upto a maximum of `m` characters. If `n` is zero, this becomes an optional combinator
+|
+[source,go]
+----
+chomp.WhileNM(
+    chomp.IsLetter, 1, 8)("Hello, World!")
+----
+|
+....
+rem: ", World!"
+ext: "Hello"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#WhileNot[WhileNot]
+
+Will scan the input text, testing each character against the provided predicate. The predicate must not match at least one character. It has the inverse behavior of While
+|
+[source,go]
+----
+chomp.WhileNot(chomp.IsDigit)("Hello, World!")
+----
+|
+....
+rem: ""
+ext: "Hello, World!"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#WhileNotN[WhileNotN]
+
+Will scan the input text, testing each character against the provided predicate. The predicate must not match at least `n` characters. If `n` is zero, this becomes an optional combinator. It has the inverse behavior of WhileN
+|
+[source,go]
+----
+chomp.WhileNotN(
+    chomp.IsDigit, 1)("Hello, World!")
+----
+|
+....
+rem: ""
+ext: "Hello, World!"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#WhileNotNM[WhileNotNM]
+
+Will scan the input text, testing each character against the provided predicate. The predicate must not match a minimum of `n` and upto a maximum of `m` characters. If `n` is zero, this becomes an optional combinator. It has the inverse behavior of WhileNM
+|
+[source,go]
+----
+chomp.WhileNotNM(
+    chomp.IsLetter, 1, 8,
+)("20240709 was a great day")
+----
+|
+....
+rem: " was a great day"
+ext: "20240709"
+....
+|===
+
+=== Available predicates [[available_predicates]]
+
+* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsDigit]`: Determines whether a rune is a decimal digit. A rune is classed as a digit if it is between the ASCII range of `'0'` or `'9'`, or if it belongs within the Unicode https://www.fileformat.info/info/unicode/category/Nd/list.htm[Nd] category.
+* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLetter]`: Determines if a rune is a letter. A rune is classed as a letter if it is between the ASCII range of `'a'` and `'z'` (_including its uppercase equivalents_), or it belongs within any of the Unicode letter categories: https://www.fileformat.info/info/unicode/category/Lu/list.htm[Lu] https://www.fileformat.info/info/unicode/category/Ll/list.htm[LI] https://www.fileformat.info/info/unicode/category/Lt/list.htm[Lt] https://www.fileformat.info/info/unicode/category/Lm/list.htm[Lm] https://www.fileformat.info/info/unicode/category/Lo/list.htm[Lo].
+* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsAlphanumeric]`: Determines whether a rune is a decimal digit or a letter. This convenience method wraps the existing `IsDigit` and `IsLetter` predicates.
+* `https://pkg.go.dev/github.com/purpleclay/chomp#pkg-variables:[IsLineEnding]`: Determines whether a rune is one of the following ASCII line ending characters `'\r'` or `'\n'`.
+
+== Sequence combinators [[sequence_combinators]]
+
+[%header,cols="1a,1a,1a"]
+|===
+|Combinator
+|Usage
+|Output
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Pair[Pair]
+
+Will scan the input text and match each combinator in turn. Both combinators must match
+|
+[source,go]
+----
+chomp.Pair(
+    chomp.Tag("Hello,"),
+    chomp.Tag(" World"))("Hello, World!")
+----
+|
+....
+rem: "!"
+ext: ["Hello,", " World"]
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#SepPair[SepPair]
+
+Will scan the input text and match each combinator, discarding the separator's output. All combinators must match
+|
+[source,go]
+----
+chomp.SepPair(
+    chomp.Tag("Hello"),
+    chomp.Tag(", "),
+    chomp.Tag("World"))("Hello, World!")
+----
+|
+....
+rem: "!"
+ext: ["Hello", "World"]
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Repeat[Repeat]
+
+Will scan the input text and match the combinator the defined number of times. Every execution must match
+|
+[source,go]
+----
+chomp.Repeat(
+    chomp.Parentheses(), 2,
+)("(Hello)(World)(!)")
+----
+|
+....
+rem: "(!)"
+ext: ["(Hello)", "(World)"]
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#RepeatRange[RepeatRange]
+
+Will scan the input text and match the combinator between a minimum and maximum number of times. It must match the expected minimum number of times
+|
+[source,go]
+----
+chomp.RepeatRange(
+    chomp.OneOf("Hleo"), 1, 8,
+)("Hello, World!")
+----
+|
+....
+rem: ", World!"
+ext: ["H", "e", "l", "l", "o"]
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Delimited[Delimited]
+
+Will match a series of combinators against the input text. All must match, with the delimiters being discarded
+|
+[source,go]
+----
+chomp.Delimited(
+    chomp.Tag("'"),
+    chomp.Tag("Hello, World!"),
+    chomp.Tag("'"))("'Hello, World!'")
+----
+|
+....
+rem: ""
+ext: "Hello, World!"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#QuoteDouble[QuoteDouble]
+
+Will match any text delimited (_or surrounded_) by a pair of "double quotes"
+|
+[source,go]
+----
+chomp.DoubleQuote()(`"Hello, World!"`)
+----
+|
+....
+rem: ""
+ext: "Hello, World!"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#QuoteSingle[QuoteSingle]
+
+Will match any text delimited (_or surrounded_) by a pair of 'single quotes'
+|
+[source,go]
+----
+chomp.QuoteSingle()("'Hello, World!'")
+----
+|
+....
+rem: ""
+ext: "Hello, World!"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#BracketSquare[BracketSquare]
+
+Will match any text delimited (_or surrounded_) by a pair of [square brackets]
+|
+[source,go]
+----
+chomp.BracketSquare()("[Hello, World!]")
+----
+|
+....
+rem: ""
+ext: "Hello, World!"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Parentheses[Parentheses]
+
+Will match any text delimited (_or surrounded_) by a pair of (parentheses)
+|
+[source,go]
+----
+chomp.Parentheses()("(Hello, World!)")
+----
+|
+....
+rem: ""
+ext: "Hello, World!"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#BracketAngled[BracketAngled]
+
+Will match any text delimited (_or surrounded_) by a pair of <angled brackets>
+|
+[source,go]
+----
+chomp.BracketAngled()("<Hello, World!>")
+----
+|
+....
+rem: ""
+ext: "Hello, World!"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#First[First]
+
+Will match the input text against a series of combinators. Matching stops as soon as the first combinator succeeds. One combinator must match. For better performance, try and order the combinators from most to least likely to match
+|
+[source,go]
+----
+chomp.First(
+    chomp.Tag("Good Morning"),
+    chomp.Tag("Hello"),
+)("Good Morning, World!")
+----
+|
+....
+rem: " ,World!"
+ext: "Good Morning"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#All[All]
+
+Will match the input text against a series of combinators. All combinators must match in the order provided
+|
+[source,go]
+----
+chomp.All(
+    chomp.Tag("Hello"),
+    chomp.Until("W"),
+    chomp.Tag("World!"))("Hello, World!")
+----
+|
+....
+rem: ""
+ext: ["Hello", ", ", "World!"]
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Many[Many]
+
+Will scan the input text, and it must match the combinator at least once. This combinator is greedy and will continuously execute until the first failed match. It is the equivalent of calling ManyN with an argument of 1
+|
+[source,go]
+----
+chomp.Many(one.Of("Ho"))("Hello, World!")
+----
+|
+....
+rem: "ello, World!"
+ext: ["H"]
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#ManyN[ManyN]
+
+Will scan the input text and match the combinator a minimum number of times. This combinator is greedy and will continuously execute until the first failed match
+|
+[source,go]
+----
+chomp.ManyN(
+    chomp.OneOf("W"), 0)("Hello, World!")
+----
+|
+....
+rem: "Hello, World!"
+ext: []
+....
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#Prefixed[Prefixed]
+
+Will scan the input text for a defined prefix and discard it before matching the remaining text against the combinator. Both combinators must match
+|
+[source,go]
+----
+chomp.Prefixed(
+    chomp.Tag("Hello"),
+    chomp.Tag(`"`))(`"Hello, World!"`)
+----
+|
+....
+rem: `, World!"`
+ext: "Hello"
+....
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#Suffixed[Suffixed]
+
+Will scan the input text against the combinator before matching a suffix and discarding it. Both combinators must match
+|
+[source,go]
+----
+chomp.Suffixed(
+    chomp.Tag("Hello"),
+    chomp.Tag(", "))("Hello, World!")
+----
+|
+....
+rem: "World!"
+ext: "Hello"
+....
+|===
+
+== Modifier combinators [[modifier_combinators]]
+
+[%header,cols="1a,1a,1a"]
+|===
+|Combinator
+|Usage
+|Output
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#Map[Map]
+
+Map the result of a combinator to any other type
+|
+[source,go]
+----
+chomp.Map(
+    chomp.While(chomp.IsDigit),
+    func (in string) int {
+        return len(in)
+    },
+)("123456")
+----
+|
+....
+rem: ""
+ext: 6
+....
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#S[S]
+
+Wraps the result of the inner combinator within a string slice. Combinators of differing return types can be successfully chained together while using this conversion combinator
+|
+[source,go]
+----
+chomp.S(chomp.Until(","))("Hello, World!")
+----
+|
+....
+rem: ", World!"
+ext: ["Hello"]
+....
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#I[I]
+
+Extracts and returns a single string from the result of the inner combinator. Combinators of differing return types can be successfully chained together while using this conversion combinator
+|
+[source,go]
+----
+chomp.I(chomp.SepPair(
+    chomp.Tag("Hello"),
+    chomp.Tag(", "),
+    chomp.Tag("World")), 1)("Hello, World!")
+----
+|
+....
+rem: "!"
+ext: "World"
+....
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#Peek[Peek]
+
+Will scan the text and apply the combinator without consuming any input. Useful if you need to look ahead
+|
+[source,go]
+----
+chomp.Peek(chomp.Tag("Hello"))("Hello, World!")
+----
+|
+....
+rem: "Hello, World!"
+ext: "Hello"
+....
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#Opt[Opt]
+
+Allows a combinator to be optional by discarding its returned error and not modifying the input text upon failure
+|
+[source,go]
+----
+chomp.Opt(chomp.Tag("Hey"))("Hello, World!")
+----
+|
+....
+rem: "Hello, World!"
+ext: ""
+....
+|===
+
+== Ready-made parsers [[ready-made_parsers]]
+
+[%header,cols="1a,1a,1a"]
+|===
+|Combinator
+|Usage
+|Output
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Crlf[Crlf]
+
+Must match either a `CR (\r)` or `CRLF (\r\n)` line ending
+|
+[source,go]
+----
+chomp.Crlf()("\r\nHello")
+----
+|
+....
+rem: "Hello"
+ext: "\r\n"
+....
+
+|
+https://pkg.go.dev/github.com/purpleclay/chomp#Eol[Eol]
+
+Will scan and return any text before any ASCII line ending characters. Line endings are discarded
+|
+[source,go]
+----
+chomp.Eol()(`Hello, World!\nIt's a great day!`)
+----
+|
+....
+rem: "It's a great day!"
+ext: "Hello, World!"
+....
+|===

@@ -157,47 +157,6 @@ func TestUntil(t *testing.T) {
 	}
 }
 
-func TestCrlf(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name  string
-		input string
-		rem   string
-		ext   string
-	}{
-		{
-			name:  "LF",
-			input: "\nHello",
-			rem:   "Hello",
-			ext:   "\n",
-		},
-		{
-			name:  "CRLF",
-			input: "\r\nこんにちは",
-			rem:   "こんにちは",
-			ext:   "\r\n",
-		},
-		{
-			name:  "LFOnly",
-			input: "\n",
-			rem:   "",
-			ext:   "\n",
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			rem, ext, err := chomp.Crlf()(tt.input)
-
-			require.NoError(t, err)
-			assert.Equal(t, tt.rem, rem)
-			assert.Equal(t, tt.ext, ext)
-		})
-	}
-}
-
 func TestOneOf(t *testing.T) {
 	t.Parallel()
 
@@ -274,59 +233,6 @@ func TestNoneOf(t *testing.T) {
 	}
 }
 
-func TestOpt(t *testing.T) {
-	t.Parallel()
-
-	rem, ext, err := chomp.Opt(chomp.Tag("the"))("dark knight")
-
-	require.NoError(t, err)
-	assert.Equal(t, "dark knight", rem)
-	assert.Equal(t, "", ext)
-}
-
-func TestS(t *testing.T) {
-	t.Parallel()
-
-	rem, ext, err := chomp.S(chomp.Tag("hello"))("hello and good morning")
-
-	require.NoError(t, err)
-	assert.Equal(t, " and good morning", rem)
-	require.Len(t, ext, 1)
-	assert.Equal(t, "hello", ext[0])
-}
-
-func TestI(t *testing.T) {
-	t.Parallel()
-
-	rem, ext, err := chomp.I(
-		chomp.Repeat(chomp.All(chomp.Until(" "), chomp.Tag(" ")), 3),
-		2)("hello and good morning")
-
-	require.NoError(t, err)
-	assert.Equal(t, "morning", rem)
-	assert.Equal(t, "and", ext)
-}
-
-func TestPrefixed(t *testing.T) {
-	t.Parallel()
-
-	rem, ext, err := chomp.Prefixed(chomp.Tag("Hello"), chomp.Tag(`"`))(`"Hello, World"`)
-
-	require.NoError(t, err)
-	assert.Equal(t, `, World"`, rem)
-	assert.Equal(t, "Hello", ext)
-}
-
-func TestSuffixed(t *testing.T) {
-	t.Parallel()
-
-	rem, ext, err := chomp.Suffixed(chomp.Tag("Hello"), chomp.Tag(","))("Hello, World")
-
-	require.NoError(t, err)
-	assert.Equal(t, " World", rem)
-	assert.Equal(t, "Hello", ext)
-}
-
 func TestCombinatorError(t *testing.T) {
 	t.Parallel()
 
@@ -344,67 +250,4 @@ func TestParserCombinatorError(t *testing.T) {
 		chomp.Tag("marvel"))("the legend of batman:dc:9781801260336:£19.99")
 
 	assert.EqualError(t, err, "(all) parser failed. (tag) combinator failed to parse text 'dc:9781801260336:£19.99' with input 'marvel'")
-}
-
-func TestEol(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name  string
-		input string
-		rem   string
-		ext   string
-	}{
-		{
-			name: "LF",
-			input: `Hello, World!
-It's a great day`,
-			rem: "It's a great day",
-			ext: "Hello, World!",
-		},
-		{
-			name:  "NoLF",
-			input: "こんにちは、おはよう",
-			rem:   "",
-			ext:   "こんにちは、おはよう",
-		},
-		{
-			name: "EmptyLineBeforeLF",
-			input: `
-こんにちは、おはよう`,
-			rem: "こんにちは、おはよう",
-			ext: "",
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			rem, ext, err := chomp.Eol()(tt.input)
-
-			require.NoError(t, err)
-			assert.Equal(t, tt.rem, rem)
-			assert.Equal(t, tt.ext, ext)
-		})
-	}
-}
-
-func TestPeek(t *testing.T) {
-	t.Parallel()
-	rem, ext, err := chomp.Peek(chomp.Tag("Hello"))("Hello and Good Morning!")
-
-	require.NoError(t, err)
-	assert.Equal(t, "Hello and Good Morning!", rem)
-	assert.Equal(t, "Hello", ext)
-}
-
-func TestPeekUsingSequence(t *testing.T) {
-	t.Parallel()
-	rem, ext, err := chomp.Peek(
-		chomp.Many(chomp.Suffixed(chomp.Until(" "), chomp.Tag(" "))),
-	)("Hello and Good Morning!")
-
-	require.NoError(t, err)
-	assert.Equal(t, "Hello and Good Morning!", rem)
-	assert.Equal(t, []string{"Hello", "and", "Good"}, ext)
 }

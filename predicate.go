@@ -57,16 +57,16 @@ func (isLineEnding) String() string {
 
 var (
 	// IsDigit determines whether a rune is a decimal digit. A rune is classed
-	// as a digit if it is between the ASCII range of '0' or '9', or it belongs
+	// as a digit if it is between the ASCII range of '0' or '9', or if it belongs
 	// within the Unicode [Nd] category.
 	//
 	// [Nd]: https://www.fileformat.info/info/unicode/category/Nd/list.htm
 	IsDigit = isDigit{}
 
-	// IsLetter determines whether a rune is a letter. A rune is classed as a
-	// letter if it is between the ASCII range of 'a' and 'z' (including its
-	// uppercase equivalents), or it belongs within any of the Unicode letter
-	// categories: [Lu] [LI] [Lt] [Lm] [Lo]
+	// IsLetter determines if a rune is a letter. A rune is classed as a letter
+	// if it is between the ASCII range of 'a' and 'z' (including its uppercase
+	// equivalents), or it belongs within any of the Unicode letter categories:
+	// [Lu] [LI] [Lt] [Lm] [Lo].
 	//
 	// [Lu]: https://www.fileformat.info/info/unicode/category/Lu/list.htm
 	// [LI]: https://www.fileformat.info/info/unicode/category/Ll/list.htm
@@ -75,19 +75,18 @@ var (
 	// [Lo]: https://www.fileformat.info/info/unicode/category/Lo/list.htm
 	IsLetter = isLetter{}
 
-	// IsAlphanumeric determines whether a rune is either a decimal digit
-	// or a letter. This is a convenience method that wraps both the
-	// existing [IsDigit] and [IsLetter] predicates
+	// IsAlphanumeric determines whether a rune is a decimal digit or a letter.
+	// This convenience method wraps the existing [IsDigit] and [IsLetter]
+	// predicates.
 	IsAlphanumeric = isAlphanumeric{}
 
-	// IsLineEnding deterines whether a rune is one of the following ASCII
-	// line ending characters '\r' or '\n'
+	// IsLineEnding determines whether a rune is one of the following ASCII
+	// line ending characters '\r' or '\n'.
 	IsLineEnding = isLineEnding{}
 )
 
 // While will scan the input text, testing each character against the provided
-// [Predicate]. Everything until the predicate returns false will be matched.
-// A minimum of one character must be returned.
+// [Predicate]. The [Predicate] must match at least one character.
 //
 //	chomp.While(chomp.IsLetter)("Hello, World!")
 //	// (", World!", "Hello", nil)
@@ -96,9 +95,8 @@ func While(p Predicate) Combinator[string] {
 }
 
 // WhileN will scan the input text, testing each character against the provided
-// [Predicate]. Everything until the predicate returns false will be matched.
-// A minimum of n characters must be returned. If n is zero, this becomes an
-// optional combinator
+// [Predicate]. The [Predicate] must match at least n characters. If n is zero,
+// this becomes an optional combinator.
 //
 //	chomp.WhileN(chomp.IsLetter, 1)("Hello, World!")
 //	// (", World!", "Hello", nil)
@@ -128,9 +126,8 @@ func WhileN(p Predicate, n uint) Combinator[string] {
 }
 
 // WhileNM will scan the input text, testing each character against the provided
-// [Predicate]. Everything until the predicate returns false will be matched.
-// A minimum of n and upto a maximum of m characters must be returned. If n
-// is zero, this becomes an optional combinator
+// [Predicate]. The [Predicate] must match a minimum of n and upto a maximum
+// of m characters. If n is zero, this becomes an optional combinator.
 //
 //	chomp.WhileNM(chomp.IsLetter, 1, 8)("Hello, World!")
 //	// (", World!", "Hello", nil)
@@ -157,8 +154,8 @@ func WhileNM(p Predicate, n, m uint) Combinator[string] {
 }
 
 // WhileNot will scan the input text, testing each character against the provided
-// [Predicate]. Everything until the predicate returns true will be matched. This
-// is the inverse of [While]. A minimum of one character must be returned.
+// [Predicate]. The [Predicate] must not match at least one character. It has
+// the inverse behavior of [While].
 //
 //	chomp.WhileNot(chomp.IsDigit)("Hello, World!")
 //	// ("", "Hello, World!", nil)
@@ -167,9 +164,8 @@ func WhileNot(p Predicate) Combinator[string] {
 }
 
 // WhileNotN will scan the input text, testing each character against the provided
-// [Predicate]. Everything until the predicate returns true will be matched. This is
-// the inverse of [WhileN]. A minimum of n characters must be returned. If n is zero,
-// this becomes an optional combinator
+// [Predicate]. The [Predicate] must not match at least n characters. If n is
+// zero, this becomes an optional combinator. It has the inverse behavior of [WhileN].
 //
 //	chomp.WhileNotN(chomp.IsDigit, 1)("Hello, World!")
 //	// ("", "Hello, World!", nil)
@@ -199,9 +195,9 @@ func WhileNotN(p Predicate, n uint) Combinator[string] {
 }
 
 // WhileNotNM will scan the input text, testing each character against the provided
-// [Predicate]. Everything until the predicate returns true will be matched. This is
-// the inverse of [WhileNM]. A minimum of n and upto a maximum of m characters must
-// be returned. If n is zero, this becomes an optional combinator
+// [Predicate]. The [Predicate] must not match a minimum of n and upto a maximum of
+// m characters. If n is zero, this becomes an optional combinator. It has the
+// inverse behavior of [WhileNM].
 //
 //	chomp.WhileNotNM(chomp.IsLetter, 1, 8)("20240709 was a great day")
 //	// (" was a great day", "20240709", nil)
