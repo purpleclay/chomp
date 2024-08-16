@@ -55,6 +55,8 @@ Take a look at one of the examples of how to write a parser combinator.
 . https://github.com/purpleclay/chomp/blob/main/examples/gpg/main.go[GPG Private Key parser]
 . https://github.com/purpleclay/chomp/blob/main/examples/git-diff/main.go[Git Diff parser]
 
+A full glossary of combinators can be be viewed xref:docs/combinators.adoc[here].
+
 == Why use Chomp?
 
 - Combinators are very easy to write and combine into more complex parsers.
@@ -62,12 +64,6 @@ Take a look at one of the examples of how to write a parser combinator.
 - It is incredibly easy to unit test.
 
 == Badges
-
-[![Build status](https://img.shields.io/github/actions/workflow/status/purpleclay/chomp/ci.yml?style=flat-square&logo=go)](https://github.com/purpleclay/chomp/actions?workflow=ci)
-[![License MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](/LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/purpleclay/chomp?style=flat-square)](https://goreportcard.com/report/github.com/purpleclay/chomp)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/purpleclay/chomp.svg?style=flat-square)](go.mod)
-[![DeepSource](https://app.deepsource.com/gh/purpleclay/chomp.svg/?label=active+issues&show_trend=false&token=DFB8RRar8iHJrVaNF7e9JaVm)](https://app.deepsource.com/gh/purpleclay/chomp/)
 
 image:https://img.shields.io/github/actions/workflow/status/purpleclay/chomp/ci.yml?style=flat-square&logo=go["Build Status", link=https://github.com/purpleclay/chomp/actions?workflow=ci]
 image:https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square["License MIT", link=/LICENSE]
