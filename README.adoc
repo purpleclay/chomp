@@ -69,11 +69,8 @@ Take a look at one of the examples of how to write a parser combinator.
 [![Go Version](https://img.shields.io/github/go-mod/go-version/purpleclay/chomp.svg?style=flat-square)](go.mod)
 [![DeepSource](https://app.deepsource.com/gh/purpleclay/chomp.svg/?label=active+issues&show_trend=false&token=DFB8RRar8iHJrVaNF7e9JaVm)](https://app.deepsource.com/gh/purpleclay/chomp/)
 
-image:https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square["License MIT", link=/LICENSE]
 image:https://img.shields.io/github/actions/workflow/status/purpleclay/chomp/ci.yml?style=flat-square&logo=go["Build Status", link=https://github.com/purpleclay/chomp/actions?workflow=ci]
-
-
-image:https://img.shields.io/gem/v/asciidoctor.svg[Latest Release, link={url-rubygem}]
-image:https://img.shields.io/badge/rubydoc.info-{release-version}-blue.svg[library (API) docs,link=https://www.rubydoc.info/gems/asciidoctor/{release-version}]
-image:https://github.com/asciidoctor/asciidoctor/workflows/CI/badge.svg[Build Status (GitHub Actions),link={url-repo}/actions]
-image:https://img.shields.io/badge/zulip-join_chat-brightgreen.svg[Project Chat (Zulip),link={url-chat}]
+image:https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square["License MIT", link=/LICENSE]
+image:https://goreportcard.com/badge/github.com/purpleclay/chomp?style=flat-square["Go Report Card", link=https://goreportcard.com/report/github.com/purpleclay/chomp]
+image:https://img.shields.io/github/go-mod/go-version/purpleclay/chomp.svg?style=flat-square["Go Version", link=go.mod]
+image:https://app.deepsource.com/gh/purpleclay/chomp.svg/?label=active+issues&show_trend=false&token=DFB8RRar8iHJrVaNF7e9JaVm["DeepSource", link=https://app.deepsource.com/gh/purpleclay/chomp/]
