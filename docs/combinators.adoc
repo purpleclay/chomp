@@ -550,7 +550,7 @@ ext: "World"
 
 |https://pkg.go.dev/github.com/purpleclay/chomp#Peek[Peek]
 
-Will scan the text and apply the parser without consuming any input. Useful if you need to look ahead
+Will scan the text and apply the combinator without consuming any input. Useful if you need to look ahead
 |
 [source,go]
 ----

@@ -1,7 +1,7 @@
 package chomp
 
-// Pair will scan the input text and match each [Combinator] in turn. Both combinators
-// must match. The result of each will be returned in the slice in execution order.
+// Pair will scan the input text and match each [Combinator] in turn.
+// Both combinators must match.
 //
 //	chomp.Pair(chomp.Tag("Hello,"), chomp.Tag(" World"))("Hello, World!")
 //	// ("!", []string{"Hello,", " World"}, nil)
@@ -37,9 +37,8 @@ func combine(in []string, elems ...any) []string {
 	return in
 }
 
-// SepPair will scan the input text and match each [Combinator] in turn. All combinators
-// must match. The result of the separator combinator is discarded and not included
-// within the returned slice.
+// SepPair will scan the input text and match each [Combinator], discarding
+// the separator's output. All combinators must match.
 //
 //	chomp.SepPair(
 //		chomp.Tag("Hello"),
@@ -70,9 +69,8 @@ func SepPair[T, U, V Result](c1 Combinator[T], sep Combinator[U], c2 Combinator[
 	}
 }
 
-// Repeat will scan the input text and repeat the [Combinator] the defined number
-// of times. Each combinator must match, with the output of each contained in
-// the returned slice.
+// Repeat will scan the input text and match the combinator the defined
+// number of times. Every execution must match.
 //
 //	chomp.Repeat(chomp.Parentheses(), 2)("(Hello)(World)(!)")
 //	// ("(!)", []string{"(Hello)", "(World)"}, nil)
@@ -98,10 +96,9 @@ func Repeat[T Result](c Combinator[T], n uint) Combinator[[]string] {
 	}
 }
 
-// RepeatRange will scan the input text and repeat the [Combinator] between
-// a minimum and maximum number of times. Each combinator must match, with
-// the output of each contained in the returned slice. The minimum number of
-// times must be executed for this combinator to be successful.
+// RepeatRange will scan the input text and match the [Combinator] between
+// a minimum and maximum number of times. It must match the expected minimum
+// number of times.
 //
 //	chomp.RepeatRange(chomp.OneOf("Hleo"), 1, 8)("Hello, World!")
 //	// (", World!", []string{"H", "e", "l", "l", "o"}, nil)
@@ -134,9 +131,8 @@ func RepeatRange[T Result](c Combinator[T], n, m uint) Combinator[[]string] {
 	}
 }
 
-// Delimited will match a series of combinators against the input text. The left
-// and right combinators are used to match a delimited sequence and are discarded.
-// Only the text between the delimiters is extracted.
+// Delimited will match a series of combinators against the input text. All
+// must match, with the delimiters being discarded.
 //
 //	chomp.Delimited(
 //		chomp.Tag("'"),
@@ -166,8 +162,8 @@ func Delimited[T, U, V Result](left Combinator[T], str Combinator[U], right Comb
 	}
 }
 
-// QuoteDouble will match any text delimited (or surrounded) by a pair
-// of "double quotes". The delimiters are discarded.
+// QuoteDouble will match any text delimited (or surrounded) by a
+// pair of "double quotes".
 //
 //	chomp.DoubleQuote()(`"Hello, World!"`)
 //	// ("", "Hello, World!", nil)
@@ -177,8 +173,8 @@ func QuoteDouble() Combinator[string] {
 	}
 }
 
-// QuoteSingle will match any text delimited (or surrounded) by a pair
-// of 'single quotes'. The delimiters are discarded.
+// QuoteSingle will match any text delimited (or surrounded) by a
+// pair of 'single quotes'.
 //
 //	chomp.QuoteSingle()("'Hello, World!'")
 //	// ("", "Hello, World!", nil)
@@ -188,8 +184,8 @@ func QuoteSingle() Combinator[string] {
 	}
 }
 
-// BracketSquare will match any text delimited (or surrounded) by a pair
-// of [square brackets]. The delimiters are discarded.
+// BracketSquare will match any text delimited (or surrounded) by
+// a pair of [square brackets].
 //
 //	chomp.BracketSquare()("[Hello, World!]")
 //	// ("", "Hello, World!", nil)
@@ -199,8 +195,8 @@ func BracketSquare() Combinator[string] {
 	}
 }
 
-// Parentheses will match any text delimited (or surrounded) by a pair
-// of (parentheses). The delimiters are discarded.
+// Parentheses will match any text delimited (or surrounded) by
+// a pair of (parentheses).
 //
 //	chomp.Parentheses()("(Hello, World!)")
 //	// ("", "Hello, World!", nil)
@@ -210,8 +206,8 @@ func Parentheses() Combinator[string] {
 	}
 }
 
-// BracketAngled will match any text delimited (or surrounded) by a pair
-// of <angled brackets>. The delimiters are discarded.
+// BracketAngled will match any text delimited (or surrounded) by
+// a pair of <angled brackets>.
 //
 //	chomp.BracketAngled()("<Hello, World!>")
 //	// ("", "Hello, World!", nil)
@@ -221,10 +217,10 @@ func BracketAngled() Combinator[string] {
 	}
 }
 
-// First will match the input text against a series of combinators. Matching
-// stops as soon as the first combinator succeeds. One combinator must match.
-// For better performance, try and order the combinators from most to least
-// likely to match.
+// First will match the input text against a series of [Combinator]s.
+// Matching stops as soon as the first combinator succeeds. One [Combinator]
+// must match. For better performance, try and order the combinators from
+// most to least likely to match.
 //
 //	chomp.First(
 //		chomp.Tag("Good Morning"),
@@ -243,8 +239,8 @@ func First[T Result](c ...Combinator[T]) Combinator[T] {
 	}
 }
 
-// All will match the input text against a series of combinators. All
-// combinators must match in the order provided.
+// All will match the input text against a series of [Combinator]s.
+// All combinators must match in the order provided.
 //
 //	chomp.All(
 //		chomp.Tag("Hello"),
@@ -269,9 +265,9 @@ func All[T Result](c ...Combinator[T]) Combinator[[]string] {
 	}
 }
 
-// Many will scan the input text and match the [Combinator] a minimum of one
-// time. The combinator will repeatedly be executed until the the first failed
-// match. This is the equivalent of calling [ManyN] with an argument of 1.
+// Many will scan the input text, and it must match the [Combinator] at least
+// once. This [Combinator] is greedy and will continuously execute until the first
+// failed match. It is the equivalent of calling [ManyN] with an argument of 1.
 //
 //	chomp.Many(one.Of("Ho"))("Hello, World!")
 //	// ("ello, World!", []string{"H"}, nil)
@@ -280,9 +276,8 @@ func Many[T Result](c Combinator[T]) Combinator[[]string] {
 }
 
 // ManyN will scan the input text and match the [Combinator] a minimum number
-// of times. The combinator will repeatedly be executed until the first failed
-// match. The minimum number of times must be executed for this combinator to
-// be successful.
+// of times. This [Combinator] is greedy and will continuously execute until
+// the first failed match.
 //
 //	chomp.ManyN(chomp.OneOf("W"), 0)("Hello, World!")
 //	// ("Hello, World!", nil, nil)
@@ -317,9 +312,9 @@ func ManyN[T Result](c Combinator[T], n uint) Combinator[[]string] {
 	}
 }
 
-// Prefixed will firstly scan the input text for a defined prefix and discard it.
-// The remaining input text will be matched against the [Combinator] and returned
-// if successful. Both combinators must match.
+// Prefixed will scan the input text for a defined prefix and discard it
+// before matching the remaining text against the [Combinator]. Both
+// combinators must match.
 //
 //	chomp.Prefixed(
 //		chomp.Tag("Hello"),
@@ -336,9 +331,8 @@ func Prefixed(c, pre Combinator[string]) Combinator[string] {
 	}
 }
 
-// Suffixed will firstly scan the input text and match it against the [Combinator].
-// The remaining text will be scanned for a defined suffix and discarded. Both
-// combinators must match.
+// Suffixed will scan the input text against the [Combinator] before matching a
+// suffix and discarding it. Both combinators must match.
 //
 //	chomp.Suffixed(
 //		chomp.Tag("Hello"),

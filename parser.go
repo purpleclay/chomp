@@ -2,7 +2,7 @@ package chomp
 
 import "strings"
 
-// Crlf must match either a CR or CRLF line ending.
+// Crlf must match either a CR '\r' or CRLF '\r\n' line ending.
 //
 //	chomp.Crlf()("\r\nHello")
 //	// ("Hello", "\r\n", nil)
@@ -17,9 +17,8 @@ func Crlf() Combinator[string] {
 	}
 }
 
-// Eol will scan the text until it encounters any ASCII line ending characters
-// identified by the [IsLineEnding] predicate. All text before the line ending
-// will be returned. The line ending, if detected, will be discarded.
+// Eol will scan and return any text before any ASCII line ending
+// characters. Line endings are discarded.
 //
 //	chomp.Eol()(`Hello, World!\nIt's a great day!`)
 //	// ("It's a great day!", "Hello, World!", nil)

@@ -4,7 +4,7 @@ import (
 	"strings"
 )
 
-// Tag must match a series of characters at the beginning of the input text,
+// Tag must match a series of characters at the beginning of the input text
 // in the exact order and case provided.
 //
 //	chomp.Tag("Hello")("Hello, World!")
@@ -19,9 +19,8 @@ func Tag(str string) Combinator[string] {
 	}
 }
 
-// Any must match at least one character at the beginning of the input text,
-// from the provided sequence. Parsing immediately stops upon the first
-// unmatched character.
+// Any must match at least one character from the provided sequence at the
+// beginning of the input text. Parsing stops upon the first unmatched character.
 //
 //	chomp.Any("eH")("Hello, World!")
 //	// ("llo, World!", "He", nil)
@@ -49,9 +48,8 @@ func Any(str string) Combinator[string] {
 	}
 }
 
-// Not must not match at least one character at the beginning of the input
-// text from the provided sequence. Parsing immediately stops upon the
-// first matched character.
+// Not must not match at least one character at the beginning of the input text
+// from the provided sequence. Parsing stops upon the first matched character.
 //
 //	chomp.Not("ol")("Hello, World!")
 //	// ("llo, World!", "He", nil)
@@ -78,8 +76,8 @@ func Not(str string) Combinator[string] {
 	}
 }
 
-// OneOf must match a single character at the beginning of the text from the
-// provided sequence.
+// OneOf must match a single character at the beginning of the text from
+// the provided sequence.
 //
 //	chomp.OneOf("!,eH")("Hello, World!")
 //	// ("ello, World!", "H", nil)
@@ -98,8 +96,8 @@ func OneOf(str string) Combinator[string] {
 	}
 }
 
-// NoneOf must not match a single character at the beginning of the text from
-// the provided sequence.
+// NoneOf must not match a single character at the beginning of the text
+// from the provided sequence.
 //
 //	chomp.NoneOf("loWrd!e")("Hello, World!")
 //	// ("ello, World!", "H", nil)

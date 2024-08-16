@@ -29,9 +29,8 @@ func Map[S any, T Result](c Combinator[T], mapper func(in T) S) MappedCombinator
 	}
 }
 
-// Opt allows a combinator to be optional. Any error returned by the underlying
-// combinator will be swallowed. The parsed text will not be modified if the
-// underlying combinator did not run.
+// Opt allows a [Combinator] to be optional by discarding its returned
+// error and not modifying the input text upon failure.
 //
 //	chomp.Opt(chomp.Tag("Hey"))("Hello, World!")
 //	// ("Hello, World!", "", nil)
@@ -42,7 +41,7 @@ func Opt[T Result](c Combinator[T]) Combinator[T] {
 	}
 }
 
-// S wraps the result of the inner combinator within a string slice.
+// S wraps the result of the inner [Combinator] within a string slice.
 // Combinators of differing return types can be successfully chained
 // together while using this conversion combinator.
 //
@@ -59,9 +58,9 @@ func S(c Combinator[string]) Combinator[[]string] {
 	}
 }
 
-// I extracts and returns a single string from the result of the inner combinator.
-// Combinators of differing return types can be successfully chained together while
-// using this conversion combinator.
+// I extracts and returns a single string from the result of the inner
+// [Combinator]. Combinators of differing return types can be successfully
+// chained together while using this conversion combinator.
 //
 //	chomp.I(chomp.SepPair(
 //		chomp.Tag("Hello"),
@@ -86,8 +85,8 @@ func I(c Combinator[[]string], i int) Combinator[string] {
 	}
 }
 
-// Peek will scan the text and apply the parser without consuming any of the input.
-// Useful if you need to lookahead.
+// Peek will scan the text and apply the [Combinator] without consuming
+// any input. Useful if you need to look ahead.
 //
 //	chomp.Peek(chomp.Tag("Hello"))("Hello, World!")
 //	// ("Hello, World!", "Hello", nil)
