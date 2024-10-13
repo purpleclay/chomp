@@ -575,6 +575,20 @@ chomp.Opt(chomp.Tag("Hey"))("Hello, World!")
 rem: "Hello, World!"
 ext: ""
 ....
+
+|https://pkg.go.dev/github.com/purpleclay/chomp#Flatten[Flatten]
+|
+[source,go]
+----
+chomp.Flatten(
+    chomp.Many(chomp.Parentheses()),
+)("(H)(el)(lo), World!")
+----
+|
+....
+rem: ", World!"
+ext: "Hello"
+....
 |===
 
 == Ready-made parsers [[ready-made_parsers]]

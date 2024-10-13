@@ -1,6 +1,9 @@
 package chomp
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // MappedCombinator is a function capable of converting the output from a [Combinator]
 // into any given type. Upon success, it will return the unparsed text, along with the
@@ -99,5 +102,22 @@ func Peek[T Result](c Combinator[T]) Combinator[T] {
 	return func(s string) (string, T, error) {
 		_, ext, err := c(s)
 		return s, ext, err
+	}
+}
+
+// Flatten the output of a [Combinator] by joining all extracted values
+// into a string.
+//
+//	chomp.Flatten(
+//		chomp.Many(chomp.Parentheses()),
+//	)("(H)(el)(lo), World!")
+//	// (", World!", "Hello", nil)
+func Flatten(c Combinator[[]string]) Combinator[string] {
+	return func(s string) (string, string, error) {
+		rem, ext, err := c(s)
+		if err != nil {
+			return rem, "", ParserError{Err: err, Type: "flatten"}
+		}
+		return rem, strings.Join(ext, ""), nil
 	}
 }

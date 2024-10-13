@@ -84,3 +84,15 @@ func TestPeekUsingSequence(t *testing.T) {
 	assert.Equal(t, "Hello and Good Morning!", rem)
 	assert.Equal(t, []string{"Hello", "and", "Good"}, ext)
 }
+
+func TestFlatten(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Flatten(
+		chomp.Many(chomp.Parentheses()),
+	)("(H)(el)(lo) and Good Morning!")
+
+	require.NoError(t, err)
+	assert.Equal(t, " and Good Morning!", rem)
+	assert.Equal(t, "Hello", ext)
+}
