@@ -105,7 +105,7 @@ func Peek[T Result](c Combinator[T]) Combinator[T] {
 	}
 }
 
-// Flatten the output of a [Combinator] by joining all extracted values
+// Flatten the output from a [Combinator] by joining all extracted values
 // into a string.
 //
 //	chomp.Flatten(

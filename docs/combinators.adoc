@@ -577,6 +577,8 @@ ext: ""
 ....
 
 |https://pkg.go.dev/github.com/purpleclay/chomp#Flatten[Flatten]
+
+Flattens the output from a combinator by joining all extracted values into a string
 |
 [source,go]
 ----
