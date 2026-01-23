@@ -84,7 +84,7 @@ type RangedParserError struct {
 	Type string
 }
 
-// RangedParserExec details how a ranged [Combinator] was exeucted.
+// RangedParserExec details how a ranged [Combinator] was executed.
 type RangedParserExec struct {
 	// Min is the minimum number of expected executions.
 	Min uint
