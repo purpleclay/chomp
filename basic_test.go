@@ -8,6 +8,117 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestChar(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		char  rune
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: ",,rest",
+			char:  ',',
+			rem:   ",rest",
+			ext:   ",",
+		},
+		{
+			name:  "Unicode",
+			input: "★星空",
+			char:  '★',
+			rem:   "星空",
+			ext:   "★",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Char(tt.char)(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestAnyChar(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: "Hello",
+			rem:   "ello",
+			ext:   "H",
+		},
+		{
+			name:  "Unicode",
+			input: "こんにちは",
+			rem:   "んにちは",
+			ext:   "こ",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.AnyChar()(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestSatisfy(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		pred  func(rune) bool
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "UppercaseAscii",
+			input: "Hello",
+			pred:  func(r rune) bool { return r >= 'A' && r <= 'Z' },
+			rem:   "ello",
+			ext:   "H",
+		},
+		{
+			name:  "UnicodeHiragana",
+			input: "あいうえお",
+			pred:  func(r rune) bool { return r >= 'あ' && r <= 'ん' },
+			rem:   "いうえお",
+			ext:   "あ",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Satisfy(tt.pred)(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
 func TestTag(t *testing.T) {
 	t.Parallel()
 

@@ -8,6 +8,302 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestAlpha(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: "Hello123",
+			rem:   "123",
+			ext:   "Hello",
+		},
+		{
+			name:  "Unicode",
+			input: "こんにちは123",
+			rem:   "123",
+			ext:   "こんにちは",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Alpha()(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestAlpha0(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Alpha0()("123Hello")
+
+	require.NoError(t, err)
+	assert.Equal(t, "123Hello", rem)
+	assert.Equal(t, "", ext)
+}
+
+func TestDigit(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: "123abc",
+			rem:   "abc",
+			ext:   "123",
+		},
+		{
+			name:  "Unicode",
+			input: "123あいう",
+			rem:   "あいう",
+			ext:   "123",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Digit()(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestDigit0(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Digit0()("abc123")
+
+	require.NoError(t, err)
+	assert.Equal(t, "abc123", rem)
+	assert.Equal(t, "", ext)
+}
+
+func TestAlphanumeric(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: "Hello123!",
+			rem:   "!",
+			ext:   "Hello123",
+		},
+		{
+			name:  "Unicode",
+			input: "こんにちは123!",
+			rem:   "!",
+			ext:   "こんにちは123",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Alphanumeric()(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestAlphanumeric0(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Alphanumeric0()("!Hello123")
+
+	require.NoError(t, err)
+	assert.Equal(t, "!Hello123", rem)
+	assert.Equal(t, "", ext)
+}
+
+func TestSpace(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Space()("   \tHello")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Hello", rem)
+	assert.Equal(t, "   \t", ext)
+}
+
+func TestSpace0(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Space0()("Hello")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Hello", rem)
+	assert.Equal(t, "", ext)
+}
+
+func TestMultispace(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Multispace()("  \n\t\rHello")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Hello", rem)
+	assert.Equal(t, "  \n\t\r", ext)
+}
+
+func TestMultispace0(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Multispace0()("Hello")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Hello", rem)
+	assert.Equal(t, "", ext)
+}
+
+func TestHexDigit(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.HexDigit()("1a2B3cFf rest")
+
+	require.NoError(t, err)
+	assert.Equal(t, " rest", rem)
+	assert.Equal(t, "1a2B3cFf", ext)
+}
+
+func TestHexDigit0(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.HexDigit0()("xyz")
+
+	require.NoError(t, err)
+	assert.Equal(t, "xyz", rem)
+	assert.Equal(t, "", ext)
+}
+
+func TestOctalDigit(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.OctalDigit()("01onal")
+
+	require.NoError(t, err)
+	assert.Equal(t, "onal", rem)
+	assert.Equal(t, "01", ext)
+}
+
+func TestOctalDigit0(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.OctalDigit0()("89")
+
+	require.NoError(t, err)
+	assert.Equal(t, "89", rem)
+	assert.Equal(t, "", ext)
+}
+
+func TestBinaryDigit(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.BinaryDigit()("1010 rest")
+
+	require.NoError(t, err)
+	assert.Equal(t, " rest", rem)
+	assert.Equal(t, "1010", ext)
+}
+
+func TestBinaryDigit0(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.BinaryDigit0()("234")
+
+	require.NoError(t, err)
+	assert.Equal(t, "234", rem)
+	assert.Equal(t, "", ext)
+}
+
+func TestNewline(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Newline()("\nHello")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Hello", rem)
+	assert.Equal(t, "\n", ext)
+}
+
+func TestTab(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Tab()("\tHello")
+
+	require.NoError(t, err)
+	assert.Equal(t, "Hello", rem)
+	assert.Equal(t, "\t", ext)
+}
+
+func TestNotLineEnding(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "WithNewline",
+			input: "Hello, World!\nNext line",
+			rem:   "\nNext line",
+			ext:   "Hello, World!",
+		},
+		{
+			name:  "WithCarriageReturn",
+			input: "Hello, World!\rNext line",
+			rem:   "\rNext line",
+			ext:   "Hello, World!",
+		},
+		{
+			name:  "Unicode",
+			input: "こんにちは\n次の行",
+			rem:   "\n次の行",
+			ext:   "こんにちは",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.NotLineEnding()(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
 func TestWhile(t *testing.T) {
 	t.Parallel()
 
