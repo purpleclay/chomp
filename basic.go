@@ -1,8 +1,55 @@
 package chomp
 
 import (
+	"fmt"
 	"strings"
 )
+
+// Char matches a specific single character at the beginning of the input text.
+//
+//	chomp.Char(',')(",,rest")
+//	// (",rest", ",", nil)
+func Char(c rune) Combinator[string] {
+	return func(s string) (string, string, error) {
+		if runes := []rune(s); len(runes) > 0 && runes[0] == c {
+			matched := string(c)
+			return s[len(matched):], matched, nil
+		}
+
+		return s, "", CombinatorParseError{Input: fmt.Sprintf("%c", c), Text: s, Type: "char"}
+	}
+}
+
+// AnyChar matches any single character at the beginning of the input text.
+//
+//	chomp.AnyChar()("Hello")
+//	// ("ello", "H", nil)
+func AnyChar() Combinator[string] {
+	return func(s string) (string, string, error) {
+		if runes := []rune(s); len(runes) > 0 {
+			matched := string(runes[0])
+			return s[len(matched):], matched, nil
+		}
+
+		return s, "", CombinatorParseError{Text: s, Type: "any_char"}
+	}
+}
+
+// Satisfy matches a single character at the beginning of the input text that
+// satisfies the given predicate function.
+//
+//	chomp.Satisfy(func(r rune) bool { return r >= 'A' && r <= 'Z' })("Hello")
+//	// ("ello", "H", nil)
+func Satisfy(pred func(rune) bool) Combinator[string] {
+	return func(s string) (string, string, error) {
+		if runes := []rune(s); len(runes) > 0 && pred(runes[0]) {
+			matched := string(runes[0])
+			return s[len(matched):], matched, nil
+		}
+
+		return s, "", CombinatorParseError{Text: s, Type: "satisfy"}
+	}
+}
 
 // Tag must match a series of characters at the beginning of the input text
 // in the exact order and case provided.
