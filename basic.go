@@ -19,6 +19,22 @@ func Tag(str string) Combinator[string] {
 	}
 }
 
+// TagNoCase must match a series of characters at the beginning of the input text
+// in the exact order provided, but ignoring case. The matched text from the input
+// is returned (preserving the original casing).
+//
+//	chomp.TagNoCase("hello")("HELLO, World!")
+//	// (", World!", "HELLO", nil)
+func TagNoCase(str string) Combinator[string] {
+	return func(s string) (string, string, error) {
+		if len(s) >= len(str) && strings.EqualFold(s[:len(str)], str) {
+			return s[len(str):], s[:len(str)], nil
+		}
+
+		return s, "", CombinatorParseError{Input: str, Text: s, Type: "tag_no_case"}
+	}
+}
+
 // Any must match at least one character from the provided sequence at the
 // beginning of the input text. Parsing stops upon the first unmatched character.
 //
@@ -130,5 +146,138 @@ func Until(str string) Combinator[string] {
 		}
 
 		return s, "", CombinatorParseError{Input: str, Text: s, Type: "until"}
+	}
+}
+
+// Take will consume exactly n characters from the beginning of the input text.
+// Unicode characters are handled correctly by counting runes, not bytes.
+//
+//	chomp.Take(5)("Hello, World!")
+//	// (", World!", "Hello", nil)
+func Take(n uint) Combinator[string] {
+	return func(s string) (string, string, error) {
+		runes := []rune(s)
+		if uint(len(runes)) < n {
+			return s, "", CombinatorParseError{Text: s, Type: "take"}
+		}
+
+		taken := string(runes[:n])
+		return s[len(taken):], taken, nil
+	}
+}
+
+// TakeUntil1 will scan the input text for the first occurrence of the provided
+// series of characters, requiring at least one character to be matched before
+// the delimiter. Everything until that point in the text will be matched.
+//
+//	chomp.TakeUntil1(",")("Hello, World!")
+//	// (", World!", "Hello", nil)
+//
+//	chomp.TakeUntil1(",")(",World!")
+//	// Error: must match at least one character
+func TakeUntil1(str string) Combinator[string] {
+	return func(s string) (string, string, error) {
+		if idx := strings.Index(s, str); idx > 0 {
+			return s[idx:], s[:idx], nil
+		}
+
+		return s, "", CombinatorParseError{Input: str, Text: s, Type: "take_until_1"}
+	}
+}
+
+// Escaped parses a string containing escape sequences. It takes a normal content
+// combinator, an escape character, and a combinator that matches valid characters
+// after the escape. The escape sequences are preserved in the output as-is.
+//
+//	chomp.Escaped(chomp.While(chomp.IsLetter), '\\', chomp.OneOf(`"n\`))(`Hello\"World`)
+//	// ("", `Hello\"World`, nil)
+func Escaped(normal Combinator[string], escape rune, escapable Combinator[string]) Combinator[string] {
+	return func(s string) (string, string, error) {
+		pos := 0
+		rem := s
+
+		for len(rem) > 0 {
+			if newRem, ext, err := normal(rem); err == nil && len(ext) > 0 {
+				pos += len(ext)
+				rem = newRem
+				continue
+			}
+
+			runes := []rune(rem)
+			if len(runes) > 0 && runes[0] == escape {
+				escLen := len(string(escape))
+				if len(rem) <= escLen {
+					break
+				}
+
+				if _, ext, err := escapable(rem[escLen:]); err == nil && len(ext) > 0 {
+					pos += escLen + len(ext)
+					rem = rem[escLen+len(ext):]
+					continue
+				}
+			}
+
+			break
+		}
+
+		if pos == 0 {
+			return s, "", CombinatorParseError{Text: s, Type: "escaped"}
+		}
+
+		return s[pos:], s[:pos], nil
+	}
+}
+
+// EscapedTransform parses a string containing escape sequences and transforms them.
+// It takes a normal content combinator, an escape character, and a transform function
+// that converts escape sequences to their actual values.
+//
+//	transform := func(s string) (string, string, error) {
+//	    switch s[0] {
+//	    case 'n':
+//	        return s[1:], "\n", nil
+//	    case '"':
+//	        return s[1:], "\"", nil
+//	    case '\\':
+//	        return s[1:], "\\", nil
+//	    }
+//	    return s, "", errors.New("invalid escape")
+//	}
+//	chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', transform)(`Hello\nWorld`)
+//	// ("", "Hello\nWorld", nil)
+func EscapedTransform(normal Combinator[string], escape rune, transform Combinator[string]) Combinator[string] {
+	return func(s string) (string, string, error) {
+		var result strings.Builder
+		rem := s
+
+		for len(rem) > 0 {
+			if newRem, ext, err := normal(rem); err == nil && len(ext) > 0 {
+				result.WriteString(ext)
+				rem = newRem
+				continue
+			}
+
+			runes := []rune(rem)
+			if len(runes) > 0 && runes[0] == escape {
+				escLen := len(string(escape))
+				if len(rem) <= escLen {
+					break
+				}
+
+				if newRem, transformed, err := transform(rem[escLen:]); err == nil && len(transformed) > 0 {
+					result.WriteString(transformed)
+					rem = newRem
+					continue
+				}
+			}
+
+			break
+		}
+
+		if result.Len() == 0 {
+			return s, "", CombinatorParseError{Text: s, Type: "escaped_transform"}
+		}
+
+		return rem, result.String(), nil
 	}
 }
