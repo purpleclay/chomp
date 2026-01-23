@@ -233,6 +233,369 @@ func TestNoneOf(t *testing.T) {
 	}
 }
 
+func TestTagNoCase(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		tag   string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "MatchExact",
+			input: "hello and good morning",
+			tag:   "hello",
+			rem:   " and good morning",
+			ext:   "hello",
+		},
+		{
+			name:  "MatchUppercase",
+			input: "HELLO and good morning",
+			tag:   "hello",
+			rem:   " and good morning",
+			ext:   "HELLO",
+		},
+		{
+			name:  "MatchMixedCase",
+			input: "HeLLo and good morning",
+			tag:   "hello",
+			rem:   " and good morning",
+			ext:   "HeLLo",
+		},
+		{
+			name:  "Unicode",
+			input: "ΓΕΙΑ and good morning",
+			tag:   "γεια",
+			rem:   " and good morning",
+			ext:   "ΓΕΙΑ",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.TagNoCase(tt.tag)(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestTake(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		n     uint
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: "Hello, World!",
+			n:     5,
+			rem:   ", World!",
+			ext:   "Hello",
+		},
+		{
+			name:  "Unicode",
+			input: "こんにちは、おはよう",
+			n:     5,
+			rem:   "、おはよう",
+			ext:   "こんにちは",
+		},
+		{
+			name:  "EntireInput",
+			input: "Hello",
+			n:     5,
+			rem:   "",
+			ext:   "Hello",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Take(tt.n)(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestTakeUntil1(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		until string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			until: ",",
+			input: "Hello, World!",
+			rem:   ", World!",
+			ext:   "Hello",
+		},
+		{
+			name:  "Unicode",
+			until: "、",
+			input: "こんにちは、おはよう",
+			rem:   "、おはよう",
+			ext:   "こんにちは",
+		},
+		{
+			name:  "MultiCharDelimiter",
+			until: "World",
+			input: "Hello, World!",
+			rem:   "World!",
+			ext:   "Hello, ",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.TakeUntil1(tt.until)(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestEscaped(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "WithEscapedQuote",
+			input: `Hello\"World`,
+			rem:   "",
+			ext:   `Hello\"World`,
+		},
+		{
+			name:  "WithEscapedBackslash",
+			input: `Hello\\World`,
+			rem:   "",
+			ext:   `Hello\\World`,
+		},
+		{
+			name:  "WithEscapedNewline",
+			input: `Hello\nWorld`,
+			rem:   "",
+			ext:   `Hello\nWorld`,
+		},
+		{
+			name:  "NoEscape",
+			input: "HelloWorld",
+			rem:   "",
+			ext:   "HelloWorld",
+		},
+		{
+			name:  "MultipleEscapes",
+			input: `Hello\"World\nTest`,
+			rem:   "",
+			ext:   `Hello\"World\nTest`,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Escaped(
+				chomp.While(chomp.IsLetter),
+				'\\',
+				chomp.OneOf(`"n\`),
+			)(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestEscapedUnicode(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "UnicodeWithEscape",
+			input: "こんにちは★は世界",
+			rem:   "",
+			ext:   "こんにちは★は世界",
+		},
+		{
+			name:  "UnicodeMultipleEscapes",
+			input: "始まり★に中間★は終わり",
+			rem:   "",
+			ext:   "始まり★に中間★は終わり",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Escaped(
+				chomp.While(chomp.IsLetter),
+				'★',
+				chomp.OneOf("はに"),
+			)(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestEscapedTransform(t *testing.T) {
+	t.Parallel()
+
+	transform := func(s string) (string, string, error) {
+		if len(s) == 0 {
+			return s, "", chomp.CombinatorParseError{Text: s, Type: "transform"}
+		}
+		switch s[0] {
+		case 'n':
+			return s[1:], "\n", nil
+		case '"':
+			return s[1:], "\"", nil
+		case '\\':
+			return s[1:], "\\", nil
+		}
+		return s, "", chomp.CombinatorParseError{Text: s, Type: "transform"}
+	}
+
+	tests := []struct {
+		name  string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "WithEscapedNewline",
+			input: `Hello\nWorld`,
+			rem:   "",
+			ext:   "Hello\nWorld",
+		},
+		{
+			name:  "WithEscapedQuote",
+			input: `Hello\"World`,
+			rem:   "",
+			ext:   `Hello"World`,
+		},
+		{
+			name:  "WithEscapedBackslash",
+			input: `Hello\\World`,
+			rem:   "",
+			ext:   `Hello\World`,
+		},
+		{
+			name:  "NoEscape",
+			input: "HelloWorld",
+			rem:   "",
+			ext:   "HelloWorld",
+		},
+		{
+			name:  "MultipleEscapes",
+			input: `Hello\nWorld\"Test`,
+			rem:   "",
+			ext:   "Hello\nWorld\"Test",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.EscapedTransform(
+				chomp.While(chomp.IsLetter),
+				'\\',
+				transform,
+			)(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestEscapedTransformUnicode(t *testing.T) {
+	t.Parallel()
+
+	transform := func(s string) (string, string, error) {
+		if len(s) == 0 {
+			return s, "", chomp.CombinatorParseError{Text: s, Type: "transform"}
+		}
+		runes := []rune(s)
+		switch runes[0] {
+		case 'は':
+			return string(runes[1:]), "【", nil
+		case 'に':
+			return string(runes[1:]), "】", nil
+		}
+		return s, "", chomp.CombinatorParseError{Text: s, Type: "transform"}
+	}
+
+	tests := []struct {
+		name  string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "UnicodeContent",
+			input: "こんにちは★は世界",
+			rem:   "",
+			ext:   "こんにちは【世界",
+		},
+		{
+			name:  "UnicodeMultipleEscapes",
+			input: "こんにちは★は世界★に終",
+			rem:   "",
+			ext:   "こんにちは【世界】終",
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.EscapedTransform(
+				chomp.While(chomp.IsLetter),
+				'★',
+				transform,
+			)(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
 func TestCombinatorError(t *testing.T) {
 	t.Parallel()
 
