@@ -1,19 +1,27 @@
-name: nsv
+name: typos
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  nsv:
+  typos:
     runs-on: ubuntu-24.04
+    if: github.actor != 'renovate[bot]'
+    name: check spelling
     steps:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GH_NSV }}
 
       - name: Install Nix
         uses: cachix/install-nix-action@4e002c8ec80594ecd40e759629461e26c8abed15 # v31
@@ -28,11 +36,5 @@ jobs:
           skipPush: true
           useDaemon: false
 
-      - name: GPG Import
-        env:
-          GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
-          GPG_PASSPHRASE: "${{ secrets.GPG_PASSPHRASE }}"
-        run: nix run github:purpleclay/gpg-import
-
-      - name: Tag
-        run: nix run github:purpleclay/nsv -- tag --show
+      - name: Run Typos
+        run: nix develop -c typos

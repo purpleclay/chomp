@@ -1,9 +1,21 @@
 {
   "languages": {
     "Nix": {
-      "tab_size": 2,
-      "ensure_final_newline_on_save": false,
-      "remove_trailing_whitespace_on_save": true
-    }
-  }
+      "language_servers": ["nil", "!nixd"],
+    },
+  },
+  "lsp": {
+    "nil": {
+      "initialization_options": {
+        "formatting": {
+          "command": ["alejandra", "--quiet", "--"],
+        },
+      },
+      "settings": {
+        "diagnostics": {
+          "ignored": ["unused_binding"],
+        },
+      },
+    },
+  },
 }
