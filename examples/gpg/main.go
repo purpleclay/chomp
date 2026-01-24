@@ -22,12 +22,12 @@ type GpgPrivateKey struct {
 
 func (d GpgKeyDetails) String() string {
 	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("fingerprint:     %s\n", d.Fingerprint))
-	buf.WriteString(fmt.Sprintf("keygrip:         %s\n", d.KeyGrip))
-	buf.WriteString(fmt.Sprintf("key_id:          %s\n", d.KeyID))
-	buf.WriteString(fmt.Sprintf("created_on:      %d (%s)\n", d.CreationDate, unixToRFC3339(int64(d.CreationDate))))
+	fmt.Fprintf(&buf, "fingerprint:     %s\n", d.Fingerprint)
+	fmt.Fprintf(&buf, "keygrip:         %s\n", d.KeyGrip)
+	fmt.Fprintf(&buf, "key_id:          %s\n", d.KeyID)
+	fmt.Fprintf(&buf, "created_on:      %d (%s)\n", d.CreationDate, unixToRFC3339(int64(d.CreationDate)))
 	if d.ExpirationDate > 0 {
-		buf.WriteString(fmt.Sprintf("expires_on:      %d (%s)\n", d.ExpirationDate, unixToRFC3339(int64(d.ExpirationDate))))
+		fmt.Fprintf(&buf, "expires_on:      %d (%s)\n", d.ExpirationDate, unixToRFC3339(int64(d.ExpirationDate)))
 	}
 
 	return buf.String()
@@ -47,7 +47,7 @@ type GpgKeyDetails struct {
 
 func (k GpgPrivateKey) String() string {
 	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("user:            %s <%s>\n", k.UserName, k.UserEmail))
+	fmt.Fprintf(&buf, "user:            %s <%s>\n", k.UserName, k.UserEmail)
 	buf.WriteString(underline.Render("\nsecret_key:") + "\n")
 	buf.WriteString(k.SecretKey.String())
 	buf.WriteString(underline.Render("\nsecret_sub_key:") + "\n")

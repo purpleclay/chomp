@@ -1,6 +1,6 @@
 module examples
 
-go 1.19
+go 1.22.12
 
 replace github.com/purpleclay/chomp => ../
 

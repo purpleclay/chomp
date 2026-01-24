@@ -80,7 +80,7 @@ func Repeat[T Result](c Combinator[T], n uint) Combinator[[]string] {
 		var err error
 
 		rem := s
-		for i := uint(0); i < n; i++ {
+		for i := range n {
 			var out T
 			if rem, out, err = c(rem); err != nil {
 				return rem, nil, RangedParserError{
@@ -112,7 +112,7 @@ func RepeatRange[T Result](c Combinator[T], n, m uint) Combinator[[]string] {
 		}
 
 		rem := s
-		for i := uint(0); i < m; i++ {
+		for i := range m {
 			var out T
 			if rem, out, err = c(rem); err != nil {
 				if i+1 > n {
