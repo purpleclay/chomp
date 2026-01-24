@@ -503,3 +503,81 @@ func TestWhileNotNM(t *testing.T) {
 		})
 	}
 }
+
+func TestAnyDigit(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.AnyDigit()("123")
+
+	require.NoError(t, err)
+	assert.Equal(t, "23", rem)
+	assert.Equal(t, "1", ext)
+}
+
+func TestAnyDigitNoMatch(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.AnyDigit()("abc")
+
+	require.Error(t, err)
+}
+
+func TestAnyLetter(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.AnyLetter()("Hello")
+
+	require.NoError(t, err)
+	assert.Equal(t, "ello", rem)
+	assert.Equal(t, "H", ext)
+}
+
+func TestAnyLetterUnicode(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.AnyLetter()("こんにちは")
+
+	require.NoError(t, err)
+	assert.Equal(t, "んにちは", rem)
+	assert.Equal(t, "こ", ext)
+}
+
+func TestAnyAlphanumeric(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.AnyAlphanumeric()("a1!")
+
+	require.NoError(t, err)
+	assert.Equal(t, "1!", rem)
+	assert.Equal(t, "a", ext)
+}
+
+func TestAnyHexDigit(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.AnyHexDigit()("fF0")
+
+	require.NoError(t, err)
+	assert.Equal(t, "F0", rem)
+	assert.Equal(t, "f", ext)
+}
+
+func TestAnyOctalDigit(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.AnyOctalDigit()("752")
+
+	require.NoError(t, err)
+	assert.Equal(t, "52", rem)
+	assert.Equal(t, "7", ext)
+}
+
+func TestAnyBinaryDigit(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.AnyBinaryDigit()("101")
+
+	require.NoError(t, err)
+	assert.Equal(t, "01", rem)
+	assert.Equal(t, "1", ext)
+}

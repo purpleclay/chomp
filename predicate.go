@@ -444,7 +444,7 @@ func BinaryDigit0() Combinator[string] {
 //	// ("Hello", "\n", nil)
 func Newline() Combinator[string] {
 	return func(s string) (string, string, error) {
-		if len(s) > 0 && s[0] == '\n' {
+		if s != "" && s[0] == '\n' {
 			return s[1:], "\n", nil
 		}
 		return s, "", CombinatorParseError{Text: s, Type: "newline"}
@@ -457,7 +457,7 @@ func Newline() Combinator[string] {
 //	// ("Hello", "\t", nil)
 func Tab() Combinator[string] {
 	return func(s string) (string, string, error) {
-		if len(s) > 0 && s[0] == '\t' {
+		if s != "" && s[0] == '\t' {
 			return s[1:], "\t", nil
 		}
 		return s, "", CombinatorParseError{Text: s, Type: "tab"}
@@ -471,4 +471,52 @@ func Tab() Combinator[string] {
 //	// ("\nNext line", "Hello, World!", nil)
 func NotLineEnding() Combinator[string] {
 	return WhileNot(IsLineEnding)
+}
+
+// AnyDigit matches a single decimal digit (0-9).
+//
+//	chomp.AnyDigit()("123")
+//	// ("23", "1", nil)
+func AnyDigit() Combinator[string] {
+	return Satisfy(IsDigit.Match)
+}
+
+// AnyLetter matches a single ASCII or Unicode letter.
+//
+//	chomp.AnyLetter()("Hello")
+//	// ("ello", "H", nil)
+func AnyLetter() Combinator[string] {
+	return Satisfy(IsLetter.Match)
+}
+
+// AnyAlphanumeric matches a single alphanumeric character.
+//
+//	chomp.AnyAlphanumeric()("a1!")
+//	// ("1!", "a", nil)
+func AnyAlphanumeric() Combinator[string] {
+	return Satisfy(IsAlphanumeric.Match)
+}
+
+// AnyHexDigit matches a single hexadecimal digit (0-9, a-f, A-F).
+//
+//	chomp.AnyHexDigit()("fF0")
+//	// ("F0", "f", nil)
+func AnyHexDigit() Combinator[string] {
+	return Satisfy(IsHexDigit.Match)
+}
+
+// AnyOctalDigit matches a single octal digit (0-7).
+//
+//	chomp.AnyOctalDigit()("752")
+//	// ("52", "7", nil)
+func AnyOctalDigit() Combinator[string] {
+	return Satisfy(IsOctalDigit.Match)
+}
+
+// AnyBinaryDigit matches a single binary digit (0-1).
+//
+//	chomp.AnyBinaryDigit()("101")
+//	// ("01", "1", nil)
+func AnyBinaryDigit() Combinator[string] {
+	return Satisfy(IsBinaryDigit.Match)
 }

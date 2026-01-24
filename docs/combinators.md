@@ -303,6 +303,115 @@ chomp.BracketAngled()("<Hello, World!>")
 // ext: "Hello, World!"
 ```
 
+### SeparatedList
+
+Matches elements separated by a delimiter. At least one element must match. The separator is discarded.
+
+```go
+chomp.SeparatedList(chomp.Alpha(), chomp.Tag(","))("apple,banana,cherry,")
+// rem: ","
+// ext: ["apple", "banana", "cherry"]
+```
+
+### SeparatedList0
+
+Matches elements separated by a delimiter. Zero or more elements may match. The separator is discarded.
+
+```go
+chomp.SeparatedList0(chomp.Alpha(), chomp.Tag(","))("123")
+// rem: "123"
+// ext: []
+```
+
+### ManyTill
+
+Matches elements repeatedly until a terminator is found. The terminator is consumed but not included in the result. At least one element must match.
+
+```go
+chomp.ManyTill(chomp.AnyChar(), chomp.Tag("END"))("abcEND")
+// rem: ""
+// ext: ["a", "b", "c"]
+```
+
+### ManyTill0
+
+Matches elements repeatedly until a terminator is found. The terminator is consumed but not included in the result. Zero or more elements may match.
+
+```go
+chomp.ManyTill0(chomp.AnyChar(), chomp.Tag("END"))("END")
+// rem: ""
+// ext: []
+```
+
+### FoldMany
+
+Matches a combinator repeatedly and accumulates results using a reducer function. At least one match is required.
+
+```go
+chomp.FoldMany(chomp.OneOf("123"), 0, func(acc int, val string) int {
+    return acc + int(val[0]-'0')
+})("123abc")
+// rem: "abc"
+// ext: 6
+```
+
+### FoldMany0
+
+Matches a combinator repeatedly and accumulates results using a reducer function. Zero or more matches allowed.
+
+```go
+chomp.FoldMany0(chomp.OneOf("123"), 0, func(acc int, val string) int {
+    return acc + int(val[0]-'0')
+})("abc")
+// rem: "abc"
+// ext: 0
+```
+
+### ManyCount
+
+Counts the number of times a combinator matches without storing results. At least one match is required. Memory efficient for counting.
+
+```go
+chomp.ManyCount(chomp.OneOf("abc"))("abc123")
+// rem: "123"
+// ext: 3
+```
+
+### ManyCount0
+
+Counts the number of times a combinator matches without storing results. Zero or more matches allowed. Memory efficient for counting.
+
+```go
+chomp.ManyCount0(chomp.OneOf("abc"))("123")
+// rem: "123"
+// ext: 0
+```
+
+### LengthCount
+
+Parses a length value first, then applies a combinator that exact number of times.
+
+```go
+chomp.LengthCount(
+    chomp.Map(chomp.OneOf("0123456789"), func(s string) uint {
+        return uint(s[0] - '0')
+    }),
+    chomp.OneOf("abc"),
+)("3abcdef")
+// rem: "def"
+// ext: ["a", "b", "c"]
+```
+
+### Fill
+
+Matches a combinator exactly `n` times, populating a result slice. All `n` matches must succeed.
+
+```go
+chomp.Fill(chomp.OneOf("abc"), 3)("abcdef")
+// rem: "def"
+// ext: ["a", "b", "c"]
+```
+
 ---
 
 ## Predicate Combinators
@@ -394,6 +503,12 @@ These are shorthand combinators built on predicates.
 | `Newline()` | - | Matches `\n` |
 | `Tab()` | - | Matches `\t` |
 | `NotLineEnding()` | `WhileNot(IsLineEnding)` | Characters until line ending |
+| `AnyDigit()` | `Satisfy(IsDigit.Match)` | Single decimal digit |
+| `AnyLetter()` | `Satisfy(IsLetter.Match)` | Single letter |
+| `AnyAlphanumeric()` | `Satisfy(IsAlphanumeric.Match)` | Single alphanumeric character |
+| `AnyHexDigit()` | `Satisfy(IsHexDigit.Match)` | Single hexadecimal digit |
+| `AnyOctalDigit()` | `Satisfy(IsOctalDigit.Match)` | Single octal digit |
+| `AnyBinaryDigit()` | `Satisfy(IsBinaryDigit.Match)` | Single binary digit |
 
 ---
 
