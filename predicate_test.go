@@ -31,7 +31,6 @@ func TestAlpha(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.Alpha()(tt.input)
@@ -76,7 +75,6 @@ func TestDigit(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.Digit()(tt.input)
@@ -121,7 +119,6 @@ func TestAlphanumeric(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.Alphanumeric()(tt.input)
@@ -292,7 +289,6 @@ func TestNotLineEnding(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.NotLineEnding()(tt.input)
@@ -327,7 +323,6 @@ func TestWhile(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.While(chomp.IsLetter)(tt.input)
@@ -362,7 +357,6 @@ func TestWhileN(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.WhileN(chomp.IsDigit, 2)(tt.input)
@@ -397,7 +391,6 @@ func TestWhileNM(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.WhileNM(chomp.IsDigit, 1, 8)(tt.input)
@@ -432,7 +425,6 @@ func TestWhileNot(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.WhileNot(chomp.IsDigit)(tt.input)
@@ -467,7 +459,6 @@ func TestWhileNotN(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.WhileNotN(chomp.IsLetter, 2)(tt.input)
@@ -502,7 +493,6 @@ func TestWhileNotNM(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.WhileNotNM(chomp.IsLetter, 1, 8)(tt.input)

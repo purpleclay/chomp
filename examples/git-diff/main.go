@@ -31,7 +31,7 @@ type FileDiff struct {
 
 func (d FileDiff) String() string {
 	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("path: %s\n", d.Path))
+	fmt.Fprintf(&buf, "path: %s\n", d.Path)
 	for _, chunk := range d.Chunks {
 		buf.WriteString(chunk.String())
 	}
@@ -49,9 +49,9 @@ func (d DiffChunk) String() string {
 
 	buf.WriteString("(")
 	buf.WriteString(red.Render("-"))
-	buf.WriteString(fmt.Sprintf("%d,%d ", d.Removed.LineNo, d.Removed.Count))
+	fmt.Fprintf(&buf, "%d,%d ", d.Removed.LineNo, d.Removed.Count)
 	buf.WriteString(green.Render("+"))
-	buf.WriteString(fmt.Sprintf("%d,%d", d.Added.LineNo, d.Added.Count))
+	fmt.Fprintf(&buf, "%d,%d", d.Added.LineNo, d.Added.Count)
 	buf.WriteString(")\n")
 
 	if d.Removed.Change != "" {
@@ -121,23 +121,24 @@ func diffChunks(in string) ([]DiffChunk, error) {
 		func(in []string) []DiffChunk {
 			var diffChunks []DiffChunk
 
-			for i := 0; i+5 < len(in); i += 6 {
+			for i := range len(in) / 6 {
 				// 0: removed line
 				// 1: removed count
 				// 2: added line
 				// 3: added count
 				// 4: removed lines
 				// 5: added lines
+				idx := i * 6
 				chunk := DiffChunk{
 					Removed: DiffChange{
-						LineNo: mustInt(in[i]),
-						Count:  mustInt(in[i+1]),
-						Change: in[i+4],
+						LineNo: mustInt(in[idx]),
+						Count:  mustInt(in[idx+1]),
+						Change: in[idx+4],
 					},
 					Added: DiffChange{
-						LineNo: mustInt(in[i+2]),
-						Count:  mustInt(in[i+3]),
-						Change: in[i+5],
+						LineNo: mustInt(in[idx+2]),
+						Count:  mustInt(in[idx+3]),
+						Change: in[idx+5],
 					},
 				}
 

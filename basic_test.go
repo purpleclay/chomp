@@ -34,7 +34,6 @@ func TestChar(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.Char(tt.char)(tt.input)
@@ -69,7 +68,6 @@ func TestAnyChar(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.AnyChar()(tt.input)
@@ -107,7 +105,6 @@ func TestSatisfy(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.Satisfy(tt.pred)(tt.input)
@@ -142,7 +139,6 @@ func TestTag(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, tag, err := chomp.Tag(tt.tag)(tt.input)
@@ -180,7 +176,6 @@ func TestAny(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.Any(tt.any)(tt.input)
@@ -218,7 +213,6 @@ func TestNot(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.Not(tt.not)(tt.input)
@@ -256,7 +250,6 @@ func TestUntil(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.Until(tt.until)(tt.input)
@@ -294,7 +287,6 @@ func TestOneOf(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.OneOf(tt.oneOf)(tt.input)
@@ -332,7 +324,6 @@ func TestNoneOf(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.NoneOf(tt.noneOf)(tt.input)
@@ -384,7 +375,6 @@ func TestTagNoCase(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.TagNoCase(tt.tag)(tt.input)
@@ -429,7 +419,6 @@ func TestTake(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.Take(tt.n)(tt.input)
@@ -474,7 +463,6 @@ func TestTakeUntil1(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.TakeUntil1(tt.until)(tt.input)
@@ -527,7 +515,6 @@ func TestEscaped(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.Escaped(
@@ -566,7 +553,6 @@ func TestEscapedUnicode(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.Escaped(
@@ -586,7 +572,7 @@ func TestEscapedTransform(t *testing.T) {
 	t.Parallel()
 
 	transform := func(s string) (string, string, error) {
-		if len(s) == 0 {
+		if s == "" {
 			return s, "", chomp.CombinatorParseError{Text: s, Type: "transform"}
 		}
 		switch s[0] {
@@ -638,7 +624,6 @@ func TestEscapedTransform(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.EscapedTransform(
@@ -658,7 +643,7 @@ func TestEscapedTransformUnicode(t *testing.T) {
 	t.Parallel()
 
 	transform := func(s string) (string, string, error) {
-		if len(s) == 0 {
+		if s == "" {
 			return s, "", chomp.CombinatorParseError{Text: s, Type: "transform"}
 		}
 		runes := []rune(s)
@@ -691,7 +676,6 @@ func TestEscapedTransformUnicode(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			rem, ext, err := chomp.EscapedTransform(

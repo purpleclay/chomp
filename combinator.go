@@ -41,10 +41,10 @@ func (e CombinatorParseError) Error() string {
 	}
 
 	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("(%s) combinator failed to parse text '%s'", e.Type, text))
+	fmt.Fprintf(&buf, "(%s) combinator failed to parse text '%s'", e.Type, text)
 
 	if e.Input != "" {
-		buf.WriteString(fmt.Sprintf(" with input '%s'", e.Input))
+		fmt.Fprintf(&buf, " with input '%s'", e.Input)
 	}
 
 	return buf.String()
@@ -99,13 +99,13 @@ type RangedParserExec struct {
 // String returns a string representation of a [RangedParserExec].
 func (e RangedParserExec) String() string {
 	var buf strings.Builder
-	buf.WriteString(fmt.Sprintf("[count: %d", e.Count))
+	fmt.Fprintf(&buf, "[count: %d", e.Count)
 	if e.Min > 0 {
-		buf.WriteString(fmt.Sprintf(" min: %d", e.Min))
+		fmt.Fprintf(&buf, " min: %d", e.Min)
 	}
 
 	if e.Max > 0 {
-		buf.WriteString(fmt.Sprintf(" max: %d", e.Max))
+		fmt.Fprintf(&buf, " max: %d", e.Max)
 	}
 	buf.WriteString("]")
 	return buf.String()
