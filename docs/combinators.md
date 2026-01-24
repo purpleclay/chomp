@@ -5,6 +5,7 @@ A comprehensive reference of all combinators provided by `chomp`.
 - [Character Combinators](#character-combinators)
 - [Tag Combinators](#tag-combinators)
 - [Sequence Combinators](#sequence-combinators)
+- [Control Flow Combinators](#control-flow-combinators)
 - [Predicate Combinators](#predicate-combinators)
 - [Convenience Combinators](#convenience-combinators)
 - [Modifier Combinators](#modifier-combinators)
@@ -410,6 +411,139 @@ Matches a combinator exactly `n` times, populating a result slice. All `n` match
 chomp.Fill(chomp.OneOf("abc"), 3)("abcdef")
 // rem: "def"
 // ext: ["a", "b", "c"]
+```
+
+---
+
+## Control Flow Combinators
+
+### Verify
+
+Validates the parsed result against a predicate function without modifying the output. If the predicate returns false, the combinator fails.
+
+```go
+chomp.Verify(chomp.Alpha(), func(s string) bool {
+    return len(s) >= 3
+})("Hello, World!")
+// rem: ", World!"
+// ext: "Hello"
+```
+
+### Recognize
+
+Returns the consumed input as the output, regardless of the inner parser's result. Useful for capturing complex patterns as text.
+
+```go
+chomp.Recognize(chomp.SepPair(chomp.Alpha(), chomp.Tag(", "), chomp.Alpha()))("Hello, World!")
+// rem: "!"
+// ext: "Hello, World"
+```
+
+### Consumed
+
+Provides both the raw consumed text and the parsed output. The first element is the raw consumed text, followed by the parsed result.
+
+```go
+chomp.Consumed(chomp.SepPair(chomp.Alpha(), chomp.Tag(", "), chomp.Alpha()))("Hello, World!")
+// rem: "!"
+// ext: ["Hello, World", "Hello", "World"]
+```
+
+### Eof
+
+Matches only when at the end of input, returning an empty string on success. Prevents partial parsing.
+
+```go
+chomp.Eof()("")
+// rem: ""
+// ext: ""
+
+chomp.Pair(chomp.Tag("Hello"), chomp.Eof())("Hello")
+// rem: ""
+// ext: ["Hello", ""]
+```
+
+### AllConsuming
+
+Ensures the entire input is consumed by the inner parser, failing if any text remains unparsed.
+
+```go
+chomp.AllConsuming(chomp.Tag("Hello"))("Hello")
+// rem: ""
+// ext: "Hello"
+
+chomp.AllConsuming(chomp.Tag("Hello"))("Hello, World!")
+// error: all_consuming failed
+```
+
+### Rest
+
+Returns all remaining unconsumed input as a string value. Always succeeds, even with empty input.
+
+```go
+chomp.Rest()("Hello, World!")
+// rem: ""
+// ext: "Hello, World!"
+
+chomp.Pair(chomp.Tag("Hello"), chomp.Rest())("Hello, World!")
+// rem: ""
+// ext: ["Hello", ", World!"]
+```
+
+### Value
+
+Returns a fixed value upon parser success, discarding the actual parse result. Useful for assigning semantic meaning to parsed tokens.
+
+```go
+chomp.Value(chomp.Tag("true"), true)("true")
+// rem: ""
+// ext: true
+
+chomp.Value(chomp.Tag("null"), nil)("null")
+// rem: ""
+// ext: nil
+```
+
+### Cond
+
+Conditionally applies a parser based on a boolean flag. If the condition is true, the parser is applied. Otherwise, returns an empty result without consuming input.
+
+```go
+chomp.Cond(true, chomp.Tag("Hello"))("Hello, World!")
+// rem: ", World!"
+// ext: "Hello"
+
+chomp.Cond(false, chomp.Tag("Hello"))("Hello, World!")
+// rem: "Hello, World!"
+// ext: ""
+```
+
+### Cut
+
+Converts recoverable parsing errors into fatal failures, preventing backtracking past decision points. Improves error messaging by committing to a parsing path. When used with `First`, a `CutError` stops backtracking immediately.
+
+```go
+// Without Cut, First would try the second alternative and succeed
+// With Cut, once "if" matches, failure on "(" is fatal
+chomp.First(
+    chomp.Flatten(chomp.All(
+        chomp.Tag("if"),
+        chomp.Cut(chomp.Tag("(")))),
+    chomp.Tag("if x"))("if x")
+// error: CutError (no backtracking to "if x")
+```
+
+### PeekNot
+
+Succeeds when the inner parser fails without consuming input. Implements negative lookahead for validation. Pairs with `Peek` for positive lookahead.
+
+```go
+chomp.PeekNot(chomp.Tag("Hello"))("World!")
+// rem: "World!"
+// ext: ""
+
+chomp.PeekNot(chomp.Tag("Hello"))("Hello, World!")
+// error: peek_not failed
 ```
 
 ---
