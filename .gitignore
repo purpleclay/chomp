@@ -3,7 +3,7 @@
 
 # Allow project files
 !.gitignore
-!README.adoc
+!README.md
 !LICENSE
 !CODE_OF_CONDUCT.md
 !taskfile.yaml
@@ -12,7 +12,7 @@
 !.goreleaser.yaml
 !.github/**/*
 !.zed/*
-!docs/*.adoc
+!docs/*.md
 !typos.toml
 
 # Allow Nix flake
