@@ -190,3 +190,222 @@ func TestSuffixed(t *testing.T) {
 	assert.Equal(t, " World", rem)
 	assert.Equal(t, "Hello", ext)
 }
+
+func TestSeparatedList(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.SeparatedList(chomp.Alpha(), chomp.Tag(","))("apple,banana,cherry,")
+
+	require.NoError(t, err)
+	assert.Equal(t, ",", rem)
+	require.Len(t, ext, 3)
+	assert.Equal(t, "apple", ext[0])
+	assert.Equal(t, "banana", ext[1])
+	assert.Equal(t, "cherry", ext[2])
+}
+
+func TestSeparatedListSingleElement(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.SeparatedList(chomp.Alpha(), chomp.Tag(","))("apple")
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	require.Len(t, ext, 1)
+	assert.Equal(t, "apple", ext[0])
+}
+
+func TestSeparatedListNoMatch(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.SeparatedList(chomp.Alpha(), chomp.Tag(","))("123")
+
+	require.Error(t, err)
+}
+
+func TestSeparatedList0(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.SeparatedList0(chomp.Alpha(), chomp.Tag(","))("apple,banana")
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	require.Len(t, ext, 2)
+	assert.Equal(t, "apple", ext[0])
+	assert.Equal(t, "banana", ext[1])
+}
+
+func TestSeparatedList0NoMatch(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.SeparatedList0(chomp.Alpha(), chomp.Tag(","))("123")
+
+	require.NoError(t, err)
+	assert.Equal(t, "123", rem)
+	assert.Empty(t, ext)
+}
+
+func TestManyTill(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.ManyTill(chomp.AnyChar(), chomp.Tag("END"))("abcEND rest")
+
+	require.NoError(t, err)
+	assert.Equal(t, " rest", rem)
+	require.Len(t, ext, 3)
+	assert.Equal(t, "a", ext[0])
+	assert.Equal(t, "b", ext[1])
+	assert.Equal(t, "c", ext[2])
+}
+
+func TestManyTillNoElementsBeforeTerminator(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.ManyTill(chomp.AnyChar(), chomp.Tag("END"))("END")
+
+	require.Error(t, err)
+}
+
+func TestManyTill0(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.ManyTill0(chomp.AnyChar(), chomp.Tag("END"))("abEND")
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	require.Len(t, ext, 2)
+	assert.Equal(t, "a", ext[0])
+	assert.Equal(t, "b", ext[1])
+}
+
+func TestManyTill0EmptyBeforeTerminator(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.ManyTill0(chomp.AnyChar(), chomp.Tag("END"))("END")
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	assert.Empty(t, ext)
+}
+
+func TestFoldMany(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.FoldMany(chomp.AnyDigit(), 0, func(acc int, val string) int {
+		return acc + int(val[0]-'0')
+	})("123abc")
+
+	require.NoError(t, err)
+	assert.Equal(t, "abc", rem)
+	assert.Equal(t, 6, ext)
+}
+
+func TestFoldManyNoMatch(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.FoldMany(chomp.AnyDigit(), 0, func(acc int, val string) int {
+		return acc + int(val[0]-'0')
+	})("abc")
+
+	require.Error(t, err)
+}
+
+func TestFoldMany0(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.FoldMany0(chomp.AnyDigit(), 0, func(acc int, val string) int {
+		return acc + int(val[0]-'0')
+	})("12abc")
+
+	require.NoError(t, err)
+	assert.Equal(t, "abc", rem)
+	assert.Equal(t, 3, ext)
+}
+
+func TestFoldMany0NoMatch(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.FoldMany0(chomp.AnyDigit(), 0, func(acc int, val string) int {
+		return acc + int(val[0]-'0')
+	})("abc")
+
+	require.NoError(t, err)
+	assert.Equal(t, "abc", rem)
+	assert.Equal(t, 0, ext)
+}
+
+func TestManyCount(t *testing.T) {
+	t.Parallel()
+
+	rem, count, err := chomp.ManyCount(chomp.AnyLetter())("abc123")
+
+	require.NoError(t, err)
+	assert.Equal(t, "123", rem)
+	assert.Equal(t, uint(3), count)
+}
+
+func TestManyCountNoMatch(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.ManyCount(chomp.AnyLetter())("123")
+
+	require.Error(t, err)
+}
+
+func TestManyCount0(t *testing.T) {
+	t.Parallel()
+
+	rem, count, err := chomp.ManyCount0(chomp.AnyLetter())("ab123")
+
+	require.NoError(t, err)
+	assert.Equal(t, "123", rem)
+	assert.Equal(t, uint(2), count)
+}
+
+func TestManyCount0NoMatch(t *testing.T) {
+	t.Parallel()
+
+	rem, count, err := chomp.ManyCount0(chomp.AnyLetter())("123")
+
+	require.NoError(t, err)
+	assert.Equal(t, "123", rem)
+	assert.Equal(t, uint(0), count)
+}
+
+func TestLengthCount(t *testing.T) {
+	t.Parallel()
+
+	lengthParser := chomp.Map(chomp.AnyDigit(), func(s string) uint {
+		return uint(s[0] - '0')
+	})
+
+	rem, ext, err := chomp.LengthCount(lengthParser, chomp.AnyLetter())("3abcdef")
+
+	require.NoError(t, err)
+	assert.Equal(t, "def", rem)
+	require.Len(t, ext, 3)
+	assert.Equal(t, "a", ext[0])
+	assert.Equal(t, "b", ext[1])
+	assert.Equal(t, "c", ext[2])
+}
+
+func TestFill(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Fill(chomp.AnyLetter(), 3)("abcdef")
+
+	require.NoError(t, err)
+	assert.Equal(t, "def", rem)
+	require.Len(t, ext, 3)
+	assert.Equal(t, "a", ext[0])
+	assert.Equal(t, "b", ext[1])
+	assert.Equal(t, "c", ext[2])
+}
+
+func TestFillNotEnoughElements(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.Fill(chomp.AnyLetter(), 5)("abc")
+
+	require.Error(t, err)
+}
