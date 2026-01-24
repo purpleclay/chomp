@@ -30,6 +30,10 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    rules:
+      - linters:
+          - revive
+        text: "var-naming: func Eof should be EOF"
     paths:
       - third_party$
       - builtin$

@@ -1,5 +1,10 @@
 package chomp
 
+import (
+	"errors"
+	"fmt"
+)
+
 // Pair will scan the input text and match each [Combinator] in turn.
 // Both combinators must match.
 //
@@ -222,6 +227,9 @@ func BracketAngled() Combinator[string] {
 // must match. For better performance, try and order the combinators from
 // most to least likely to match.
 //
+// If a [CutError] is encountered during parsing, backtracking stops immediately
+// and the error is propagated. This allows [Cut] to commit to a parsing path.
+//
 //	chomp.First(
 //		chomp.Tag("Good Morning"),
 //		chomp.Tag("Hello"))("Good Morning, World!")
@@ -229,8 +237,16 @@ func BracketAngled() Combinator[string] {
 func First[T Result](c ...Combinator[T]) Combinator[T] {
 	return func(s string) (string, T, error) {
 		for _, comb := range c {
-			if rem, ext, err := comb(s); err == nil {
+			rem, ext, err := comb(s)
+			if err == nil {
 				return rem, ext, nil
+			}
+
+			// Check for CutError - stop backtracking immediately
+			var cutErr CutError
+			if errors.As(err, &cutErr) {
+				var out T
+				return s, out, err
 			}
 		}
 
@@ -655,4 +671,238 @@ func LengthCount[T Result](length MappedCombinator[uint, string], c Combinator[T
 //	// ("def", []string{"a", "b", "c"}, nil)
 func Fill[T Result](c Combinator[T], n uint) Combinator[[]string] {
 	return Repeat(c, n)
+}
+
+// Verify validates the parsed result against a predicate function without
+// modifying the output. If the predicate returns false, the combinator fails.
+// Useful for semantic validation of parsed data.
+//
+//	chomp.Verify(chomp.Alpha(), func(s string) bool {
+//	    return len(s) >= 3
+//	})("Hello, World!")
+//	// (", World!", "Hello", nil)
+//
+//	chomp.Verify(chomp.Alpha(), func(s string) bool {
+//	    return len(s) >= 10
+//	})("Hello, World!")
+//	// ("Hello, World!", "", error)
+func Verify[T Result](c Combinator[T], predicate func(T) bool) Combinator[T] {
+	return func(s string) (string, T, error) {
+		var def T
+
+		rem, out, err := c(s)
+		if err != nil {
+			return s, def, err
+		}
+
+		if !predicate(out) {
+			return s, def, CombinatorParseError{Text: s, Type: "verify"}
+		}
+
+		return rem, out, nil
+	}
+}
+
+// Recognize returns the consumed input as the output, regardless of the
+// inner parser's result. Useful for capturing complex patterns as text.
+//
+//	chomp.Recognize(chomp.SepPair(
+//	    chomp.Alpha(),
+//	    chomp.Tag(", "),
+//	    chomp.Alpha()))("Hello, World!")
+//	// ("!", "Hello, World", nil)
+func Recognize[T Result](c Combinator[T]) Combinator[string] {
+	return func(s string) (string, string, error) {
+		rem, _, err := c(s)
+		if err != nil {
+			return s, "", err
+		}
+
+		consumed := s[:len(s)-len(rem)]
+		return rem, consumed, nil
+	}
+}
+
+// Consumed provides both the raw consumed text and the parsed output as a tuple.
+// Enables access to both representations simultaneously.
+//
+//	chomp.Consumed(chomp.SepPair(
+//	    chomp.Alpha(),
+//	    chomp.Tag(", "),
+//	    chomp.Alpha()))("Hello, World!")
+//	// ("!", []string{"Hello, World", "Hello", "World"}, nil)
+func Consumed[T Result](c Combinator[T]) Combinator[[]string] {
+	return func(s string) (string, []string, error) {
+		rem, out, err := c(s)
+		if err != nil {
+			return s, nil, err
+		}
+
+		consumed := s[:len(s)-len(rem)]
+		var ext []string
+		ext = append(ext, consumed)
+		ext = combine(ext, out)
+
+		return rem, ext, nil
+	}
+}
+
+// Eof matches only when at the end of input, returning an empty string
+// on success. Prevents partial parsing by ensuring no input remains.
+//
+//	chomp.Eof()("")
+//	// ("", "", nil)
+//
+//	chomp.Eof()("remaining")
+//	// ("remaining", "", error)
+func Eof() Combinator[string] {
+	return func(s string) (string, string, error) {
+		if s == "" {
+			return s, "", nil
+		}
+		return s, "", CombinatorParseError{Text: s, Type: "eof"}
+	}
+}
+
+// AllConsuming ensures the entire input is consumed by the inner parser,
+// failing if any text remains unparsed.
+//
+//	chomp.AllConsuming(chomp.Tag("Hello"))("Hello")
+//	// ("", "Hello", nil)
+//
+//	chomp.AllConsuming(chomp.Tag("Hello"))("Hello, World!")
+//	// ("Hello, World!", "", error)
+func AllConsuming[T Result](c Combinator[T]) Combinator[T] {
+	return func(s string) (string, T, error) {
+		var def T
+
+		rem, out, err := c(s)
+		if err != nil {
+			return s, def, err
+		}
+
+		if rem != "" {
+			return s, def, CombinatorParseError{
+				Input: rem,
+				Text:  s,
+				Type:  "all_consuming",
+			}
+		}
+
+		return rem, out, nil
+	}
+}
+
+// Rest returns all remaining unconsumed input as a string value.
+// Always succeeds, even with empty input.
+//
+//	chomp.Rest()("Hello, World!")
+//	// ("", "Hello, World!", nil)
+//
+//	chomp.Rest()("")
+//	// ("", "", nil)
+func Rest() Combinator[string] {
+	return func(s string) (string, string, error) {
+		return "", s, nil
+	}
+}
+
+// Value returns a fixed value upon parser success, discarding the actual
+// parse result. Useful for assigning semantic meaning to parsed tokens.
+//
+//	chomp.Value(chomp.Tag("true"), true)("true")
+//	// ("", true, nil)
+//
+//	chomp.Value(chomp.Tag("false"), false)("false")
+//	// ("", false, nil)
+func Value[S any, T Result](c Combinator[T], val S) MappedCombinator[S, T] {
+	return func(s string) (string, S, error) {
+		var def S
+
+		rem, _, err := c(s)
+		if err != nil {
+			return s, def, err
+		}
+
+		return rem, val, nil
+	}
+}
+
+// Cond conditionally applies a parser based on a boolean flag. If the
+// condition is true, the parser is applied. Otherwise, it returns an
+// empty result without consuming input. Enables optional parsing logic.
+//
+//	chomp.Cond(true, chomp.Tag("Hello"))("Hello, World!")
+//	// (", World!", "Hello", nil)
+//
+//	chomp.Cond(false, chomp.Tag("Hello"))("Hello, World!")
+//	// ("Hello, World!", "", nil)
+func Cond[T Result](cond bool, c Combinator[T]) Combinator[T] {
+	return func(s string) (string, T, error) {
+		var def T
+		if !cond {
+			return s, def, nil
+		}
+		return c(s)
+	}
+}
+
+// CutError is a fatal parsing error that prevents backtracking past the
+// decision point. Used with [Cut] to improve error messaging.
+type CutError struct {
+	// Err contains the underlying error that caused the cut.
+	Err error
+}
+
+// Error returns a friendly string representation of the cut error.
+func (e CutError) Error() string {
+	return fmt.Sprintf("(cut) fatal error, cannot backtrack. %v", e.Err)
+}
+
+// Unwrap returns the inner error.
+func (e CutError) Unwrap() error {
+	return e.Err
+}
+
+// Cut converts recoverable parsing errors into fatal failures, preventing
+// backtracking past decision points. Improves error messaging by committing
+// to a parsing path once the cut point is reached.
+//
+//	// Without Cut, First would try the second alternative
+//	// With Cut, once "if" matches, failure is fatal
+//	chomp.First(
+//	    chomp.All(
+//	        chomp.Tag("if"),
+//	        chomp.Cut(chomp.Tag("("))),
+//	    chomp.Tag("identifier"))("if x")
+//	// ("if x", nil, CutError{...})
+func Cut[T Result](c Combinator[T]) Combinator[T] {
+	return func(s string) (string, T, error) {
+		rem, out, err := c(s)
+		if err != nil {
+			var def T
+			return s, def, CutError{Err: err}
+		}
+		return rem, out, nil
+	}
+}
+
+// PeekNot succeeds when the inner parser fails without consuming input.
+// Implements negative lookahead for validation. On success, returns an
+// empty string without consuming any input. Pairs with [Peek] for
+// positive lookahead.
+//
+//	chomp.PeekNot(chomp.Tag("Hello"))("World!")
+//	// ("World!", "", nil)
+//
+//	chomp.PeekNot(chomp.Tag("Hello"))("Hello, World!")
+//	// ("Hello, World!", "", error)
+func PeekNot[T Result](c Combinator[T]) Combinator[string] {
+	return func(s string) (string, string, error) {
+		_, _, err := c(s)
+		if err == nil {
+			return s, "", CombinatorParseError{Text: s, Type: "peek_not"}
+		}
+		return s, "", nil
+	}
 }

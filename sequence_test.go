@@ -409,3 +409,333 @@ func TestFillNotEnoughElements(t *testing.T) {
 
 	require.Error(t, err)
 }
+
+func TestVerify(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: "Hello, World!",
+			rem:   ", World!",
+			ext:   "Hello",
+		},
+		{
+			name:  "Unicode",
+			input: "こんにちは、おはよう",
+			rem:   "、おはよう",
+			ext:   "こんにちは",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Verify(chomp.Alpha(), func(s string) bool {
+				return len(s) >= 3
+			})(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestVerifyPredicateFails(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.Verify(chomp.Alpha(), func(s string) bool {
+		return len(s) >= 10
+	})("Hello")
+
+	require.Error(t, err)
+}
+
+func TestRecognize(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		sep   string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: "Hello, World!",
+			sep:   ", ",
+			rem:   "!",
+			ext:   "Hello, World",
+		},
+		{
+			name:  "Unicode",
+			input: "こんにちは、世界！",
+			sep:   "、",
+			rem:   "！",
+			ext:   "こんにちは、世界",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Recognize(
+				chomp.SepPair(chomp.Alpha(), chomp.Tag(tt.sep), chomp.Alpha()))(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestConsumed(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		sep   string
+		rem   string
+		ext   []string
+	}{
+		{
+			name:  "Ascii",
+			input: "Hello, World!",
+			sep:   ", ",
+			rem:   "!",
+			ext:   []string{"Hello, World", "Hello", "World"},
+		},
+		{
+			name:  "Unicode",
+			input: "こんにちは、世界！",
+			sep:   "、",
+			rem:   "！",
+			ext:   []string{"こんにちは、世界", "こんにちは", "世界"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Consumed(
+				chomp.SepPair(chomp.Alpha(), chomp.Tag(tt.sep), chomp.Alpha()))(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestEof(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Eof()("")
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	assert.Equal(t, "", ext)
+}
+
+func TestEofAfterParsing(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Pair(chomp.Tag("Hello"), chomp.Eof())("Hello")
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	require.Len(t, ext, 2)
+	assert.Equal(t, "Hello", ext[0])
+	assert.Equal(t, "", ext[1])
+}
+
+func TestAllConsuming(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: "Hello",
+			ext:   "Hello",
+		},
+		{
+			name:  "Unicode",
+			input: "こんにちは",
+			ext:   "こんにちは",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.AllConsuming(chomp.Tag(tt.input))(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, "", rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestAllConsumingRemainingInput(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.AllConsuming(chomp.Tag("Hello"))("Hello, World!")
+	require.Error(t, err)
+}
+
+func TestRest(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		ext   string
+	}{
+		{
+			name:  "Ascii",
+			input: "Hello, World!",
+			ext:   "Hello, World!",
+		},
+		{
+			name:  "Unicode",
+			input: "こんにちは、世界！",
+			ext:   "こんにちは、世界！",
+		},
+		{
+			name:  "Empty",
+			input: "",
+			ext:   "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.Rest()(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, "", rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestValue(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Value(chomp.Tag("true"), true)("true remaining")
+
+	require.NoError(t, err)
+	assert.Equal(t, " remaining", rem)
+	assert.True(t, ext)
+}
+
+func TestCond(t *testing.T) {
+	t.Parallel()
+
+	t.Run("True", func(t *testing.T) {
+		t.Parallel()
+		rem, ext, err := chomp.Cond(true, chomp.Tag("Hello"))("Hello, World!")
+
+		require.NoError(t, err)
+		assert.Equal(t, ", World!", rem)
+		assert.Equal(t, "Hello", ext)
+	})
+
+	t.Run("False", func(t *testing.T) {
+		t.Parallel()
+		rem, ext, err := chomp.Cond(false, chomp.Tag("Hello"))("Hello, World!")
+
+		require.NoError(t, err)
+		assert.Equal(t, "Hello, World!", rem)
+		assert.Equal(t, "", ext)
+	})
+}
+
+func TestCut(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Cut(chomp.Tag("Hello"))("Hello, World!")
+
+	require.NoError(t, err)
+	assert.Equal(t, ", World!", rem)
+	assert.Equal(t, "Hello", ext)
+}
+
+func TestCutPreventsBacktracking(t *testing.T) {
+	t.Parallel()
+
+	// Without Cut, First would try the second alternative and succeed
+	// With Cut, once "if" matches, failure on "(" is fatal - no backtracking
+	_, _, err := chomp.First(
+		chomp.Flatten(chomp.All(
+			chomp.Tag("if"),
+			chomp.Cut(chomp.Tag("(")))),
+		chomp.Tag("if x"))("if x")
+
+	require.Error(t, err)
+
+	var cutErr chomp.CutError
+	require.ErrorAs(t, err, &cutErr)
+}
+
+func TestCutAllowsBacktrackingBeforeCut(t *testing.T) {
+	t.Parallel()
+
+	// If the first alternative fails BEFORE the Cut point, backtracking should still work
+	rem, ext, err := chomp.First(
+		chomp.Flatten(chomp.All(
+			chomp.Tag("while"),
+			chomp.Cut(chomp.Tag("(")))),
+		chomp.Tag("if"))("if x")
+
+	require.NoError(t, err)
+	assert.Equal(t, " x", rem)
+	assert.Equal(t, "if", ext)
+}
+
+func TestPeekNot(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		input string
+		tag   string
+	}{
+		{
+			name:  "Ascii",
+			input: "World!",
+			tag:   "Hello",
+		},
+		{
+			name:  "Unicode",
+			input: "おはよう",
+			tag:   "こんにちは",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.PeekNot(chomp.Tag(tt.tag))(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.input, rem)
+			assert.Equal(t, "", ext)
+		})
+	}
+}
+
+func TestPeekNotFails(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.PeekNot(chomp.Tag("Hello"))("Hello, World!")
+	require.Error(t, err)
+}
