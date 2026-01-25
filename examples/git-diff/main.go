@@ -95,21 +95,27 @@ func Parse(in string) (FileDiff, error) {
 	}, nil
 }
 
+// diffPath parses the diff header line and extracts the file path.
+// Uses Recognize to capture the raw path text from "a/path" format.
 func diffPath() chomp.Combinator[string] {
 	return func(s string) (string, string, error) {
 		// diff --git a/scan/scanner.go b/scan/scanner.go
-		var rem string
-		var err error
+		rem, _, err := chomp.Tag("diff --git ")(s)
+		if err != nil {
+			return s, "", err
+		}
 
-		if rem, _, err = chomp.Tag("diff --git ")(s); err != nil {
+		// Use Recognize to capture "a/path" as raw text, then extract path after "/"
+		var rawPath string
+		rem, rawPath, err = chomp.Recognize(
+			chomp.Pair(chomp.Tag("a/"), chomp.Until(" ")),
+		)(rem)
+		if err != nil {
 			return rem, "", err
 		}
 
-		var path string
-		if rem, path, err = chomp.Until(" ")(rem); err != nil {
-			return rem, "", err
-		}
-		path = path[strings.Index(path, "/")+1:]
+		// Strip the "a/" prefix
+		path := rawPath[2:]
 
 		rem, _, err = chomp.Eol()(rem)
 		return rem, path, err
@@ -166,11 +172,7 @@ func diffChunk() chomp.Combinator[[]string] {
 			+       "bytes"
 			+)
 		*/
-		var rem string
-		var err error
-
-		var changes []string
-		rem, changes, err = chomp.Delimited(
+		rem, changes, err := chomp.Delimited(
 			chomp.Tag(hdrDelim+" "),
 			chomp.SepPair(diffChunkHeaderChange(remPrefix), chomp.Tag(" "), diffChunkHeaderChange(addPrefix)),
 			chomp.Eol(),
@@ -201,16 +203,24 @@ func diffChunk() chomp.Combinator[[]string] {
 	}
 }
 
+// diffChunkHeaderChange parses line number and optional count from chunk header.
+// Uses Verify to ensure line numbers are valid positive integers.
 func diffChunkHeaderChange(prefix string) chomp.Combinator[[]string] {
 	return func(s string) (string, []string, error) {
+		// Matches patterns like "-25" or "+3,3"
 		rem, _, err := chomp.Tag(prefix)(s)
 		if err != nil {
 			return rem, nil, err
 		}
 
 		return chomp.All(
-			chomp.While(chomp.IsDigit),
-			chomp.Opt(chomp.Prefixed(chomp.While(chomp.IsDigit), chomp.Tag(","))),
+			// Line number - verify it's a valid positive integer
+			chomp.Verify(chomp.Digit(), func(s string) bool {
+				n, err := strconv.Atoi(s)
+				return err == nil && n >= 0
+			}),
+			// Optional count (,N) - defaults to empty string if not present
+			chomp.Opt(chomp.Prefixed(chomp.Digit(), chomp.Tag(","))),
 		)(rem)
 	}
 }

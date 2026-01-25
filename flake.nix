@@ -51,8 +51,15 @@
             };
           };
         };
+        examples = pkgs.callPackage ./default.nix {};
       in
         with pkgs; {
+          packages =
+            examples
+            // {
+              default = examples.git-diff;
+            };
+
           devShells.default = mkShell {
             inherit (pre-commit-check) shellHook;
 
@@ -62,6 +69,7 @@
                 (go-bin.fromGoMod "${self}/go.mod")
                 gofumpt
                 golangci-lint
+                go-overlay.packages.${system}.govendor
                 nil
                 typos
               ]

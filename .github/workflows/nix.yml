@@ -1,0 +1,59 @@
+name: nix
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.go"
+      - "**.nix"
+      - "flake.lock"
+      - "examples/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "**.go"
+      - "**.nix"
+      - "flake.lock"
+      - "examples/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  examples:
+    runs-on: ${{ matrix.os }}
+    name: examples (${{ matrix.os }})
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, macos-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@4e002c8ec80594ecd40e759629461e26c8abed15 # v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Cachix
+        uses: cachix/cachix-action@3ba601ff5bbb07c7220846facfa2cd81eeee15a1 # v16
+        with:
+          name: purpleclay
+          authToken: "${{ secrets.GH_CACHIX }}"
+          skipPush: true
+          useDaemon: false
+
+      - name: Build and run git-diff example
+        run: |
+          nix build .#git-diff
+          ./result/bin/git-diff
+
+      - name: Build and run gpg example
+        run: |
+          nix build .#gpg
+          ./result/bin/gpg
