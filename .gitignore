@@ -19,11 +19,13 @@
 !.envrc
 !flake.nix
 !flake.lock
+!*.nix
 
 # Allow Go files
 !*.go
 !go.sum
 !go.mod
+!govendor.toml
 
 # Recurse through sub-directories applying the same patterns
 !*/

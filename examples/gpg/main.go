@@ -133,18 +133,13 @@ func key() chomp.Combinator[[]string] {
 	}
 }
 
+// colon parses a colon-delimited field, using Suffixed to consume the trailing colon.
 func colon() chomp.Combinator[string] {
-	return func(s string) (string, string, error) {
-		// <any>:
-		rem, ext, err := chomp.Pair(chomp.Until(":"), chomp.Tag(":"))(s)
-		if err != nil {
-			return rem, "", err
-		}
-
-		return rem, ext[0], nil
-	}
+	return chomp.Suffixed(chomp.Until(":"), chomp.Tag(":"))
 }
 
+// fingerprint parses the fingerprint line (fpr) and validates it is 40 hex characters.
+// Uses Verify to ensure the fingerprint has the correct format.
 func fingerprint() chomp.Combinator[string] {
 	return func(s string) (string, string, error) {
 		// fpr:::::::::28BF65E18407FD2966565284AAC7E54CBD73F690:
@@ -155,8 +150,12 @@ func fingerprint() chomp.Combinator[string] {
 			return rem, "", err
 		}
 
+		// Use Verify to ensure fingerprint is exactly 40 hex characters
 		var fpr string
-		if rem, fpr, err = chomp.Until(":")(rem); err != nil {
+		if rem, fpr, err = chomp.Verify(
+			chomp.HexDigit(),
+			func(s string) bool { return len(s) == 40 },
+		)(rem); err != nil {
 			return rem, "", err
 		}
 
@@ -167,6 +166,8 @@ func fingerprint() chomp.Combinator[string] {
 	}
 }
 
+// keygrip parses the keygrip line (grp) and validates it is 40 hex characters.
+// Uses Verify to ensure the keygrip has the correct format.
 func keygrip() chomp.Combinator[string] {
 	return func(s string) (string, string, error) {
 		// grp:::::::::12E86CE47CEB942D2A65B4D02106657BA8D0C92B:
@@ -177,8 +178,12 @@ func keygrip() chomp.Combinator[string] {
 			return rem, "", err
 		}
 
+		// Use Verify to ensure keygrip is exactly 40 hex characters
 		var grp string
-		if rem, grp, err = chomp.Until(":")(rem); err != nil {
+		if rem, grp, err = chomp.Verify(
+			chomp.HexDigit(),
+			func(s string) bool { return len(s) == 40 },
+		)(rem); err != nil {
 			return rem, "", err
 		}
 
