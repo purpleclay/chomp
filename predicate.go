@@ -3,6 +3,7 @@ package chomp
 import (
 	"fmt"
 	"unicode"
+	"unicode/utf8"
 )
 
 // Predicate defines an expression that will return either true or false
@@ -181,7 +182,7 @@ func WhileN(p Predicate, n uint) Combinator[string] {
 			if !p.Match(c) {
 				break
 			}
-			pos += len(string(c))
+			pos += utf8.RuneLen(c)
 		}
 
 		if uint(pos) < n {
@@ -209,7 +210,7 @@ func WhileNM(p Predicate, n, m uint) Combinator[string] {
 			if !p.Match(c) {
 				break
 			}
-			pos += len(string(c))
+			pos += utf8.RuneLen(c)
 		}
 
 		if uint(pos) < n || uint(pos) > m {
@@ -250,7 +251,7 @@ func WhileNotN(p Predicate, n uint) Combinator[string] {
 			if p.Match(c) {
 				break
 			}
-			pos += len(string(c))
+			pos += utf8.RuneLen(c)
 		}
 
 		if uint(pos) < n {
@@ -279,7 +280,7 @@ func WhileNotNM(p Predicate, n, m uint) Combinator[string] {
 			if p.Match(c) {
 				break
 			}
-			pos += len(string(c))
+			pos += utf8.RuneLen(c)
 		}
 
 		if uint(pos) < n || uint(pos) > m {

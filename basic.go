@@ -100,7 +100,7 @@ func Any(str string) Combinator[string] {
 		for _, sc := range s {
 			for _, strc := range str {
 				if sc == strc {
-					pos = pos + len(string(strc))
+					pos = pos + utf8.RuneLen(strc)
 					continue match
 				}
 			}
@@ -133,7 +133,7 @@ func Not(str string) Combinator[string] {
 				}
 			}
 
-			pos = pos + len(string(sc))
+			pos = pos + utf8.RuneLen(sc)
 		}
 
 		if pos == 0 {
@@ -257,9 +257,9 @@ func Escaped(normal Combinator[string], escape rune, escapable Combinator[string
 				continue
 			}
 
-			runes := []rune(rem)
-			if len(runes) > 0 && runes[0] == escape {
-				escLen := len(string(escape))
+			r, _ := utf8.DecodeRuneInString(rem)
+			if r == escape {
+				escLen := utf8.RuneLen(escape)
 				if len(rem) <= escLen {
 					break
 				}
@@ -311,9 +311,9 @@ func EscapedTransform(normal Combinator[string], escape rune, transform Combinat
 				continue
 			}
 
-			runes := []rune(rem)
-			if len(runes) > 0 && runes[0] == escape {
-				escLen := len(string(escape))
+			r, _ := utf8.DecodeRuneInString(rem)
+			if r == escape {
+				escLen := utf8.RuneLen(escape)
 				if len(rem) <= escLen {
 					break
 				}
