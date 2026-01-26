@@ -1,6 +1,9 @@
 package chomp
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 // Crlf must match either a CR '\r' or CRLF '\r\n' line ending.
 //
@@ -24,6 +27,26 @@ func Crlf() Combinator[string] {
 //	// ("It's a great day!", "Hello, World!", nil)
 func Eol() Combinator[string] {
 	return func(s string) (string, string, error) {
-		return Suffixed(WhileNotN(IsLineEnding, 0), Opt(Crlf()))(s)
+		pos := 0
+		for _, c := range s {
+			if c == '\n' || c == '\r' {
+				break
+			}
+			pos += utf8.RuneLen(c)
+		}
+
+		rem := s[pos:]
+		matched := s[:pos]
+		if rem != "" {
+			if rem[0] == '\n' {
+				rem = rem[1:]
+			} else if len(rem) >= 2 && rem[0] == '\r' && rem[1] == '\n' {
+				rem = rem[2:]
+			} else if rem[0] == '\r' {
+				rem = rem[1:]
+			}
+		}
+
+		return rem, matched, nil
 	}
 }
