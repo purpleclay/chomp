@@ -3,6 +3,7 @@ package chomp
 import (
 	"fmt"
 	"strings"
+	"unicode/utf8"
 )
 
 // Char matches a specific single character at the beginning of the input text.
@@ -11,9 +12,13 @@ import (
 //	// (",rest", ",", nil)
 func Char(c rune) Combinator[string] {
 	return func(s string) (string, string, error) {
-		if runes := []rune(s); len(runes) > 0 && runes[0] == c {
-			matched := string(c)
-			return s[len(matched):], matched, nil
+		if s == "" {
+			return s, "", CombinatorParseError{Input: string(c), Text: s, Type: "char"}
+		}
+
+		r, size := utf8.DecodeRuneInString(s)
+		if r == c {
+			return s[size:], s[:size], nil
 		}
 
 		return s, "", CombinatorParseError{Input: fmt.Sprintf("%c", c), Text: s, Type: "char"}
@@ -146,12 +151,14 @@ func Not(str string) Combinator[string] {
 //	// ("ello, World!", "H", nil)
 func OneOf(str string) Combinator[string] {
 	return func(s string) (string, string, error) {
-		if txt := []rune(s); len(txt) > 0 {
-			for _, strc := range str {
-				if txt[0] == strc {
-					pos := len(string(txt[0]))
-					return s[pos:], s[:pos], nil
-				}
+		if s == "" {
+			return s, "", CombinatorParseError{Input: str, Text: s, Type: "one_of"}
+		}
+
+		r, size := utf8.DecodeRuneInString(s)
+		for _, strc := range str {
+			if r == strc {
+				return s[size:], s[:size], nil
 			}
 		}
 
@@ -166,18 +173,18 @@ func OneOf(str string) Combinator[string] {
 //	// ("ello, World!", "H", nil)
 func NoneOf(str string) Combinator[string] {
 	return func(s string) (string, string, error) {
-		if txt := []rune(s); len(txt) > 0 {
-			for _, strc := range str {
-				if txt[0] == strc {
-					break
-				}
-			}
-
-			pos := len(string(txt[0]))
-			return s[pos:], s[:pos], nil
+		if s == "" {
+			return s, "", CombinatorParseError{Input: str, Text: s, Type: "none_of"}
 		}
 
-		return s, "", CombinatorParseError{Input: str, Text: s, Type: "none_of"}
+		r, size := utf8.DecodeRuneInString(s)
+		for _, strc := range str {
+			if r == strc {
+				return s, "", CombinatorParseError{Input: str, Text: s, Type: "none_of"}
+			}
+		}
+
+		return s[size:], s[:size], nil
 	}
 }
 
@@ -243,8 +250,8 @@ func Escaped(normal Combinator[string], escape rune, escapable Combinator[string
 		pos := 0
 		rem := s
 
-		for len(rem) > 0 {
-			if newRem, ext, err := normal(rem); err == nil && len(ext) > 0 {
+		for rem != "" {
+			if newRem, ext, err := normal(rem); err == nil && ext != "" {
 				pos += len(ext)
 				rem = newRem
 				continue
@@ -257,7 +264,7 @@ func Escaped(normal Combinator[string], escape rune, escapable Combinator[string
 					break
 				}
 
-				if _, ext, err := escapable(rem[escLen:]); err == nil && len(ext) > 0 {
+				if _, ext, err := escapable(rem[escLen:]); err == nil && ext != "" {
 					pos += escLen + len(ext)
 					rem = rem[escLen+len(ext):]
 					continue
@@ -297,8 +304,8 @@ func EscapedTransform(normal Combinator[string], escape rune, transform Combinat
 		var result strings.Builder
 		rem := s
 
-		for len(rem) > 0 {
-			if newRem, ext, err := normal(rem); err == nil && len(ext) > 0 {
+		for rem != "" {
+			if newRem, ext, err := normal(rem); err == nil && ext != "" {
 				result.WriteString(ext)
 				rem = newRem
 				continue
@@ -311,7 +318,7 @@ func EscapedTransform(normal Combinator[string], escape rune, transform Combinat
 					break
 				}
 
-				if newRem, transformed, err := transform(rem[escLen:]); err == nil && len(transformed) > 0 {
+				if newRem, transformed, err := transform(rem[escLen:]); err == nil && transformed != "" {
 					result.WriteString(transformed)
 					rem = newRem
 					continue
