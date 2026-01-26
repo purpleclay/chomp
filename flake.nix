@@ -69,6 +69,7 @@
                 (go-bin.fromGoMod "${self}/go.mod")
                 gofumpt
                 golangci-lint
+                goperf
                 go-overlay.packages.${system}.govendor
                 nil
                 typos
