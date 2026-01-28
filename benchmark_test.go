@@ -195,13 +195,23 @@ func BenchmarkAny(b *testing.B) {
 		input string
 	}{
 		{
-			name:  "Ascii",
-			chars: "the quic",
+			name:  "Small/Ascii",
+			chars: "the",
 			input: asciiSentence,
 		},
 		{
-			name:  "Unicode",
-			chars: "素早い茶色",
+			name:  "Large/Ascii",
+			chars: "the quickbrown",
+			input: asciiSentence,
+		},
+		{
+			name:  "Small/Unicode",
+			chars: "素早い",
+			input: unicodeSentence,
+		},
+		{
+			name:  "Large/Unicode",
+			chars: "素早い茶色のキツネ",
 			input: unicodeSentence,
 		},
 	}
@@ -226,13 +236,23 @@ func BenchmarkNot(b *testing.B) {
 		input string
 	}{
 		{
-			name:  "Ascii",
+			name:  "Small/Ascii",
 			chars: "xyz",
 			input: asciiSentence,
 		},
 		{
-			name:  "Unicode",
+			name:  "Large/Ascii",
+			chars: "xyzABCDEFGH",
+			input: asciiSentence,
+		},
+		{
+			name:  "Small/Unicode",
 			chars: "犬猫",
+			input: unicodeSentence,
+		},
+		{
+			name:  "Large/Unicode",
+			chars: "犬猫鳥魚虫蛇馬牛羊",
 			input: unicodeSentence,
 		},
 	}
