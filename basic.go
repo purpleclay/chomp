@@ -87,12 +87,41 @@ func TagNoCase(str string) Combinator[string] {
 	}
 }
 
+// charSetThreshold is the minimum charset size at which a map lookup
+// becomes more efficient than linear scanning
+const charSetThreshold = 8
+
 // Any must match at least one character from the provided sequence at the
 // beginning of the input text. Parsing stops upon the first unmatched character.
 //
 //	chomp.Any("eH")("Hello, World!")
 //	// ("llo, World!", "He", nil)
 func Any(str string) Combinator[string] {
+	runeCount := utf8.RuneCountInString(str)
+
+	if runeCount >= charSetThreshold {
+		charSet := make(map[rune]struct{}, runeCount)
+		for _, r := range str {
+			charSet[r] = struct{}{}
+		}
+
+		return func(s string) (string, string, error) {
+			pos := 0
+			for _, sc := range s {
+				if _, ok := charSet[sc]; !ok {
+					break
+				}
+				pos += utf8.RuneLen(sc)
+			}
+
+			if pos == 0 {
+				return s, "", CombinatorParseError{Input: str, Text: s, Type: "any"}
+			}
+
+			return s[pos:], s[:pos], nil
+		}
+	}
+
 	return func(s string) (string, string, error) {
 		pos := 0
 
@@ -100,11 +129,10 @@ func Any(str string) Combinator[string] {
 		for _, sc := range s {
 			for _, strc := range str {
 				if sc == strc {
-					pos = pos + utf8.RuneLen(strc)
+					pos += utf8.RuneLen(sc)
 					continue match
 				}
 			}
-
 			break match
 		}
 
@@ -122,6 +150,31 @@ func Any(str string) Combinator[string] {
 //	chomp.Not("ol")("Hello, World!")
 //	// ("llo, World!", "He", nil)
 func Not(str string) Combinator[string] {
+	runeCount := utf8.RuneCountInString(str)
+
+	if runeCount >= charSetThreshold {
+		charSet := make(map[rune]struct{}, runeCount)
+		for _, r := range str {
+			charSet[r] = struct{}{}
+		}
+
+		return func(s string) (string, string, error) {
+			pos := 0
+			for _, sc := range s {
+				if _, ok := charSet[sc]; ok {
+					break
+				}
+				pos += utf8.RuneLen(sc)
+			}
+
+			if pos == 0 {
+				return s, "", CombinatorParseError{Input: str, Text: s, Type: "not"}
+			}
+
+			return s[pos:], s[:pos], nil
+		}
+	}
+
 	return func(s string) (string, string, error) {
 		pos := 0
 
@@ -132,8 +185,7 @@ func Not(str string) Combinator[string] {
 					break match
 				}
 			}
-
-			pos = pos + utf8.RuneLen(sc)
+			pos += utf8.RuneLen(sc)
 		}
 
 		if pos == 0 {
