@@ -266,13 +266,15 @@ func Until(str string) Combinator[string] {
 //	// (", World!", "Hello", nil)
 func Take(n uint) Combinator[string] {
 	return func(s string) (string, string, error) {
-		runes := []rune(s)
-		if uint(len(runes)) < n {
-			return s, "", CombinatorParseError{Text: s, Type: "take"}
+		pos := 0
+		for i := uint(0); i < n; i++ {
+			if pos >= len(s) {
+				return s, "", CombinatorParseError{Text: s, Type: "take"}
+			}
+			_, size := utf8.DecodeRuneInString(s[pos:])
+			pos += size
 		}
-
-		taken := string(runes[:n])
-		return s[len(taken):], taken, nil
+		return s[pos:], s[:pos], nil
 	}
 }
 
