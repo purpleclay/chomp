@@ -31,12 +31,12 @@ func Char(c rune) Combinator[string] {
 //	// ("ello", "H", nil)
 func AnyChar() Combinator[string] {
 	return func(s string) (string, string, error) {
-		if runes := []rune(s); len(runes) > 0 {
-			matched := string(runes[0])
-			return s[len(matched):], matched, nil
+		if s == "" {
+			return s, "", CombinatorParseError{Text: s, Type: "any_char"}
 		}
 
-		return s, "", CombinatorParseError{Text: s, Type: "any_char"}
+		_, size := utf8.DecodeRuneInString(s)
+		return s[size:], s[:size], nil
 	}
 }
 
@@ -47,9 +47,13 @@ func AnyChar() Combinator[string] {
 //	// ("ello", "H", nil)
 func Satisfy(pred func(rune) bool) Combinator[string] {
 	return func(s string) (string, string, error) {
-		if runes := []rune(s); len(runes) > 0 && pred(runes[0]) {
-			matched := string(runes[0])
-			return s[len(matched):], matched, nil
+		if s == "" {
+			return s, "", CombinatorParseError{Text: s, Type: "satisfy"}
+		}
+
+		r, size := utf8.DecodeRuneInString(s)
+		if pred(r) {
+			return s[size:], s[:size], nil
 		}
 
 		return s, "", CombinatorParseError{Text: s, Type: "satisfy"}
