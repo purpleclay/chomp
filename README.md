@@ -72,6 +72,16 @@ rem, kv, _ := KeyValue()("name=alice&age=30")
 // rem: "&age=30"
 ```
 
+## The Combinator Contract
+
+Every combinator honours a single documented contract, so combinators compose predictably regardless of who wrote them:
+
+1. **Failure is non-consuming.** On error, a combinator returns the original input string unchanged (and the zero value for `ext`).
+2. **Success extraction is a prefix.** On success, for a `Combinator[string]`, `ext` is exactly the consumed prefix: `input == ext + rem`. Combinators that transform their output, or intentionally discard part of the matched text (delimiters, prefixes, suffixes, separators), are documented as such and are exempt from this clause only.
+3. **Zero-width success terminates repetition.** A repetition combinator stops iterating when an iteration succeeds without consuming input.
+
+If you write your own combinators, follow the same rules — `First`, `Opt`, and the repetition combinators all rely on rule 1 to backtrack correctly.
+
 ## Examples
 
 Real-world parser examples:

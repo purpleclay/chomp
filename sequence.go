@@ -14,12 +14,12 @@ func Pair[T, U Result](c1 Combinator[T], c2 Combinator[U]) Combinator[[]string] 
 	return func(s string) (string, []string, error) {
 		rem, out1, err := c1(s)
 		if err != nil {
-			return rem, nil, ParserError{Err: err, Type: "pair"}
+			return s, nil, ParserError{Err: err, Type: "pair"}
 		}
 
 		rem, out2, err := c2(rem)
 		if err != nil {
-			return rem, nil, ParserError{Err: err, Type: "pair"}
+			return s, nil, ParserError{Err: err, Type: "pair"}
 		}
 
 		var ext []string
@@ -54,17 +54,17 @@ func SepPair[T, U, V Result](c1 Combinator[T], sep Combinator[U], c2 Combinator[
 	return func(s string) (string, []string, error) {
 		rem, out1, err := c1(s)
 		if err != nil {
-			return rem, nil, ParserError{Err: err, Type: "sep_pair"}
+			return s, nil, ParserError{Err: err, Type: "sep_pair"}
 		}
 
 		rem, _, err = sep(rem)
 		if err != nil {
-			return rem, nil, ParserError{Err: err, Type: "sep_pair"}
+			return s, nil, ParserError{Err: err, Type: "sep_pair"}
 		}
 
 		rem, out2, err := c2(rem)
 		if err != nil {
-			return rem, nil, ParserError{Err: err, Type: "sep_pair"}
+			return s, nil, ParserError{Err: err, Type: "sep_pair"}
 		}
 
 		var ext []string
@@ -82,18 +82,18 @@ func SepPair[T, U, V Result](c1 Combinator[T], sep Combinator[U], c2 Combinator[
 func Repeat[T Result](c Combinator[T], n uint) Combinator[[]string] {
 	return func(s string) (string, []string, error) {
 		var ext []string
-		var err error
 
 		rem := s
 		for i := range n {
-			var out T
-			if rem, out, err = c(rem); err != nil {
-				return rem, nil, RangedParserError{
+			tmpRem, out, err := c(rem)
+			if err != nil {
+				return s, nil, RangedParserError{
 					Err:  err,
 					Exec: RangeExecution(i, n),
 					Type: "repeat",
 				}
 			}
+			rem = tmpRem
 			ext = combine(ext, out)
 		}
 
@@ -110,7 +110,6 @@ func Repeat[T Result](c Combinator[T], n uint) Combinator[[]string] {
 func RepeatRange[T Result](c Combinator[T], n, m uint) Combinator[[]string] {
 	return func(s string) (string, []string, error) {
 		var ext []string
-		var err error
 
 		if n > m {
 			n, m = m, n
@@ -118,17 +117,18 @@ func RepeatRange[T Result](c Combinator[T], n, m uint) Combinator[[]string] {
 
 		rem := s
 		for i := range m {
-			var out T
-			if rem, out, err = c(rem); err != nil {
+			tmpRem, out, err := c(rem)
+			if err != nil {
 				if i+1 > n {
 					break
 				}
-				return rem, nil, RangedParserError{
+				return s, nil, RangedParserError{
 					Err:  err,
 					Exec: RangeExecution(i, n, m),
 					Type: "repeat_range",
 				}
 			}
+			rem = tmpRem
 			ext = combine(ext, out)
 		}
 
@@ -155,12 +155,12 @@ func Delimited[T, U, V Result](left Combinator[T], str Combinator[U], right Comb
 
 		rem, ext, err := str(rem)
 		if err != nil {
-			return rem, def, ParserError{Err: err, Type: "delimited"}
+			return s, def, ParserError{Err: err, Type: "delimited"}
 		}
 
 		rem, _, err = right(rem)
 		if err != nil {
-			return rem, def, ParserError{Err: err, Type: "delimited"}
+			return s, def, ParserError{Err: err, Type: "delimited"}
 		}
 
 		return rem, ext, nil
@@ -272,7 +272,7 @@ func All[T Result](c ...Combinator[T]) Combinator[[]string] {
 		for _, comb := range c {
 			var out T
 			if rem, out, err = comb(rem); err != nil {
-				return rem, nil, ParserError{Err: err, Type: "all"}
+				return s, nil, ParserError{Err: err, Type: "all"}
 			}
 			ext = combine(ext, out)
 		}
@@ -317,7 +317,7 @@ func ManyN[T Result](c Combinator[T], n uint) Combinator[[]string] {
 		}
 
 		if count < n {
-			return rem, nil, RangedParserError{
+			return s, nil, RangedParserError{
 				Err:  err,
 				Exec: RangeExecution(count, n),
 				Type: "many_n",
@@ -340,10 +340,15 @@ func Prefixed(c, pre Combinator[string]) Combinator[string] {
 	return func(s string) (string, string, error) {
 		rem, _, err := pre(s)
 		if err != nil {
-			return rem, "", err
+			return s, "", err
 		}
 
-		return c(rem)
+		rem, ext, err := c(rem)
+		if err != nil {
+			return s, "", err
+		}
+
+		return rem, ext, nil
 	}
 }
 
@@ -358,12 +363,12 @@ func Suffixed(c, suf Combinator[string]) Combinator[string] {
 	return func(s string) (string, string, error) {
 		rem, ext, err := c(s)
 		if err != nil {
-			return rem, "", err
+			return s, "", err
 		}
 
 		rem, _, err = suf(rem)
 		if err != nil {
-			return rem, "", err
+			return s, "", err
 		}
 
 		return rem, ext, nil
@@ -386,7 +391,7 @@ func SeparatedList[T, U Result](c Combinator[T], sep Combinator[U]) Combinator[[
 		// First element (required)
 		var out T
 		if rem, out, err = c(rem); err != nil {
-			return rem, nil, RangedParserError{
+			return s, nil, RangedParserError{
 				Err:  err,
 				Exec: RangeExecution(0, 1),
 				Type: "separated_list",
@@ -469,7 +474,7 @@ func ManyTill[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]str
 			// Check for terminator first
 			if tmpRem, _, termErr := term(rem); termErr == nil {
 				if count == 0 {
-					return rem, nil, RangedParserError{
+					return s, nil, RangedParserError{
 						Err:  CombinatorParseError{Text: s, Type: "many_till"},
 						Exec: RangeExecution(0, 1),
 						Type: "many_till",
@@ -482,7 +487,7 @@ func ManyTill[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]str
 			var out T
 			var tmpRem string
 			if tmpRem, out, err = c(rem); err != nil {
-				return rem, nil, ParserError{Err: err, Type: "many_till"}
+				return s, nil, ParserError{Err: err, Type: "many_till"}
 			}
 			rem = tmpRem
 			ext = combine(ext, out)
@@ -511,7 +516,7 @@ func ManyTill0[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]st
 			var out T
 			var tmpRem string
 			if tmpRem, out, err = c(rem); err != nil {
-				return rem, nil, ParserError{Err: err, Type: "many_till_0"}
+				return s, nil, ParserError{Err: err, Type: "many_till_0"}
 			}
 			rem = tmpRem
 			ext = combine(ext, out)
@@ -547,7 +552,7 @@ func FoldMany[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) Ma
 		}
 
 		if count == 0 {
-			return rem, init, RangedParserError{
+			return s, init, RangedParserError{
 				Err:  err,
 				Exec: RangeExecution(0, 1),
 				Type: "fold_many",
@@ -607,7 +612,7 @@ func ManyCount[T Result](c Combinator[T]) MappedCombinator[uint, T] {
 		}
 
 		if count == 0 {
-			return rem, 0, RangedParserError{
+			return s, 0, RangedParserError{
 				Err:  err,
 				Exec: RangeExecution(0, 1),
 				Type: "many_count",
@@ -657,10 +662,15 @@ func LengthCount[T Result](length MappedCombinator[uint, string], c Combinator[T
 	return func(s string) (string, []string, error) {
 		rem, count, err := length(s)
 		if err != nil {
-			return rem, nil, ParserError{Err: err, Type: "length_count"}
+			return s, nil, ParserError{Err: err, Type: "length_count"}
 		}
 
-		return Repeat(c, count)(rem)
+		rem, ext, err := Repeat(c, count)(rem)
+		if err != nil {
+			return s, nil, err
+		}
+
+		return rem, ext, nil
 	}
 }
 
