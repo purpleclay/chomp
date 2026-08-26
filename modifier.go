@@ -24,7 +24,7 @@ func Map[S any, T Result](c Combinator[T], mapper func(in T) S) MappedCombinator
 
 		rem, out, err := c(s)
 		if err != nil {
-			return rem, mapped, err
+			return s, mapped, err
 		}
 
 		mapped = mapper(out)
@@ -54,10 +54,10 @@ func S(c Combinator[string]) Combinator[[]string] {
 	return func(s string) (string, []string, error) {
 		rem, ext, err := c(s)
 		if err != nil {
-			return rem, nil, err
+			return s, nil, err
 		}
 
-		return rem, []string{ext}, err
+		return rem, []string{ext}, nil
 	}
 }
 
@@ -74,11 +74,11 @@ func I(c Combinator[[]string], i int) Combinator[string] {
 	return func(s string) (string, string, error) {
 		rem, ext, err := c(s)
 		if err != nil {
-			return rem, "", err
+			return s, "", err
 		}
 
 		if i < 0 || i >= len(ext) {
-			return rem, "", ParserError{
+			return s, "", ParserError{
 				Err:  fmt.Errorf("index %d is out of bounds within string slice of %d elements", i, len(ext)),
 				Type: "i",
 			}
@@ -116,7 +116,7 @@ func Flatten(c Combinator[[]string]) Combinator[string] {
 	return func(s string) (string, string, error) {
 		rem, ext, err := c(s)
 		if err != nil {
-			return rem, "", ParserError{Err: err, Type: "flatten"}
+			return s, "", ParserError{Err: err, Type: "flatten"}
 		}
 		return rem, strings.Join(ext, ""), nil
 	}
