@@ -284,6 +284,7 @@ func All[T Result](c ...Combinator[T]) Combinator[[]string] {
 // Many will scan the input text, and it must match the [Combinator] at least
 // once. This [Combinator] is greedy and will continuously execute until the first
 // failed match. It is the equivalent of calling [ManyN] with an argument of 1.
+// See [ManyN] for its zero-width matching behaviour.
 //
 //	chomp.Many(one.Of("Ho"))("Hello, World!")
 //	// ("ello, World!", []string{"H"}, nil)
@@ -293,7 +294,8 @@ func Many[T Result](c Combinator[T]) Combinator[[]string] {
 
 // ManyN will scan the input text and match the [Combinator] a minimum number
 // of times. This [Combinator] is greedy and will continuously execute until
-// the first failed match.
+// the first failed match. An iteration that succeeds without consuming input
+// stops the loop instead of being counted, so it can never repeat forever.
 //
 //	chomp.ManyN(chomp.OneOf("W"), 0)("Hello, World!")
 //	// ("Hello, World!", nil, nil)
@@ -309,6 +311,11 @@ func ManyN[T Result](c Combinator[T], n uint) Combinator[[]string] {
 			var tmpRem string
 
 			if tmpRem, out, err = c(rem); err != nil {
+				break
+			}
+			if len(tmpRem) == len(rem) {
+				// zero-width success: cannot make progress, stop to avoid looping forever
+				err = CombinatorParseError{Text: rem, Type: "many_n"}
 				break
 			}
 			rem = tmpRem
@@ -377,7 +384,8 @@ func Suffixed(c, suf Combinator[string]) Combinator[string] {
 
 // SeparatedList will scan the input text and match the [Combinator] separated
 // by the provided separator. At least one element must match. The separator
-// output is discarded.
+// output is discarded. If a separator and element together succeed without
+// consuming input, iteration stops instead of repeating forever.
 //
 //	chomp.SeparatedList(chomp.Alpha(), chomp.Tag(","))("a,b,c,")
 //	// (",", []string{"a", "b", "c"}, nil)
@@ -402,15 +410,23 @@ func SeparatedList[T, U Result](c Combinator[T], sep Combinator[U]) Combinator[[
 		// Subsequent elements (sep + element pairs)
 		for {
 			// Try separator - if fails, we're done
-			var tmpRem string
-			if tmpRem, _, err = sep(rem); err != nil {
+			var sepRem string
+			if sepRem, _, err = sep(rem); err != nil {
 				break
 			}
 
 			// Parse element after separator
-			if tmpRem, out, err = c(tmpRem); err != nil {
+			var tmpRem string
+			if tmpRem, out, err = c(sepRem); err != nil {
 				break
 			}
+
+			if len(tmpRem) == len(rem) {
+				// zero-width success: separator and element together made
+				// no progress, stop to avoid looping forever
+				break
+			}
+
 			rem = tmpRem
 			ext = combine(ext, out)
 		}
@@ -421,7 +437,8 @@ func SeparatedList[T, U Result](c Combinator[T], sep Combinator[U]) Combinator[[
 
 // SeparatedList0 will scan the input text and match the [Combinator] separated
 // by the provided separator. Zero or more elements may match. The separator
-// output is discarded.
+// output is discarded. If a separator and element together succeed without
+// consuming input, iteration stops instead of repeating forever.
 //
 //	chomp.SeparatedList0(chomp.Alpha(), chomp.Tag(","))("123")
 //	// ("123", []string{}, nil)
@@ -440,15 +457,23 @@ func SeparatedList0[T, U Result](c Combinator[T], sep Combinator[U]) Combinator[
 		// Subsequent elements (sep + element pairs)
 		for {
 			// Try separator - if fails, we're done
-			var tmpRem string
-			if tmpRem, _, err = sep(rem); err != nil {
+			var sepRem string
+			if sepRem, _, err = sep(rem); err != nil {
 				break
 			}
 
 			// Parse element after separator
-			if tmpRem, out, err = c(tmpRem); err != nil {
+			var tmpRem string
+			if tmpRem, out, err = c(sepRem); err != nil {
 				break
 			}
+
+			if len(tmpRem) == len(rem) {
+				// zero-width success: separator and element together made
+				// no progress, stop to avoid looping forever
+				break
+			}
+
 			rem = tmpRem
 			ext = combine(ext, out)
 		}
@@ -459,7 +484,9 @@ func SeparatedList0[T, U Result](c Combinator[T], sep Combinator[U]) Combinator[
 
 // ManyTill will scan the input text, matching the [Combinator] repeatedly until
 // the terminator matches. The terminator is consumed but not included in the
-// result. At least one element must match before the terminator.
+// result. At least one element must match before the terminator. If an
+// element succeeds without consuming input, the terminator can never be
+// reached, so parsing fails instead of looping forever.
 //
 //	chomp.ManyTill(chomp.AnyChar(), chomp.Tag("END"))("abcEND")
 //	// ("", []string{"a", "b", "c"}, nil)
@@ -489,6 +516,15 @@ func ManyTill[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]str
 			if tmpRem, out, err = c(rem); err != nil {
 				return s, nil, ParserError{Err: err, Type: "many_till"}
 			}
+
+			if len(tmpRem) == len(rem) {
+				// zero-width success: the terminator can never be reached
+				return s, nil, ParserError{
+					Err:  CombinatorParseError{Text: rem, Type: "many_till"},
+					Type: "many_till",
+				}
+			}
+
 			rem = tmpRem
 			ext = combine(ext, out)
 			count++
@@ -498,7 +534,9 @@ func ManyTill[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]str
 
 // ManyTill0 will scan the input text, matching the [Combinator] repeatedly until
 // the terminator matches. The terminator is consumed but not included in the
-// result. Zero or more elements may match before the terminator.
+// result. Zero or more elements may match before the terminator. If an
+// element succeeds without consuming input, the terminator can never be
+// reached, so parsing fails instead of looping forever.
 //
 //	chomp.ManyTill0(chomp.AnyChar(), chomp.Tag("END"))("END")
 //	// ("", []string{}, nil)
@@ -518,6 +556,15 @@ func ManyTill0[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]st
 			if tmpRem, out, err = c(rem); err != nil {
 				return s, nil, ParserError{Err: err, Type: "many_till_0"}
 			}
+
+			if len(tmpRem) == len(rem) {
+				// zero-width success: the terminator can never be reached
+				return s, nil, ParserError{
+					Err:  CombinatorParseError{Text: rem, Type: "many_till_0"},
+					Type: "many_till_0",
+				}
+			}
+
 			rem = tmpRem
 			ext = combine(ext, out)
 		}
@@ -526,7 +573,8 @@ func ManyTill0[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]st
 
 // FoldMany will scan the input text, matching the [Combinator] repeatedly and
 // accumulating results using the provided reducer function. At least one element
-// must match.
+// must match. An iteration that succeeds without consuming input stops the
+// loop instead of being counted, so it can never repeat forever.
 //
 //	chomp.FoldMany(chomp.Digit(), 0, func(acc int, val string) int {
 //	    n, _ := strconv.Atoi(val)
@@ -544,6 +592,11 @@ func FoldMany[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) Ma
 			var out T
 			var tmpRem string
 			if tmpRem, out, err = c(rem); err != nil {
+				break
+			}
+			if len(tmpRem) == len(rem) {
+				// zero-width success: cannot make progress, stop to avoid looping forever
+				err = CombinatorParseError{Text: rem, Type: "fold_many"}
 				break
 			}
 			rem = tmpRem
@@ -565,7 +618,8 @@ func FoldMany[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) Ma
 
 // FoldMany0 will scan the input text, matching the [Combinator] repeatedly and
 // accumulating results using the provided reducer function. Zero or more elements
-// may match.
+// may match. An iteration that succeeds without consuming input stops the
+// loop instead of being counted, so it can never repeat forever.
 //
 //	chomp.FoldMany0(chomp.Digit(), 0, func(acc int, val string) int {
 //	    n, _ := strconv.Atoi(val)
@@ -582,6 +636,10 @@ func FoldMany0[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) M
 			if err != nil {
 				break
 			}
+			if len(tmpRem) == len(rem) {
+				// zero-width success: cannot make progress, stop to avoid looping forever
+				break
+			}
 			rem = tmpRem
 			acc = reducer(acc, out)
 		}
@@ -592,7 +650,9 @@ func FoldMany0[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) M
 
 // ManyCount will scan the input text and count the number of times the
 // [Combinator] matches. At least one match is required. Results are not
-// stored, making this memory efficient for counting.
+// stored, making this memory efficient for counting. An iteration that
+// succeeds without consuming input stops counting instead of repeating
+// forever.
 //
 //	chomp.ManyCount(chomp.Alpha())("abc123")
 //	// ("123", 3, nil)
@@ -605,6 +665,11 @@ func ManyCount[T Result](c Combinator[T]) MappedCombinator[uint, T] {
 		for {
 			var tmpRem string
 			if tmpRem, _, err = c(rem); err != nil {
+				break
+			}
+			if len(tmpRem) == len(rem) {
+				// zero-width success: cannot make progress, stop to avoid looping forever
+				err = CombinatorParseError{Text: rem, Type: "many_count"}
 				break
 			}
 			rem = tmpRem
@@ -625,7 +690,9 @@ func ManyCount[T Result](c Combinator[T]) MappedCombinator[uint, T] {
 
 // ManyCount0 will scan the input text and count the number of times the
 // [Combinator] matches. Zero or more matches are allowed. Results are not
-// stored, making this memory efficient for counting.
+// stored, making this memory efficient for counting. An iteration that
+// succeeds without consuming input stops counting instead of repeating
+// forever.
 //
 //	chomp.ManyCount0(chomp.Alpha())("123")
 //	// ("123", 0, nil)
@@ -637,6 +704,10 @@ func ManyCount0[T Result](c Combinator[T]) MappedCombinator[uint, T] {
 		for {
 			tmpRem, _, err := c(rem)
 			if err != nil {
+				break
+			}
+			if len(tmpRem) == len(rem) {
+				// zero-width success: cannot make progress, stop to avoid looping forever
 				break
 			}
 			rem = tmpRem
