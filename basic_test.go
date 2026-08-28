@@ -1,12 +1,32 @@
 package chomp_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/purpleclay/chomp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// zeroWidthNonEmptyExt always succeeds without consuming any input, but
+// reports a non-empty ext - violating the assumption that a non-empty ext
+// implies real progress. Used to prove Escaped/EscapedTransform measure
+// progress from the remainder, not ext, and so never loop forever on it.
+func zeroWidthNonEmptyExt(s string) (string, string, error) {
+	return s, "ok", nil
+}
+
+// consumesButEmptyExt consumes one byte but reports an empty ext -
+// violating the assumption that ext length reflects what was consumed.
+// Used to prove Escaped/EscapedTransform still credit real progress even
+// when ext is empty.
+func consumesButEmptyExt(s string) (string, string, error) {
+	if s == "" {
+		return s, "", errors.New("empty")
+	}
+	return s[1:], "", nil
+}
 
 func TestChar(t *testing.T) {
 	t.Parallel()
@@ -689,6 +709,67 @@ func TestEscapedTransformUnicode(t *testing.T) {
 			assert.Equal(t, tt.ext, ext)
 		})
 	}
+}
+
+func TestEscapedTransformingNormal(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Escaped(chomp.Parentheses(), '\\', chomp.OneOf("n"))("(ab)(cd)")
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	assert.Equal(t, "(ab)(cd)", ext)
+}
+
+func TestEscapedTransformingEscapable(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Escaped(chomp.Tag("a"), '\\', chomp.Parentheses())(`a\(x)a`)
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	assert.Equal(t, `a\(x)a`, ext)
+}
+
+func TestEscapedNeverStallsOnEmptyExt(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Escaped(consumesButEmptyExt, '\\', chomp.OneOf("n"))("abc")
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	assert.Equal(t, "abc", ext)
+}
+
+func TestEscapedNeverLoopsOnZeroWidthNonEmptyExt(t *testing.T) {
+	t.Parallel()
+
+	withTimeout(t, hangTimeout, func() {
+		_, _, err := chomp.Escaped(zeroWidthNonEmptyExt, '\\', chomp.OneOf("n"))("abc")
+		require.Error(t, err)
+	})
+}
+
+func TestEscapedTransformNeverStallsOnEmptyTransform(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', consumesButEmptyExt)(`ab\xcd`)
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	assert.Equal(t, "abcd", ext)
+}
+
+func TestEscapedTransformNeverLoopsOnZeroWidthNonEmptyExt(t *testing.T) {
+	t.Parallel()
+
+	withTimeout(t, hangTimeout, func() {
+		transform := func(s string) (string, string, error) {
+			return s, "", errors.New("boom")
+		}
+		_, _, err := chomp.EscapedTransform(zeroWidthNonEmptyExt, '\\', transform)("abc")
+		require.Error(t, err)
+	})
 }
 
 func TestCombinatorError(t *testing.T) {
