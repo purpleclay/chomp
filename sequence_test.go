@@ -1,12 +1,30 @@
 package chomp_test
 
 import (
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/purpleclay/chomp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// nonConformingTag behaves like [chomp.Tag], but deliberately violates the
+// combinator contract by consuming one byte even when it fails to match.
+// Used to prove a combinator is self-defending against badly-behaved inner
+// combinators, rather than merely relying on them to conform.
+func nonConformingTag(match string) chomp.Combinator[string] {
+	return func(s string) (string, string, error) {
+		if strings.HasPrefix(s, match) {
+			return s[len(match):], match, nil
+		}
+		if s == "" {
+			return s, "", errors.New("boom")
+		}
+		return s[1:], "", errors.New("boom")
+	}
+}
 
 func TestPair(t *testing.T) {
 	t.Parallel()
@@ -56,6 +74,46 @@ func TestRepeatRange(t *testing.T) {
 	require.Len(t, ext, 4)
 	assert.Equal(t, "Batman", ext[0])
 	assert.Equal(t, "Joker", ext[2])
+}
+
+func TestRepeatRangeDoesNotCorruptRemainderOnFailure(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.RepeatRange(chomp.Pair(chomp.Tag("a"), chomp.Tag("b")), 1, 3)("abac")
+
+	require.NoError(t, err)
+	assert.Equal(t, "ac", rem)
+	require.Len(t, ext, 2)
+	assert.Equal(t, "a", ext[0])
+	assert.Equal(t, "b", ext[1])
+}
+
+// TestRepeatRangeSelfDefendsAgainstNonConformingInner proves RepeatRange
+// never commits the remainder from a failing optional iteration, even when
+// the inner combinator itself partially consumes before erroring (which
+// none of chomp's own combinators do, but a caller-supplied one might).
+func TestRepeatRangeSelfDefendsAgainstNonConformingInner(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.RepeatRange(nonConformingTag("ab"), 1, 3)("abac")
+
+	require.NoError(t, err)
+	assert.Equal(t, "ac", rem)
+	require.Len(t, ext, 1)
+	assert.Equal(t, "ab", ext[0])
+}
+
+// TestRepeatSelfDefendsAgainstNonConformingInner proves Repeat never
+// returns a corrupted remainder on failure, even when the inner combinator
+// itself partially consumes before erroring.
+func TestRepeatSelfDefendsAgainstNonConformingInner(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Repeat(nonConformingTag("ab"), 3)("abac")
+
+	require.Error(t, err)
+	assert.Equal(t, "abac", rem)
+	assert.Nil(t, ext)
 }
 
 func TestDelimited(t *testing.T) {
