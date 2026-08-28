@@ -504,6 +504,105 @@ func TestWhileNotNM(t *testing.T) {
 	}
 }
 
+func TestWhileNMultiByteBoundary(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.WhileN(chomp.IsLetter, 6)("héllo")
+
+	require.Error(t, err)
+
+	var rangedErr chomp.RangedParserError
+	require.ErrorAs(t, err, &rangedErr)
+	assert.Equal(t, uint(5), rangedErr.Exec.Count, "count must report runes, not bytes")
+}
+
+func TestWhileNMMultiByteBoundary(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.WhileNM(chomp.IsLetter, 1, 5)("héllo")
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	assert.Equal(t, "héllo", ext)
+}
+
+func TestWhileNotNMultiByteBoundary(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.WhileNotN(chomp.IsDigit, 6)("héllo")
+
+	require.Error(t, err)
+
+	var rangedErr chomp.RangedParserError
+	require.ErrorAs(t, err, &rangedErr)
+	assert.Equal(t, uint(5), rangedErr.Exec.Count, "count must report runes, not bytes")
+}
+
+func TestWhileNotNMMultiByteBoundary(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.WhileNotNM(chomp.IsDigit, 1, 5)("héllo")
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	assert.Equal(t, "héllo", ext)
+}
+
+// matchAllPredicate matches every decoded rune, including the replacement
+// character (U+FFFD) that invalid UTF-8 decodes to.
+type matchAllPredicate struct{}
+
+func (matchAllPredicate) Match(_ rune) bool { return true }
+func (matchAllPredicate) String() string    { return "match_all" }
+
+func TestWhileNInvalidUTF8DoesNotPanic(t *testing.T) {
+	t.Parallel()
+
+	invalid := "\xff\xff\xff\xff\xff"
+
+	rem, ext, err := chomp.WhileN(matchAllPredicate{}, 1)(invalid)
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	assert.Equal(t, invalid, ext)
+}
+
+func TestWhileNMInvalidUTF8DoesNotPanic(t *testing.T) {
+	t.Parallel()
+
+	invalid := "\xff\xff\xff\xff\xff"
+
+	rem, ext, err := chomp.WhileNM(matchAllPredicate{}, 1, 10)(invalid)
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	assert.Equal(t, invalid, ext)
+}
+
+func TestWhileNotNInvalidUTF8DoesNotPanic(t *testing.T) {
+	t.Parallel()
+
+	invalid := "\xff\xff\xff\xff\xff"
+
+	rem, ext, err := chomp.WhileNotN(chomp.IsDigit, 1)(invalid)
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	assert.Equal(t, invalid, ext)
+}
+
+func TestWhileNotNMInvalidUTF8DoesNotPanic(t *testing.T) {
+	t.Parallel()
+
+	invalid := "\xff\xff\xff\xff\xff"
+
+	rem, ext, err := chomp.WhileNotNM(chomp.IsDigit, 1, 10)(invalid)
+
+	require.NoError(t, err)
+	assert.Equal(t, "", rem)
+	assert.Equal(t, invalid, ext)
+}
+
 func TestAnyDigit(t *testing.T) {
 	t.Parallel()
 

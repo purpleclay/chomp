@@ -177,18 +177,20 @@ func While(p Predicate) Combinator[string] {
 //	// ("Hello, World!", "", nil)
 func WhileN(p Predicate, n uint) Combinator[string] {
 	return func(s string) (string, string, error) {
-		pos := 0
-		for _, c := range s {
+		pos, runes := 0, uint(0)
+		for pos < len(s) {
+			c, size := utf8.DecodeRuneInString(s[pos:])
 			if !p.Match(c) {
 				break
 			}
-			pos += utf8.RuneLen(c)
+			pos += size
+			runes++
 		}
 
-		if uint(pos) < n {
+		if runes < n {
 			return s, "", RangedParserError{
 				Err:  CombinatorParseError{Text: s, Type: p.String()},
-				Exec: RangeExecution(uint(pos), n),
+				Exec: RangeExecution(runes, n),
 				Type: "while_n",
 			}
 		}
@@ -205,18 +207,20 @@ func WhileN(p Predicate, n uint) Combinator[string] {
 //	// (", World!", "Hello", nil)
 func WhileNM(p Predicate, n, m uint) Combinator[string] {
 	return func(s string) (string, string, error) {
-		pos := 0
-		for _, c := range s {
+		pos, runes := 0, uint(0)
+		for pos < len(s) {
+			c, size := utf8.DecodeRuneInString(s[pos:])
 			if !p.Match(c) {
 				break
 			}
-			pos += utf8.RuneLen(c)
+			pos += size
+			runes++
 		}
 
-		if uint(pos) < n || uint(pos) > m {
+		if runes < n || runes > m {
 			return s, "", RangedParserError{
 				Err:  CombinatorParseError{Text: s, Type: p.String()},
-				Exec: RangeExecution(uint(pos), n, m),
+				Exec: RangeExecution(runes, n, m),
 				Type: "while_n_m",
 			}
 		}
@@ -246,18 +250,20 @@ func WhileNot(p Predicate) Combinator[string] {
 //	// ("Hello, World!", "", nil)
 func WhileNotN(p Predicate, n uint) Combinator[string] {
 	return func(s string) (string, string, error) {
-		pos := 0
-		for _, c := range s {
+		pos, runes := 0, uint(0)
+		for pos < len(s) {
+			c, size := utf8.DecodeRuneInString(s[pos:])
 			if p.Match(c) {
 				break
 			}
-			pos += utf8.RuneLen(c)
+			pos += size
+			runes++
 		}
 
-		if uint(pos) < n {
+		if runes < n {
 			return s, "", RangedParserError{
 				Err:  CombinatorParseError{Text: s, Type: p.String()},
-				Exec: RangeExecution(uint(pos), n),
+				Exec: RangeExecution(runes, n),
 				Type: "while_not_n",
 			}
 		}
@@ -275,18 +281,20 @@ func WhileNotN(p Predicate, n uint) Combinator[string] {
 //	// (" was a great day", "20240709", nil)
 func WhileNotNM(p Predicate, n, m uint) Combinator[string] {
 	return func(s string) (string, string, error) {
-		pos := 0
-		for _, c := range s {
+		pos, runes := 0, uint(0)
+		for pos < len(s) {
+			c, size := utf8.DecodeRuneInString(s[pos:])
 			if p.Match(c) {
 				break
 			}
-			pos += utf8.RuneLen(c)
+			pos += size
+			runes++
 		}
 
-		if uint(pos) < n || uint(pos) > m {
+		if runes < n || runes > m {
 			return s, "", RangedParserError{
 				Err:  CombinatorParseError{Text: s, Type: p.String()},
-				Exec: RangeExecution(uint(pos), n, m),
+				Exec: RangeExecution(runes, n, m),
 				Type: "while_not_n_m",
 			}
 		}
