@@ -33,13 +33,20 @@ func Map[S any, T Result](c Combinator[T], mapper func(in T) S) MappedCombinator
 }
 
 // Opt allows a [Combinator] to be optional by discarding its returned
-// error and not modifying the input text upon failure.
+// error and not modifying the input text upon failure. The inner
+// combinator's remainder is never trusted on failure, even if it
+// partially consumed the input before erroring.
 //
 //	chomp.Opt(chomp.Tag("Hey"))("Hello, World!")
 //	// ("Hello, World!", "", nil)
 func Opt[T Result](c Combinator[T]) Combinator[T] {
 	return func(s string) (string, T, error) {
-		rem, out, _ := c(s)
+		rem, out, err := c(s)
+		if err != nil {
+			var def T
+			return s, def, nil
+		}
+
 		return rem, out, nil
 	}
 }

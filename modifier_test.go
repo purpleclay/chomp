@@ -1,6 +1,7 @@
 package chomp_test
 
 import (
+	"errors"
 	"strconv"
 	"testing"
 
@@ -40,6 +41,63 @@ func TestOpt(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "dark knight", rem)
 	assert.Equal(t, "", ext)
+}
+
+// TestOptNeverTrustsInnerRemOnFailure asserts that Opt never advances the
+// input when its inner combinator fails, even when that combinator itself
+// partially consumes before failing. This must hold both for combinators
+// that already conform to the contract, and defensively for one that
+// deliberately doesn't.
+func TestOptNeverTrustsInnerRemOnFailure(t *testing.T) {
+	t.Parallel()
+
+	t.Run("ReproducesRoadmapIssue", func(t *testing.T) {
+		t.Parallel()
+
+		rem, ext, err := chomp.Opt(chomp.Pair(chomp.Tag("a"), chomp.Tag("b")))("ac")
+
+		require.NoError(t, err)
+		assert.Equal(t, "ac", rem)
+		assert.Nil(t, ext)
+	})
+
+	t.Run("SepPair", func(t *testing.T) {
+		t.Parallel()
+
+		rem, ext, err := chomp.Opt(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")))("HelloWorld")
+
+		require.NoError(t, err)
+		assert.Equal(t, "HelloWorld", rem)
+		assert.Nil(t, ext)
+	})
+
+	t.Run("Many", func(t *testing.T) {
+		t.Parallel()
+
+		rem, ext, err := chomp.Opt(chomp.Many(chomp.Tag("a")))("xyz")
+
+		require.NoError(t, err)
+		assert.Equal(t, "xyz", rem)
+		assert.Nil(t, ext)
+	})
+
+	t.Run("NonConformingInner", func(t *testing.T) {
+		t.Parallel()
+
+		// Deliberately violates the combinator contract by returning a
+		// partially-consumed remainder on failure, to prove Opt itself
+		// never trusts an inner combinator's rem when it errors, rather
+		// than relying on the inner combinator to behave.
+		var nonConforming chomp.Combinator[string] = func(s string) (string, string, error) {
+			return s[1:], "", errors.New("boom")
+		}
+
+		rem, ext, err := chomp.Opt(nonConforming)("abc")
+
+		require.NoError(t, err)
+		assert.Equal(t, "abc", rem)
+		assert.Equal(t, "", ext)
+	})
 }
 
 func TestS(t *testing.T) {
