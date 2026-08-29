@@ -746,7 +746,7 @@ chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', transform)(`Hello\nWor
 
 ### Crlf
 
-Matches a line ending: either `\n` (LF) or `\r\n` (CRLF).
+Matches a strict CRLF (`\r\n`) line ending only. Does not match a bare LF or bare CR.
 
 ```go
 chomp.Crlf()("\r\nHello")
@@ -754,9 +754,19 @@ chomp.Crlf()("\r\nHello")
 // ext: "\r\n"
 ```
 
+### LineEnding
+
+Matches either `\n` (LF) or `\r\n` (CRLF). Does not match a bare CR; see `Eol` if a bare CR should be treated as a legacy-Mac line terminator.
+
+```go
+chomp.LineEnding()("\nHello")
+// rem: "Hello"
+// ext: "\n"
+```
+
 ### Eol
 
-Scans and returns text before any line ending. The line ending is discarded.
+Scans and returns text before any line ending. The line ending is discarded. Unlike `LineEnding`, a bare CR is also consumed here, treated as a legacy-Mac line terminator.
 
 ```go
 chomp.Eol()("Hello, World!\nNext line")

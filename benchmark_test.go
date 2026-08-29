@@ -881,6 +881,18 @@ func BenchmarkCrlf(b *testing.B) {
 	}
 }
 
+func BenchmarkCrlfFailureLargeInput(b *testing.B) {
+	input := strings.Repeat("x", 1024*1024) // 1 MiB, no newlines
+
+	parser := Crlf()
+	b.ReportAllocs()
+	b.SetBytes(int64(len(input)))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _, _ = parser(input)
+	}
+}
+
 func BenchmarkEol(b *testing.B) {
 	tests := []struct {
 		name  string
