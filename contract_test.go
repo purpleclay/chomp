@@ -200,6 +200,10 @@ func TestContract_FailureNonConsuming(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Crlf", "Hello", chomp.Crlf())
 	})
+	t.Run("LineEnding", func(t *testing.T) {
+		t.Parallel()
+		assertFailureNonConsuming(t, "LineEnding", "Hello", chomp.LineEnding())
+	})
 
 	// sequence.go
 	t.Run("Pair_FirstFails", func(t *testing.T) {
@@ -516,6 +520,10 @@ func TestContract_SuccessIsPrefix(t *testing.T) {
 	t.Run("Crlf", func(t *testing.T) {
 		t.Parallel()
 		assertSuccessIsPrefix(t, "Crlf", "\r\nHello", chomp.Crlf())
+	})
+	t.Run("LineEnding", func(t *testing.T) {
+		t.Parallel()
+		assertSuccessIsPrefix(t, "LineEnding", "\r\nHello", chomp.LineEnding())
 	})
 	t.Run("Recognize", func(t *testing.T) {
 		t.Parallel()
