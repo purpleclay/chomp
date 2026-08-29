@@ -309,8 +309,8 @@ func Escaped(normal Combinator[string], escape rune, escapable Combinator[string
 		rem := s
 
 		for rem != "" {
-			if newRem, ext, err := normal(rem); err == nil && ext != "" {
-				pos += len(ext)
+			if newRem, _, err := normal(rem); err == nil && len(newRem) < len(rem) {
+				pos += len(rem) - len(newRem)
 				rem = newRem
 				continue
 			}
@@ -322,9 +322,10 @@ func Escaped(normal Combinator[string], escape rune, escapable Combinator[string
 					break
 				}
 
-				if _, ext, err := escapable(rem[escLen:]); err == nil && ext != "" {
-					pos += escLen + len(ext)
-					rem = rem[escLen+len(ext):]
+				escInput := rem[escLen:]
+				if newRem, _, err := escapable(escInput); err == nil && len(newRem) < len(escInput) {
+					pos += escLen + (len(escInput) - len(newRem))
+					rem = newRem
 					continue
 				}
 			}
@@ -363,7 +364,7 @@ func EscapedTransform(normal Combinator[string], escape rune, transform Combinat
 		rem := s
 
 		for rem != "" {
-			if newRem, ext, err := normal(rem); err == nil && ext != "" {
+			if newRem, ext, err := normal(rem); err == nil && len(newRem) < len(rem) {
 				result.WriteString(ext)
 				rem = newRem
 				continue
@@ -376,7 +377,8 @@ func EscapedTransform(normal Combinator[string], escape rune, transform Combinat
 					break
 				}
 
-				if newRem, transformed, err := transform(rem[escLen:]); err == nil && transformed != "" {
+				escInput := rem[escLen:]
+				if newRem, transformed, err := transform(escInput); err == nil && len(newRem) < len(escInput) {
 					result.WriteString(transformed)
 					rem = newRem
 					continue
