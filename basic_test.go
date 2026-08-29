@@ -935,3 +935,125 @@ func TestParserCombinatorError(t *testing.T) {
 
 	assert.EqualError(t, err, "(all) parser failed. (tag) combinator failed to parse text 'dc:9781801260336:£19.99' with input 'marvel'")
 }
+
+func TestEmptyPatternBehaviour(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		run     chomp.Combinator[string]
+		input   string
+		rem     string
+		ext     string
+		wantErr bool
+	}{
+		{
+			name:  "Tag",
+			run:   chomp.Tag(""),
+			input: "abc",
+			rem:   "abc",
+			ext:   "",
+		},
+		{
+			name:  "TagNoCase",
+			run:   chomp.TagNoCase(""),
+			input: "abc",
+			rem:   "abc",
+			ext:   "",
+		},
+		{
+			name:  "Until",
+			run:   chomp.Until(""),
+			input: "abc",
+			rem:   "abc",
+			ext:   "",
+		},
+		{
+			name:    "TakeUntil1",
+			run:     chomp.TakeUntil1(""),
+			input:   "abc",
+			wantErr: true,
+		},
+		{
+			name:    "Any",
+			run:     chomp.Any(""),
+			input:   "abc",
+			wantErr: true,
+		},
+		{
+			name:  "Not",
+			run:   chomp.Not(""),
+			input: "abc",
+			rem:   "",
+			ext:   "abc",
+		},
+		{
+			name:    "OneOf",
+			run:     chomp.OneOf(""),
+			input:   "abc",
+			wantErr: true,
+		},
+		{
+			name:  "NoneOf",
+			run:   chomp.NoneOf(""),
+			input: "abc",
+			rem:   "bc",
+			ext:   "a",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := tt.run(tt.input)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Equal(t, tt.input, rem)
+				assert.Equal(t, "", ext)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestEmptyPatternZeroWidthCombinatorsDoNotHang(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		c    chomp.Combinator[string]
+	}{
+		{name: "Tag", c: chomp.Tag("")},
+		{name: "TagNoCase", c: chomp.TagNoCase("")},
+		{name: "Until", c: chomp.Until("")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			withTimeout(t, hangTimeout, func() {
+				rem, ext, err := chomp.ManyN(tt.c, 0)("abc")
+				require.NoError(t, err)
+				assert.Equal(t, "abc", rem)
+				assert.Empty(t, ext)
+			})
+		})
+	}
+}
+
+// TestNotEmptySequenceOnEmptyInputFails proves Not("") does not degenerate
+// into a zero-width success against an empty input: it still requires at
+// least one character, so an empty input fails just like a non-empty
+// exclusion sequence would.
+func TestNotEmptySequenceOnEmptyInputFails(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.Not("")("")
+
+	require.Error(t, err)
+	assert.Equal(t, "", rem)
+	assert.Equal(t, "", ext)
+}
