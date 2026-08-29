@@ -2,7 +2,9 @@ package chomp_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/purpleclay/chomp"
 	"github.com/stretchr/testify/assert"
@@ -404,6 +406,149 @@ func TestTagNoCase(t *testing.T) {
 			assert.Equal(t, tt.ext, ext)
 		})
 	}
+}
+
+func TestTagNoCaseFoldLengthMismatch(t *testing.T) {
+	t.Parallel()
+
+	const (
+		kelvinSign = "K" // KELVIN SIGN, 3 bytes, folds with 'k'/'K'
+		longS      = "ſ" // LATIN SMALL LETTER LONG S, 2 bytes, folds with 's'/'S'
+	)
+
+	tests := []struct {
+		name  string
+		input string
+		tag   string
+		rem   string
+		ext   string
+	}{
+		{
+			name:  "KelvinSignInInputShorterTag",
+			input: kelvinSign + "elvin",
+			tag:   "k",
+			rem:   "elvin",
+			ext:   kelvinSign,
+		},
+		{
+			name:  "KelvinSignInTagShorterInput",
+			input: "Kelvin",
+			tag:   kelvinSign,
+			rem:   "elvin",
+			ext:   "K",
+		},
+		{
+			name:  "LongSInInputShorterTag",
+			input: longS + "ong",
+			tag:   "s",
+			rem:   "ong",
+			ext:   longS,
+		},
+		{
+			name:  "LongSInTagShorterInput",
+			input: "Song",
+			tag:   longS,
+			rem:   "ong",
+			ext:   "S",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			rem, ext, err := chomp.TagNoCase(tt.tag)(tt.input)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.rem, rem)
+			assert.Equal(t, tt.ext, ext)
+		})
+	}
+}
+
+func TestTagNoCaseRejectsMalformedUTF8AsReplacementChar(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.TagNoCase("�")("\xff")
+
+	require.Error(t, err)
+	assert.Equal(t, "\xff", rem)
+	assert.Equal(t, "", ext)
+}
+
+func TestTagNoCaseMatchesGenuineReplacementChar(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.TagNoCase("�")("�x")
+
+	require.NoError(t, err)
+	assert.Equal(t, "x", rem)
+	assert.Equal(t, "�", ext)
+}
+
+func TestTagNoCaseRejectsMalformedTagAsReplacementChar(t *testing.T) {
+	t.Parallel()
+
+	rem, ext, err := chomp.TagNoCase("\xff")("�x")
+
+	require.Error(t, err)
+	assert.Equal(t, "�x", rem)
+	assert.Equal(t, "", ext)
+}
+
+// referenceTagNoCase is an independent rune-by-rune reimplementation of
+// TagNoCase's matching logic, deferring the actual fold-equality check to
+// strings.EqualFold (applied per rune) rather than chomp's own foldEqual.
+// Used as the oracle for FuzzTagNoCase.
+func referenceTagNoCase(tag, input string) (rem, ext string, failed bool) {
+	pos, tagPos := 0, 0
+	for tagPos < len(tag) {
+		want, wantSize := utf8.DecodeRuneInString(tag[tagPos:])
+		if pos >= len(input) || (want == utf8.RuneError && wantSize <= 1) {
+			return "", "", true
+		}
+
+		got, size := utf8.DecodeRuneInString(input[pos:])
+		if (got == utf8.RuneError && size <= 1) || !strings.EqualFold(string(got), string(want)) {
+			return "", "", true
+		}
+		pos += size
+		tagPos += wantSize
+	}
+
+	return input[pos:], input[:pos], false
+}
+
+func FuzzTagNoCase(f *testing.F) {
+	f.Add("k", "Kelvin sign: Kelvin")
+	f.Add("K", "Kelvin")
+	f.Add("s", "long s: ſong")
+	f.Add("ſ", "Song")
+	f.Add("hello", "HELLO, World!")
+	f.Add("γεια", "ΓΕΙΑ and good morning")
+	f.Add("k", "")
+	f.Add("hello", "hell")
+	f.Add("�", "\xff")
+	f.Add("�", "�x")
+	f.Add("\xff", "�x")
+
+	f.Fuzz(func(t *testing.T, tag, input string) {
+		if tag == "" {
+			t.Skip()
+		}
+
+		rem, ext, err := chomp.TagNoCase(tag)(input)
+		wantRem, wantExt, wantFailed := referenceTagNoCase(tag, input)
+
+		if wantFailed {
+			require.Error(t, err)
+			assert.Equal(t, input, rem)
+			assert.Equal(t, "", ext)
+			return
+		}
+
+		require.NoError(t, err)
+		assert.Equal(t, wantRem, rem)
+		assert.Equal(t, wantExt, ext)
+	})
 }
 
 func TestTake(t *testing.T) {

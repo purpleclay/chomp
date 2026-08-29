@@ -3,6 +3,7 @@ package chomp
 import (
 	"fmt"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -76,19 +77,53 @@ func Tag(str string) Combinator[string] {
 }
 
 // TagNoCase must match a series of characters at the beginning of the input text
-// in the exact order provided, but ignoring case. The matched text from the input
-// is returned (preserving the original casing).
+// in the exact order provided, using full Unicode case-folding (not just
+// ASCII). Runes are compared via their case-fold orbit, so fold pairs that
+// don't share the same encoded byte length (the Kelvin sign 'K' U+212A
+// folds with 'k'/'K', despite being 3 bytes to their 1) still match.
+// Malformed UTF-8 in either the input or str never matches, even against a
+// literal U+FFFD on the other side, since invalid bytes decode to the same
+// replacement-character sentinel as a genuine one. The matched text from
+// the input is returned (preserving the original casing).
 //
 //	chomp.TagNoCase("hello")("HELLO, World!")
 //	// (", World!", "HELLO", nil)
 func TagNoCase(str string) Combinator[string] {
 	return func(s string) (string, string, error) {
-		if len(s) >= len(str) && strings.EqualFold(s[:len(str)], str) {
-			return s[len(str):], s[:len(str)], nil
+		pos, tagPos := 0, 0
+		for tagPos < len(str) {
+			want, wantSize := utf8.DecodeRuneInString(str[tagPos:])
+			if pos >= len(s) || (want == utf8.RuneError && wantSize <= 1) {
+				return s, "", CombinatorParseError{Input: str, Text: s, Type: "tag_no_case"}
+			}
+
+			got, size := utf8.DecodeRuneInString(s[pos:])
+			if (got == utf8.RuneError && size <= 1) || !foldEqual(got, want) {
+				return s, "", CombinatorParseError{Input: str, Text: s, Type: "tag_no_case"}
+			}
+			pos += size
+			tagPos += wantSize
 		}
 
-		return s, "", CombinatorParseError{Input: str, Text: s, Type: "tag_no_case"}
+		return s[pos:], s[:pos], nil
 	}
+}
+
+// foldEqual reports whether a and b are equal under simple Unicode case
+// folding, walking a's case-fold orbit rather than assuming a fixed set of
+// case pairs.
+func foldEqual(a, b rune) bool {
+	if a == b {
+		return true
+	}
+
+	for f := unicode.SimpleFold(a); f != a; f = unicode.SimpleFold(f) {
+		if f == b {
+			return true
+		}
+	}
+
+	return false
 }
 
 // charSetThreshold is the minimum charset size at which a map lookup
