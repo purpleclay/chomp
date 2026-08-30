@@ -1,7 +1,6 @@
 package chomp
 
 import (
-	"fmt"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -22,7 +21,7 @@ func Char(c rune) Combinator[string] {
 			return s[size:], s[:size], nil
 		}
 
-		return s, "", CombinatorParseError{Input: fmt.Sprintf("%c", c), Text: s, Type: "char"}
+		return s, "", CombinatorParseError{Input: string(c), Text: s, Type: "char"}
 	}
 }
 

@@ -78,7 +78,7 @@ func SepPair[T, U, V Result](c1 Combinator[T], sep Combinator[U], c2 Combinator[
 // number of times. Every execution must match.
 //
 //	chomp.Repeat(chomp.Parentheses(), 2)("(Hello)(World)(!)")
-//	// ("(!)", []string{"(Hello)", "(World)"}, nil)
+//	// ("(!)", []string{"Hello", "World"}, nil)
 func Repeat[T Result](c Combinator[T], n uint) Combinator[[]string] {
 	return func(s string) (string, []string, error) {
 		var ext []string
@@ -170,7 +170,7 @@ func Delimited[T, U, V Result](left Combinator[T], str Combinator[U], right Comb
 // QuoteDouble will match any text delimited (or surrounded) by a
 // pair of "double quotes".
 //
-//	chomp.DoubleQuote()(`"Hello, World!"`)
+//	chomp.QuoteDouble()(`"Hello, World!"`)
 //	// ("", "Hello, World!", nil)
 func QuoteDouble() Combinator[string] {
 	return func(s string) (string, string, error) {
@@ -233,7 +233,7 @@ func BracketAngled() Combinator[string] {
 //	chomp.First(
 //		chomp.Tag("Good Morning"),
 //		chomp.Tag("Hello"))("Good Morning, World!")
-//	// (" ,World!", "Good Morning", nil)
+//	// (", World!", "Good Morning", nil)
 func First[T Result](c ...Combinator[T]) Combinator[T] {
 	return func(s string) (string, T, error) {
 		for _, comb := range c {
@@ -286,7 +286,7 @@ func All[T Result](c ...Combinator[T]) Combinator[[]string] {
 // failed match. It is the equivalent of calling [ManyN] with an argument of 1.
 // See [ManyN] for its zero-width matching behaviour.
 //
-//	chomp.Many(one.Of("Ho"))("Hello, World!")
+//	chomp.Many(chomp.OneOf("Ho"))("Hello, World!")
 //	// ("ello, World!", []string{"H"}, nil)
 func Many[T Result](c Combinator[T]) Combinator[[]string] {
 	return ManyN(c, 1)
@@ -539,7 +539,7 @@ func ManyTill[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]str
 // reached, so parsing fails instead of looping forever.
 //
 //	chomp.ManyTill0(chomp.AnyChar(), chomp.Tag("END"))("END")
-//	// ("", []string{}, nil)
+//	// ("", nil, nil)
 func ManyTill0[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]string] {
 	return func(s string) (string, []string, error) {
 		var ext []string
@@ -576,7 +576,7 @@ func ManyTill0[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]st
 // must match. An iteration that succeeds without consuming input stops the
 // loop instead of being counted, so it can never repeat forever.
 //
-//	chomp.FoldMany(chomp.Digit(), 0, func(acc int, val string) int {
+//	chomp.FoldMany(chomp.AnyDigit(), 0, func(acc int, val string) int {
 //	    n, _ := strconv.Atoi(val)
 //	    return acc + n
 //	})("123abc")
@@ -621,7 +621,7 @@ func FoldMany[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) Ma
 // may match. An iteration that succeeds without consuming input stops the
 // loop instead of being counted, so it can never repeat forever.
 //
-//	chomp.FoldMany0(chomp.Digit(), 0, func(acc int, val string) int {
+//	chomp.FoldMany0(chomp.AnyDigit(), 0, func(acc int, val string) int {
 //	    n, _ := strconv.Atoi(val)
 //	    return acc + n
 //	})("abc")
@@ -654,7 +654,7 @@ func FoldMany0[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) M
 // succeeds without consuming input stops counting instead of repeating
 // forever.
 //
-//	chomp.ManyCount(chomp.Alpha())("abc123")
+//	chomp.ManyCount(chomp.AnyLetter())("abc123")
 //	// ("123", 3, nil)
 func ManyCount[T Result](c Combinator[T]) MappedCombinator[uint, T] {
 	return func(s string) (string, uint, error) {
@@ -694,7 +694,7 @@ func ManyCount[T Result](c Combinator[T]) MappedCombinator[uint, T] {
 // succeeds without consuming input stops counting instead of repeating
 // forever.
 //
-//	chomp.ManyCount0(chomp.Alpha())("123")
+//	chomp.ManyCount0(chomp.AnyLetter())("123")
 //	// ("123", 0, nil)
 func ManyCount0[T Result](c Combinator[T]) MappedCombinator[uint, T] {
 	return func(s string) (string, uint, error) {
@@ -722,11 +722,11 @@ func ManyCount0[T Result](c Combinator[T]) MappedCombinator[uint, T] {
 // then apply the element combinator that exact number of times.
 //
 //	chomp.LengthCount(
-//	    chomp.Map(chomp.Digit(), func(s string) uint {
+//	    chomp.Map(chomp.AnyDigit(), func(s string) uint {
 //	        n, _ := strconv.ParseUint(s, 10, 64)
 //	        return uint(n)
 //	    }),
-//	    chomp.Alpha(),
+//	    chomp.AnyLetter(),
 //	)("3abc")
 //	// ("", []string{"a", "b", "c"}, nil)
 func LengthCount[T Result](length MappedCombinator[uint, string], c Combinator[T]) Combinator[[]string] {
@@ -748,7 +748,7 @@ func LengthCount[T Result](length MappedCombinator[uint, string], c Combinator[T
 // Fill will scan the input text and match the [Combinator] exactly n times,
 // populating the result slice. All n matches must succeed.
 //
-//	chomp.Fill(chomp.Alpha(), 3)("abcdef")
+//	chomp.Fill(chomp.AnyLetter(), 3)("abcdef")
 //	// ("def", []string{"a", "b", "c"}, nil)
 func Fill[T Result](c Combinator[T], n uint) Combinator[[]string] {
 	return Repeat(c, n)
@@ -955,7 +955,7 @@ func (e CutError) Unwrap() error {
 //	    chomp.All(
 //	        chomp.Tag("if"),
 //	        chomp.Cut(chomp.Tag("("))),
-//	    chomp.Tag("identifier"))("if x")
+//	    chomp.S(chomp.Tag("identifier")))("if x")
 //	// ("if x", nil, CutError{...})
 func Cut[T Result](c Combinator[T]) Combinator[T] {
 	return func(s string) (string, T, error) {
