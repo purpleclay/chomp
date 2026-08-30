@@ -62,7 +62,8 @@ func Satisfy(pred func(rune) bool) Combinator[string] {
 }
 
 // Tag must match a series of characters at the beginning of the input text
-// in the exact order and case provided.
+// in the exact order and case provided. An empty str matches trivially
+// without consuming any input.
 //
 //	chomp.Tag("Hello")("Hello, World!")
 //	// (", World!", "Hello", nil)
@@ -84,7 +85,8 @@ func Tag(str string) Combinator[string] {
 // Malformed UTF-8 in either the input or str never matches, even against a
 // literal U+FFFD on the other side, since invalid bytes decode to the same
 // replacement-character sentinel as a genuine one. The matched text from
-// the input is returned (preserving the original casing).
+// the input is returned (preserving the original casing). An empty str
+// matches trivially without consuming any input, the same as Tag.
 //
 //	chomp.TagNoCase("hello")("HELLO, World!")
 //	// (", World!", "HELLO", nil)
@@ -132,6 +134,7 @@ const charSetThreshold = 8
 
 // Any must match at least one character from the provided sequence at the
 // beginning of the input text. Parsing stops upon the first unmatched character.
+// An empty sequence can never satisfy "at least one", so this always fails.
 //
 //	chomp.Any("eH")("Hello, World!")
 //	// ("llo, World!", "He", nil)
@@ -185,6 +188,8 @@ func Any(str string) Combinator[string] {
 
 // Not must not match at least one character at the beginning of the input text
 // from the provided sequence. Parsing stops upon the first matched character.
+// An empty sequence excludes nothing, so this matches the entire remaining
+// input when at least one character remains; an empty input still fails.
 //
 //	chomp.Not("ol")("Hello, World!")
 //	// ("llo, World!", "He", nil)
@@ -236,7 +241,8 @@ func Not(str string) Combinator[string] {
 }
 
 // OneOf must match a single character at the beginning of the text from
-// the provided sequence.
+// the provided sequence. An empty sequence can never be matched, so this
+// always fails.
 //
 //	chomp.OneOf("!,eH")("Hello, World!")
 //	// ("ello, World!", "H", nil)
@@ -258,7 +264,8 @@ func OneOf(str string) Combinator[string] {
 }
 
 // NoneOf must not match a single character at the beginning of the text
-// from the provided sequence.
+// from the provided sequence. An empty sequence excludes nothing, so this
+// degenerates to matching any single character, the same as [AnyChar].
 //
 //	chomp.NoneOf("loWrd!e")("Hello, World!")
 //	// ("ello, World!", "H", nil)
@@ -281,6 +288,8 @@ func NoneOf(str string) Combinator[string] {
 
 // Until will scan the input text for the first occurrence of the provided series
 // of characters. Everything until that point in the text will be matched.
+// An empty str matches at position 0, so this succeeds trivially without
+// consuming any input.
 //
 //	chomp.Until("World")("Hello, World!")
 //	// ("World!", "Hello, ", nil)
@@ -316,6 +325,8 @@ func Take(n uint) Combinator[string] {
 // TakeUntil1 will scan the input text for the first occurrence of the provided
 // series of characters, requiring at least one character to be matched before
 // the delimiter. Everything until that point in the text will be matched.
+// An empty str always matches at position 0, which never satisfies "at
+// least one", so this always fails.
 //
 //	chomp.TakeUntil1(",")("Hello, World!")
 //	// (", World!", "Hello", nil)
