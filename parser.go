@@ -48,7 +48,7 @@ func LineEnding() Combinator[string] {
 // characters. Line endings are discarded. Unlike [LineEnding], a bare CR
 // '\r' is also consumed here, treated as a legacy-Mac line terminator.
 //
-//	chomp.Eol()(`Hello, World!\nIt's a great day!`)
+//	chomp.Eol()("Hello, World!\nIt's a great day!")
 //	// ("It's a great day!", "Hello, World!", nil)
 func Eol() Combinator[string] {
 	return func(s string) (string, string, error) {

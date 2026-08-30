@@ -277,8 +277,8 @@ func WhileNotN(p Predicate, n uint) Combinator[string] {
 // m characters. If n is zero, this becomes an optional combinator. It has the
 // inverse behavior of [WhileNM].
 //
-//	chomp.WhileNotNM(chomp.IsLetter, 1, 8)("20240709 was a great day")
-//	// (" was a great day", "20240709", nil)
+//	chomp.WhileNotNM(chomp.IsLetter, 1, 9)("20240709 was a great day")
+//	// ("was a great day", "20240709 ", nil)
 func WhileNotNM(p Predicate, n, m uint) Combinator[string] {
 	return func(s string) (string, string, error) {
 		pos, runes := 0, uint(0)

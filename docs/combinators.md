@@ -575,8 +575,8 @@ chomp.WhileN(chomp.IsDigit, 2)("12345abc")
 Matches between `n` and `m` characters that satisfy a predicate.
 
 ```go
-chomp.WhileNM(chomp.IsLetter, 1, 3)("Hello")
-// rem: "lo"
+chomp.WhileNM(chomp.IsLetter, 1, 3)("Hel1lo")
+// rem: "1lo"
 // ext: "Hel"
 ```
 
@@ -605,9 +605,9 @@ chomp.WhileNotN(chomp.IsDigit, 1)("Hello123")
 Matches between `n` and `m` characters that do NOT satisfy a predicate.
 
 ```go
-chomp.WhileNotNM(chomp.IsLetter, 1, 8)("20240709 was great")
-// rem: " was great"
-// ext: "20240709"
+chomp.WhileNotNM(chomp.IsLetter, 1, 9)("20240709 was great")
+// rem: "was great"
+// ext: "20240709 "
 ```
 
 ---
@@ -616,33 +616,33 @@ chomp.WhileNotNM(chomp.IsLetter, 1, 8)("20240709 was great")
 
 These are shorthand combinators built on predicates.
 
-| Combinator | Equivalent | Description |
-|------------|------------|-------------|
-| `Alpha()` | `While(IsLetter)` | One or more letters |
-| `Alpha0()` | `WhileN(IsLetter, 0)` | Zero or more letters |
-| `Digit()` | `While(IsDigit)` | One or more digits |
-| `Digit0()` | `WhileN(IsDigit, 0)` | Zero or more digits |
-| `Alphanumeric()` | `While(IsAlphanumeric)` | One or more alphanumeric |
-| `Alphanumeric0()` | `WhileN(IsAlphanumeric, 0)` | Zero or more alphanumeric |
-| `Space()` | `While(IsSpace)` | One or more spaces/tabs |
-| `Space0()` | `WhileN(IsSpace, 0)` | Zero or more spaces/tabs |
-| `Multispace()` | `While(IsMultispace)` | One or more whitespace |
-| `Multispace0()` | `WhileN(IsMultispace, 0)` | Zero or more whitespace |
-| `HexDigit()` | `While(IsHexDigit)` | One or more hex digits |
-| `HexDigit0()` | `WhileN(IsHexDigit, 0)` | Zero or more hex digits |
-| `OctalDigit()` | `While(IsOctalDigit)` | One or more octal digits |
-| `OctalDigit0()` | `WhileN(IsOctalDigit, 0)` | Zero or more octal digits |
-| `BinaryDigit()` | `While(IsBinaryDigit)` | One or more binary digits |
-| `BinaryDigit0()` | `WhileN(IsBinaryDigit, 0)` | Zero or more binary digits |
-| `Newline()` | - | Matches `\n` |
-| `Tab()` | - | Matches `\t` |
-| `NotLineEnding()` | `WhileNot(IsLineEnding)` | Characters until line ending |
-| `AnyDigit()` | `Satisfy(IsDigit.Match)` | Single decimal digit |
-| `AnyLetter()` | `Satisfy(IsLetter.Match)` | Single letter |
+| Combinator          | Equivalent                      | Description                   |
+| ------------------- | ------------------------------- | ----------------------------- |
+| `Alpha()`           | `While(IsLetter)`               | One or more letters           |
+| `Alpha0()`          | `WhileN(IsLetter, 0)`           | Zero or more letters          |
+| `Digit()`           | `While(IsDigit)`                | One or more digits            |
+| `Digit0()`          | `WhileN(IsDigit, 0)`            | Zero or more digits           |
+| `Alphanumeric()`    | `While(IsAlphanumeric)`         | One or more alphanumeric      |
+| `Alphanumeric0()`   | `WhileN(IsAlphanumeric, 0)`     | Zero or more alphanumeric     |
+| `Space()`           | `While(IsSpace)`                | One or more spaces/tabs       |
+| `Space0()`          | `WhileN(IsSpace, 0)`            | Zero or more spaces/tabs      |
+| `Multispace()`      | `While(IsMultispace)`           | One or more whitespace        |
+| `Multispace0()`     | `WhileN(IsMultispace, 0)`       | Zero or more whitespace       |
+| `HexDigit()`        | `While(IsHexDigit)`             | One or more hex digits        |
+| `HexDigit0()`       | `WhileN(IsHexDigit, 0)`         | Zero or more hex digits       |
+| `OctalDigit()`      | `While(IsOctalDigit)`           | One or more octal digits      |
+| `OctalDigit0()`     | `WhileN(IsOctalDigit, 0)`       | Zero or more octal digits     |
+| `BinaryDigit()`     | `While(IsBinaryDigit)`          | One or more binary digits     |
+| `BinaryDigit0()`    | `WhileN(IsBinaryDigit, 0)`      | Zero or more binary digits    |
+| `Newline()`         | -                               | Matches `\n`                  |
+| `Tab()`             | -                               | Matches `\t`                  |
+| `NotLineEnding()`   | `WhileNot(IsLineEnding)`        | Characters until line ending  |
+| `AnyDigit()`        | `Satisfy(IsDigit.Match)`        | Single decimal digit          |
+| `AnyLetter()`       | `Satisfy(IsLetter.Match)`       | Single letter                 |
 | `AnyAlphanumeric()` | `Satisfy(IsAlphanumeric.Match)` | Single alphanumeric character |
-| `AnyHexDigit()` | `Satisfy(IsHexDigit.Match)` | Single hexadecimal digit |
-| `AnyOctalDigit()` | `Satisfy(IsOctalDigit.Match)` | Single octal digit |
-| `AnyBinaryDigit()` | `Satisfy(IsBinaryDigit.Match)` | Single binary digit |
+| `AnyHexDigit()`     | `Satisfy(IsHexDigit.Match)`     | Single hexadecimal digit      |
+| `AnyOctalDigit()`   | `Satisfy(IsOctalDigit.Match)`   | Single octal digit            |
+| `AnyBinaryDigit()`  | `Satisfy(IsBinaryDigit.Match)`  | Single binary digit           |
 
 ---
 
@@ -780,14 +780,14 @@ chomp.Eol()("Hello, World!\nNext line")
 
 Predicates are used with `While`, `WhileN`, `WhileNM`, `WhileNot`, `WhileNotN`, and `WhileNotNM`.
 
-| Predicate | Description |
-|-----------|-------------|
-| `IsDigit` | Decimal digits (0-9) and Unicode Nd category |
-| `IsLetter` | ASCII letters (a-z, A-Z) and Unicode letter categories |
-| `IsAlphanumeric` | Combination of `IsDigit` and `IsLetter` |
-| `IsLineEnding` | Line ending characters (`\n`, `\r`) |
-| `IsSpace` | Space (` `) or tab (`\t`) |
-| `IsMultispace` | Space, tab, newline, or carriage return |
-| `IsHexDigit` | Hexadecimal digits (0-9, a-f, A-F) |
-| `IsOctalDigit` | Octal digits (0-7) |
-| `IsBinaryDigit` | Binary digits (0-1) |
+| Predicate        | Description                                            |
+| ---------------- | ------------------------------------------------------ |
+| `IsDigit`        | Decimal digits (0-9) and Unicode Nd category           |
+| `IsLetter`       | ASCII letters (a-z, A-Z) and Unicode letter categories |
+| `IsAlphanumeric` | Combination of `IsDigit` and `IsLetter`                |
+| `IsLineEnding`   | Line ending characters (`\n`, `\r`)                    |
+| `IsSpace`        | Space (` `) or tab (`\t`)                              |
+| `IsMultispace`   | Space, tab, newline, or carriage return                |
+| `IsHexDigit`     | Hexadecimal digits (0-9, a-f, A-F)                     |
+| `IsOctalDigit`   | Octal digits (0-7)                                     |
+| `IsBinaryDigit`  | Binary digits (0-1)                                    |
