@@ -203,7 +203,7 @@ func TestManyNoMatches(t *testing.T) {
 
 	_, _, err := chomp.Many(chomp.OneOf("eHl")).Run("Good Morning")
 
-	require.EqualError(t, err, "(many_n) parser failed [count: 0 min: 1]. (one_of) combinator failed to parse text 'Good Morning' with input 'eHl'")
+	require.EqualError(t, err, `chomp: parse error at line 1, column 1 (offset 0): expected a character in "eHl"`)
 }
 
 func TestManyN(t *testing.T) {

@@ -2,7 +2,7 @@ package chomp
 
 import (
 	"errors"
-	"fmt"
+	"log/slog"
 )
 
 // Pair will scan the input text and match each [Combinator] in turn.
@@ -864,8 +864,7 @@ func AllConsuming[T Result](c Combinator[T]) Combinator[T] {
 
 		if rem.Rest() != "" {
 			return s, def, CombinatorParseError{
-				Input: rem.Rest(),
-				State: s,
+				State: rem,
 				Type:  "all_consuming",
 			}
 		}
@@ -936,14 +935,29 @@ type CutError struct {
 	Err error
 }
 
-// Error returns a friendly string representation of the cut error.
+// Error delegates to the inner error's Error(), for the same reason as
+// [ParserError.Error]. Fatal-vs-recoverable is a distinction for
+// [errors.As]/[errors.Is] on the CutError type itself, not the rendered
+// string.
 func (e CutError) Error() string {
-	return fmt.Sprintf("(cut) fatal error, cannot backtrack. %v", e.Err)
+	if e.Err == nil {
+		return "chomp: cut error with no underlying cause"
+	}
+	return e.Err.Error()
 }
 
 // Unwrap returns the inner error.
 func (e CutError) Unwrap() error {
 	return e.Err
+}
+
+// LogValue delegates to the inner error's LogValue if it implements
+// [slog.LogValuer], otherwise falls back to its Error() string.
+func (e CutError) LogValue() slog.Value {
+	if lv, ok := e.Err.(slog.LogValuer); ok {
+		return lv.LogValue()
+	}
+	return slog.StringValue(e.Error())
 }
 
 // Cut converts recoverable parsing errors into fatal failures, preventing

@@ -2,6 +2,8 @@ package chomp
 
 import (
 	"fmt"
+	"log/slog"
+	"strconv"
 	"strings"
 )
 
@@ -48,38 +50,156 @@ func Finalize(err error) error {
 	return err
 }
 
-const truncateErrAt = 50
-
 // CombinatorParseError defines an error that is raised when a combinator
 // fails to parse the input text under its expected condition.
 type CombinatorParseError struct {
-	// Input to the [Combinator]. This can be empty, as a combinator may
-	// not require any input to parse the text.
-	Input string
+	// Expected describes, in human terms, what the combinator required to
+	// succeed. Empty when no single literal applies, in which case
+	// [CombinatorParseError.Error], [CombinatorParseError.Snippet] and
+	// [CombinatorParseError.LogValue] fall back to a description derived
+	// from Type.
+	Expected string
 
 	// State at the point of failure, capturing the absolute position
 	// within the original input alongside the unparsed suffix.
 	State State
 
+	// Labels records the chain of grammar-level names (see the future
+	// Label combinator) being parsed when the failure occurred, outermost
+	// first. Always empty until a caller wraps a combinator with Label.
+	Labels []string
+
 	// Type of [Combinator] that failed.
 	Type string
 }
 
-// Error returns a friendly string representation of the current error.
-func (e CombinatorParseError) Error() string {
-	text := e.State.Rest()
-	if len(text) > truncateErrAt {
-		text = fmt.Sprintf("%s...(truncated)", text[:truncateErrAt])
+// typeFallback maps a Type with no natural literal to quote, and no "is_"
+// predicate prefix, to a human phrase completing "expected ___".
+var typeFallback = map[string]string{
+	"satisfy":           "a matching character",
+	"any_char":          "any character",
+	"take":              "more input",
+	"escaped":           "an escape sequence",
+	"escaped_transform": "an escape sequence",
+	"verify":            "a value satisfying the predicate",
+	"eof":               "end of input",
+	"all_consuming":     "end of input",
+	"peek_not":          "no match",
+	"first":             "one of the alternatives",
+	"many_n":            "further progress",
+	"many_till":         "further progress",
+	"many_till_0":       "further progress",
+	"fold_many":         "further progress",
+	"many_count":        "further progress",
+}
+
+// expected resolves the human phrase completing "expected ___": Expected
+// if set, otherwise a description derived from Type.
+func (e CombinatorParseError) expected() string {
+	if e.Expected != "" {
+		return e.Expected
 	}
+	if after, ok := strings.CutPrefix(e.Type, "is_"); ok {
+		return strings.ReplaceAll(after, "_", " ")
+	}
+	if phrase, ok := typeFallback[e.Type]; ok {
+		return phrase
+	}
+	return strings.ReplaceAll(e.Type, "_", " ")
+}
+
+// Error returns a single-line, grep-stable string representation of the
+// current error: "chomp: parse error at line %d, column %d (offset %d):
+// expected %s". It never contains a newline. For a human-facing,
+// caret-annotated view of the failure, see [CombinatorParseError.Snippet].
+func (e CombinatorParseError) Error() string {
+	line, col := e.State.Position()
+
+	msg := fmt.Sprintf("chomp: parse error at line %d, column %d (offset %d): expected %s",
+		line, col, e.State.Pos(), e.expected())
+
+	if len(e.Labels) > 0 {
+		msg += " while parsing " + strings.Join(e.Labels, " > ")
+	}
+
+	return msg
+}
+
+// snippetMaxWidth is the line length, in runes, beyond which [Snippet]
+// truncates to a window around the failure column.
+const snippetMaxWidth = 100
+
+// snippetContext is the number of runes shown either side of the failure
+// column once a line is truncated.
+const snippetContext = 40
+
+// Snippet renders a caret-annotated view of the source line containing the
+// failure, for human-facing output such as a CLI - reached via [errors.As]
+// rather than included in [CombinatorParseError.Error], so multi-line
+// output only ever appears because a caller asked for it.
+//
+// Long lines are truncated to a window around the failure column. Tabs in
+// the source line are replicated verbatim in the caret padding, so a
+// terminal's own tab-stop expansion keeps both lines aligned. Alignment is
+// rune-count based: double-width glyphs (e.g. CJK) may visually drift the
+// caret, since that is inherently terminal-display-width dependent.
+func (e CombinatorParseError) Snippet() string {
+	line, col, text := e.State.lineInfo()
+	runes := []rune(text)
+	col0 := col - 1 // 0-based rune index into runes
+
+	display, displayCol0 := runes, col0
+	var prefix, suffix string
+	if len(runes) > snippetMaxWidth {
+		start, end := max(0, col0-snippetContext), min(len(runes), col0+snippetContext)
+		if start > 0 {
+			prefix = "… "
+		}
+		if end < len(runes) {
+			suffix = " …"
+		}
+		display = runes[start:end]
+		displayCol0 = col0 - start + len([]rune(prefix))
+	}
+
+	var pad strings.Builder
+	for _, r := range display[:min(displayCol0, len(display))] {
+		if r == '\t' {
+			pad.WriteRune('\t')
+		} else {
+			pad.WriteRune(' ')
+		}
+	}
+
+	gutter := strconv.Itoa(line)
+	blank := strings.Repeat(" ", len(gutter))
 
 	var buf strings.Builder
-	fmt.Fprintf(&buf, "(%s) combinator failed to parse text '%s'", e.Type, text)
-
-	if e.Input != "" {
-		fmt.Fprintf(&buf, " with input '%s'", e.Input)
-	}
+	fmt.Fprintf(&buf, "%s |\n", blank)
+	fmt.Fprintf(&buf, "%s | %s%s%s\n", gutter, prefix, string(display), suffix)
+	fmt.Fprintf(&buf, "%s | %s^ expected %s", blank, pad.String(), e.expected())
 
 	return buf.String()
+}
+
+// LogValue implements [slog.LogValuer], emitting offset/line/column/
+// expected (and context, once Labels is non-empty) as structured fields
+// instead of a string to be parsed.
+func (e CombinatorParseError) LogValue() slog.Value {
+	line, col := e.State.Position()
+
+	attrs := []slog.Attr{
+		slog.Int("offset", e.State.Pos()),
+		slog.Int("line", line),
+		slog.Int("column", col),
+		slog.String("expected", e.expected()),
+	}
+
+	if len(e.Labels) > 0 {
+		attrs = append(attrs, slog.String("context", strings.Join(e.Labels, " > ")))
+	}
+
+	return slog.GroupValue(attrs...)
 }
 
 // ParserError defines an error that is raised when a parser
@@ -92,14 +212,29 @@ type ParserError struct {
 	Type string
 }
 
-// Error returns a friendly string representation of the current error.
+// Error delegates to the inner error's Error(). Only the leaf
+// [CombinatorParseError] carries a position; ParserError adds no prefix of
+// its own so the rendered message stays the single, grep-stable line
+// [CombinatorParseError.Error] produces, regardless of wrapping depth.
 func (e ParserError) Error() string {
-	return fmt.Sprintf("(%s) parser failed. %v", e.Type, e.Err)
+	if e.Err == nil {
+		return fmt.Sprintf("chomp: %s parser error with no underlying cause", e.Type)
+	}
+	return e.Err.Error()
 }
 
 // Unwrap returns the inner [CombinatorParseError].
 func (e ParserError) Unwrap() error {
 	return e.Err
+}
+
+// LogValue delegates to the inner error's LogValue if it implements
+// [slog.LogValuer], otherwise falls back to its Error() string.
+func (e ParserError) LogValue() slog.Value {
+	if lv, ok := e.Err.(slog.LogValuer); ok {
+		return lv.LogValue()
+	}
+	return slog.StringValue(e.Error())
 }
 
 // RangedParserError defines an error that is raised when a ranged parser
@@ -169,12 +304,26 @@ func RangeExecution(i ...uint) RangedParserExec {
 	return exec
 }
 
-// Error returns a friendly string representation of the current error.
+// Error delegates to the inner error's Error(), for the same reason as
+// [ParserError.Error]. [RangedParserError.Exec] remains available
+// programmatically via [errors.As] for callers that want execution counts.
 func (e RangedParserError) Error() string {
-	return fmt.Sprintf("(%s) parser failed %s. %v", e.Type, e.Exec, e.Err)
+	if e.Err == nil {
+		return fmt.Sprintf("chomp: %s parser error with no underlying cause", e.Type)
+	}
+	return e.Err.Error()
 }
 
 // Unwrap returns the inner [CombinatorParseError].
 func (e RangedParserError) Unwrap() error {
 	return e.Err
+}
+
+// LogValue delegates to the inner error's LogValue if it implements
+// [slog.LogValuer], otherwise falls back to its Error() string.
+func (e RangedParserError) LogValue() slog.Value {
+	if lv, ok := e.Err.(slog.LogValuer); ok {
+		return lv.LogValue()
+	}
+	return slog.StringValue(e.Error())
 }

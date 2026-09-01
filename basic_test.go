@@ -924,7 +924,7 @@ func TestCombinatorError(t *testing.T) {
 
 	_, _, err := chomp.OneOf("!h").Run("Happy Monday")
 
-	assert.EqualError(t, err, "(one_of) combinator failed to parse text 'Happy Monday' with input '!h'")
+	assert.EqualError(t, err, `chomp: parse error at line 1, column 1 (offset 0): expected a character in "!h"`)
 }
 
 func TestParserCombinatorError(t *testing.T) {
@@ -935,7 +935,7 @@ func TestParserCombinatorError(t *testing.T) {
 		chomp.Tag(":"),
 		chomp.Tag("marvel")).Run("the legend of batman:dc:9781801260336:£19.99")
 
-	assert.EqualError(t, err, "(all) parser failed. (tag) combinator failed to parse text 'dc:9781801260336:£19.99' with input 'marvel'")
+	assert.EqualError(t, err, `chomp: parse error at line 1, column 22 (offset 21): expected "marvel"`)
 }
 
 func TestEmptyPatternBehaviour(t *testing.T) {

@@ -19,6 +19,7 @@ chomp.Tag("Hello").Run("Hello, World!")
 - [Modifier Combinators](#modifier-combinators)
 - [Parsers](#parsers)
 - [Predicates](#predicates)
+- [Error Reporting](#error-reporting)
 
 ---
 
@@ -799,3 +800,42 @@ Predicates are used with `While`, `WhileN`, `WhileNM`, `WhileNot`, `WhileNotN`, 
 | `IsHexDigit`     | Hexadecimal digits (0-9, a-f, A-F)                     |
 | `IsOctalDigit`   | Octal digits (0-7)                                     |
 | `IsBinaryDigit`  | Binary digits (0-1)                                    |
+
+---
+
+## Error Reporting
+
+Every combinator failure is a `chomp.CombinatorParseError`, reachable via `errors.As` through any wrapping error. Rendering is layered:
+
+- **`Error()`** - a single line, safe for any log pipeline (`\n`-delimited collectors treat a newline as a record boundary):
+
+```go
+_, _, err := chomp.All(
+    chomp.Until("."),
+    chomp.Tag("."),
+    chomp.Digit(),
+    chomp.Tag("."),
+    chomp.Digit(),
+).Run("version = 1.4.x")
+fmt.Println(err)
+// chomp: parse error at line 1, column 15 (offset 14): expected digit
+```
+
+- **`Snippet()`** - opt-in, reached via `errors.As`, for a human at a terminal:
+
+```go
+var pe chomp.CombinatorParseError
+errors.As(err, &pe)
+fmt.Println(err.Error() + "\n" + pe.Snippet())
+// chomp: parse error at line 1, column 15 (offset 14): expected digit
+//   |
+// 1 | version = 1.4.x
+//   |               ^ expected digit
+```
+
+- **`LogValue()`** - implements `slog.LogValuer`, so a structured logger gets `offset`/`line`/`column`/`expected` (and `context`, once a failure occurred inside a labelled grammar rule) as fields, not a string to parse:
+
+```go
+logger.Error("failed to parse manifest", "err", err)
+// {"level":"ERROR","msg":"failed to parse manifest","err":{"offset":14,"line":1,"column":15,"expected":"digit"}}
+```
