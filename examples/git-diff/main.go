@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -265,6 +266,10 @@ index fdf8e52..02d20e5 100644
 
 	fileDiff, err := Parse(diff)
 	if err != nil {
+		var pe chomp.CombinatorParseError
+		if errors.As(err, &pe) {
+			log.Fatal(err.Error() + "\n" + pe.Snippet())
+		}
 		log.Fatal(err)
 	}
 

@@ -21,6 +21,7 @@ func assertFailureNonConsuming[S any](t *testing.T, name, input string, run func
 	var zero S
 	assert.Equalf(t, input, rem, "%s: on failure, rem must equal the original input", name)
 	assert.Equalf(t, zero, ext, "%s: on failure, ext must be the zero value", name)
+	assert.NotContainsf(t, err.Error(), "\n", "%s: Error() must not contain a newline", name)
 }
 
 // assertSuccessIsPrefix asserts rule 2 of the combinator contract: on

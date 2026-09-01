@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -233,6 +234,10 @@ grp:::::::::603DAFFC5AAE42C4B8BFCC99DD7CEDD5C443FFA0:
 
 	pk, err := Parse(colonFmt)
 	if err != nil {
+		var pe chomp.CombinatorParseError
+		if errors.As(err, &pe) {
+			log.Fatal(err.Error() + "\n" + pe.Snippet())
+		}
 		log.Fatal(err)
 	}
 

@@ -93,7 +93,7 @@ func I(c Combinator[[]string], i int) Combinator[string] {
 
 		if i < 0 || i >= len(ext) {
 			return s, "", ParserError{
-				Err:  fmt.Errorf("index %d is out of bounds within string slice of %d elements", i, len(ext)),
+				Err:  fmt.Errorf("chomp: index %d is out of bounds within string slice of %d elements", i, len(ext)),
 				Type: "i",
 			}
 		}
