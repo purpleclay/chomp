@@ -35,7 +35,7 @@ func BenchmarkTag(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -61,7 +61,7 @@ func BenchmarkTagNoCase(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -92,7 +92,7 @@ func BenchmarkChar(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -120,7 +120,7 @@ func BenchmarkAnyChar(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -151,7 +151,7 @@ func BenchmarkTake(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -182,7 +182,7 @@ func BenchmarkUntil(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -223,7 +223,7 @@ func BenchmarkAny(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -264,7 +264,7 @@ func BenchmarkNot(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -295,7 +295,7 @@ func BenchmarkOneOf(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -326,7 +326,7 @@ func BenchmarkNoneOf(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -372,7 +372,7 @@ func BenchmarkWhile(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -403,7 +403,7 @@ func BenchmarkWhileNot(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -434,7 +434,7 @@ func BenchmarkSatisfy(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -468,7 +468,7 @@ func BenchmarkPair(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -505,7 +505,7 @@ func BenchmarkDelimited(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -519,7 +519,7 @@ func BenchmarkSepPair(b *testing.B) {
 	b.SetBytes(int64(len(input)))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }
 
@@ -547,7 +547,7 @@ func BenchmarkAll(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = tt.parser(tt.input)
+				_, _, _ = tt.parser.Run(tt.input)
 			}
 		})
 	}
@@ -578,7 +578,7 @@ func BenchmarkOpt(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -592,7 +592,7 @@ func BenchmarkMap(b *testing.B) {
 	b.SetBytes(int64(len(input)))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }
 
@@ -622,7 +622,7 @@ func BenchmarkMany(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -650,7 +650,7 @@ func BenchmarkPeek(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -664,7 +664,7 @@ func BenchmarkFlatten(b *testing.B) {
 	b.SetBytes(int64(len(input)))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }
 
@@ -691,7 +691,7 @@ func BenchmarkFirst(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -717,7 +717,7 @@ func BenchmarkVerify(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -745,7 +745,7 @@ func BenchmarkRecognize(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -759,7 +759,7 @@ func BenchmarkConsumed(b *testing.B) {
 	b.SetBytes(int64(len(input)))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }
 
@@ -770,7 +770,7 @@ func BenchmarkEof(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }
 
@@ -782,7 +782,7 @@ func BenchmarkAllConsuming(b *testing.B) {
 	b.SetBytes(int64(len(input)))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }
 
@@ -808,7 +808,7 @@ func BenchmarkRest(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -822,7 +822,7 @@ func BenchmarkValue(b *testing.B) {
 	b.SetBytes(int64(len(input)))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }
 
@@ -851,7 +851,7 @@ func BenchmarkCond(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -865,7 +865,7 @@ func BenchmarkCut(b *testing.B) {
 	b.SetBytes(int64(len(input)))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }
 
@@ -877,7 +877,7 @@ func BenchmarkCrlf(b *testing.B) {
 	b.SetBytes(int64(len(input)))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }
 
@@ -889,7 +889,7 @@ func BenchmarkCrlfFailureLargeInput(b *testing.B) {
 	b.SetBytes(int64(len(input)))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }
 
@@ -915,7 +915,7 @@ func BenchmarkEol(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -947,7 +947,7 @@ func BenchmarkUntilScaling(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -979,7 +979,7 @@ func BenchmarkWhileScaling(b *testing.B) {
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				_, _, _ = parser(tt.input)
+				_, _, _ = parser.Run(tt.input)
 			}
 		})
 	}
@@ -993,7 +993,7 @@ func BenchmarkKeyValuePair(b *testing.B) {
 	b.SetBytes(int64(len(input)))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }
 
@@ -1013,7 +1013,7 @@ func BenchmarkGitDiffHeader(b *testing.B) {
 	b.SetBytes(int64(len(input)))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }
 
@@ -1025,6 +1025,6 @@ func BenchmarkCSVField(b *testing.B) {
 	b.SetBytes(int64(len(input)))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _, _ = parser(input)
+		_, _, _ = parser.Run(input)
 	}
 }

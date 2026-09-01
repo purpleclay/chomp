@@ -33,7 +33,7 @@ const hangTimeout = 500 * time.Millisecond
 func TestManyNZeroWidthTerminates(t *testing.T) {
 	t.Parallel()
 	withTimeout(t, hangTimeout, func() {
-		rem, ext, err := chomp.ManyN(chomp.Digit0(), 0)("abc")
+		rem, ext, err := chomp.ManyN(chomp.Digit0(), 0).Run("abc")
 		require.NoError(t, err)
 		assert.Equal(t, "abc", rem)
 		assert.Empty(t, ext)
@@ -43,7 +43,7 @@ func TestManyNZeroWidthTerminates(t *testing.T) {
 func TestManyNZeroWidthUntilTerminates(t *testing.T) {
 	t.Parallel()
 	withTimeout(t, hangTimeout, func() {
-		rem, ext, err := chomp.ManyN(chomp.Until(""), 0)("abc")
+		rem, ext, err := chomp.ManyN(chomp.Until(""), 0).Run("abc")
 		require.NoError(t, err)
 		assert.Equal(t, "abc", rem)
 		assert.Empty(t, ext)
@@ -53,7 +53,7 @@ func TestManyNZeroWidthUntilTerminates(t *testing.T) {
 func TestManyZeroWidthTerminates(t *testing.T) {
 	t.Parallel()
 	withTimeout(t, hangTimeout, func() {
-		_, _, err := chomp.Many(chomp.Digit0())("abc")
+		_, _, err := chomp.Many(chomp.Digit0()).Run("abc")
 		require.Error(t, err)
 	})
 }
@@ -61,7 +61,7 @@ func TestManyZeroWidthTerminates(t *testing.T) {
 func TestSeparatedListZeroWidthTerminates(t *testing.T) {
 	t.Parallel()
 	withTimeout(t, hangTimeout, func() {
-		rem, ext, err := chomp.SeparatedList(chomp.Digit0(), chomp.Opt(chomp.Tag(",")))("abc")
+		rem, ext, err := chomp.SeparatedList(chomp.Digit0(), chomp.Opt(chomp.Tag(","))).Run("abc")
 		require.NoError(t, err)
 		assert.Equal(t, "abc", rem)
 		require.Len(t, ext, 1)
@@ -72,7 +72,7 @@ func TestSeparatedListZeroWidthTerminates(t *testing.T) {
 func TestSeparatedList0ZeroWidthTerminates(t *testing.T) {
 	t.Parallel()
 	withTimeout(t, hangTimeout, func() {
-		rem, ext, err := chomp.SeparatedList0(chomp.Digit0(), chomp.Opt(chomp.Tag(",")))("abc")
+		rem, ext, err := chomp.SeparatedList0(chomp.Digit0(), chomp.Opt(chomp.Tag(","))).Run("abc")
 		require.NoError(t, err)
 		assert.Equal(t, "abc", rem)
 		require.Len(t, ext, 1)
@@ -83,7 +83,7 @@ func TestSeparatedList0ZeroWidthTerminates(t *testing.T) {
 func TestManyTillZeroWidthTerminates(t *testing.T) {
 	t.Parallel()
 	withTimeout(t, hangTimeout, func() {
-		_, _, err := chomp.ManyTill(chomp.Digit0(), chomp.Tag("END"))("abc")
+		_, _, err := chomp.ManyTill(chomp.Digit0(), chomp.Tag("END")).Run("abc")
 		require.Error(t, err)
 	})
 }
@@ -91,7 +91,7 @@ func TestManyTillZeroWidthTerminates(t *testing.T) {
 func TestManyTill0ZeroWidthTerminates(t *testing.T) {
 	t.Parallel()
 	withTimeout(t, hangTimeout, func() {
-		_, _, err := chomp.ManyTill0(chomp.Digit0(), chomp.Tag("END"))("abc")
+		_, _, err := chomp.ManyTill0(chomp.Digit0(), chomp.Tag("END")).Run("abc")
 		require.Error(t, err)
 	})
 }
@@ -99,7 +99,7 @@ func TestManyTill0ZeroWidthTerminates(t *testing.T) {
 func TestFoldManyZeroWidthTerminates(t *testing.T) {
 	t.Parallel()
 	withTimeout(t, hangTimeout, func() {
-		_, _, err := chomp.FoldMany(chomp.Digit0(), 0, func(acc int, _ string) int { return acc })("abc")
+		_, _, err := chomp.FoldMany(chomp.Digit0(), 0, func(acc int, _ string) int { return acc }).Run("abc")
 		require.Error(t, err)
 	})
 }
@@ -107,7 +107,7 @@ func TestFoldManyZeroWidthTerminates(t *testing.T) {
 func TestFoldMany0ZeroWidthTerminates(t *testing.T) {
 	t.Parallel()
 	withTimeout(t, hangTimeout, func() {
-		rem, ext, err := chomp.FoldMany0(chomp.Digit0(), 0, func(acc int, _ string) int { return acc })("abc")
+		rem, ext, err := chomp.FoldMany0(chomp.Digit0(), 0, func(acc int, _ string) int { return acc }).Run("abc")
 		require.NoError(t, err)
 		assert.Equal(t, "abc", rem)
 		assert.Equal(t, 0, ext)
@@ -117,7 +117,7 @@ func TestFoldMany0ZeroWidthTerminates(t *testing.T) {
 func TestManyCountZeroWidthTerminates(t *testing.T) {
 	t.Parallel()
 	withTimeout(t, hangTimeout, func() {
-		_, _, err := chomp.ManyCount(chomp.Digit0())("abc")
+		_, _, err := chomp.ManyCount(chomp.Digit0()).Run("abc")
 		require.Error(t, err)
 	})
 }
@@ -125,7 +125,7 @@ func TestManyCountZeroWidthTerminates(t *testing.T) {
 func TestManyCount0ZeroWidthTerminates(t *testing.T) {
 	t.Parallel()
 	withTimeout(t, hangTimeout, func() {
-		rem, count, err := chomp.ManyCount0(chomp.Digit0())("abc")
+		rem, count, err := chomp.ManyCount0(chomp.Digit0()).Run("abc")
 		require.NoError(t, err)
 		assert.Equal(t, "abc", rem)
 		assert.Equal(t, uint(0), count)

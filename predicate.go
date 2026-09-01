@@ -160,7 +160,7 @@ var (
 // While will scan the input text, testing each character against the provided
 // [Predicate]. The [Predicate] must match at least one character.
 //
-//	chomp.While(chomp.IsLetter)("Hello, World!")
+//	chomp.While(chomp.IsLetter).Run("Hello, World!")
 //	// (", World!", "Hello", nil)
 func While(p Predicate) Combinator[string] {
 	return WhileN(p, 1)
@@ -170,16 +170,17 @@ func While(p Predicate) Combinator[string] {
 // [Predicate]. The [Predicate] must match at least n characters. If n is zero,
 // this becomes an optional combinator.
 //
-//	chomp.WhileN(chomp.IsLetter, 1)("Hello, World!")
+//	chomp.WhileN(chomp.IsLetter, 1).Run("Hello, World!")
 //	// (", World!", "Hello", nil)
 //
-//	chomp.WhileN(chomp.IsDigit, 0)("Hello, World!")
+//	chomp.WhileN(chomp.IsDigit, 0).Run("Hello, World!")
 //	// ("Hello, World!", "", nil)
 func WhileN(p Predicate, n uint) Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
 		pos, runes := 0, uint(0)
-		for pos < len(s) {
-			c, size := utf8.DecodeRuneInString(s[pos:])
+		for pos < len(rest) {
+			c, size := utf8.DecodeRuneInString(rest[pos:])
 			if !p.Match(c) {
 				break
 			}
@@ -189,13 +190,13 @@ func WhileN(p Predicate, n uint) Combinator[string] {
 
 		if runes < n {
 			return s, "", RangedParserError{
-				Err:  CombinatorParseError{Text: s, Type: p.String()},
+				Err:  CombinatorParseError{State: s, Type: p.String()},
 				Exec: RangeExecution(runes, n),
 				Type: "while_n",
 			}
 		}
 
-		return s[pos:], s[:pos], nil
+		return s.Advance(pos), rest[:pos], nil
 	}
 }
 
@@ -203,13 +204,14 @@ func WhileN(p Predicate, n uint) Combinator[string] {
 // [Predicate]. The [Predicate] must match a minimum of n and upto a maximum
 // of m characters. If n is zero, this becomes an optional combinator.
 //
-//	chomp.WhileNM(chomp.IsLetter, 1, 8)("Hello, World!")
+//	chomp.WhileNM(chomp.IsLetter, 1, 8).Run("Hello, World!")
 //	// (", World!", "Hello", nil)
 func WhileNM(p Predicate, n, m uint) Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
 		pos, runes := 0, uint(0)
-		for pos < len(s) {
-			c, size := utf8.DecodeRuneInString(s[pos:])
+		for pos < len(rest) {
+			c, size := utf8.DecodeRuneInString(rest[pos:])
 			if !p.Match(c) {
 				break
 			}
@@ -219,13 +221,13 @@ func WhileNM(p Predicate, n, m uint) Combinator[string] {
 
 		if runes < n || runes > m {
 			return s, "", RangedParserError{
-				Err:  CombinatorParseError{Text: s, Type: p.String()},
+				Err:  CombinatorParseError{State: s, Type: p.String()},
 				Exec: RangeExecution(runes, n, m),
 				Type: "while_n_m",
 			}
 		}
 
-		return s[pos:], s[:pos], nil
+		return s.Advance(pos), rest[:pos], nil
 	}
 }
 
@@ -233,7 +235,7 @@ func WhileNM(p Predicate, n, m uint) Combinator[string] {
 // [Predicate]. The [Predicate] must not match at least one character. It has
 // the inverse behavior of [While].
 //
-//	chomp.WhileNot(chomp.IsDigit)("Hello, World!")
+//	chomp.WhileNot(chomp.IsDigit).Run("Hello, World!")
 //	// ("", "Hello, World!", nil)
 func WhileNot(p Predicate) Combinator[string] {
 	return WhileNotN(p, 1)
@@ -243,16 +245,17 @@ func WhileNot(p Predicate) Combinator[string] {
 // [Predicate]. The [Predicate] must not match at least n characters. If n is
 // zero, this becomes an optional combinator. It has the inverse behavior of [WhileN].
 //
-//	chomp.WhileNotN(chomp.IsDigit, 1)("Hello, World!")
+//	chomp.WhileNotN(chomp.IsDigit, 1).Run("Hello, World!")
 //	// ("", "Hello, World!", nil)
 //
-//	chomp.WhileNotN(chomp.IsLetter, 0)("Hello, World!")
+//	chomp.WhileNotN(chomp.IsLetter, 0).Run("Hello, World!")
 //	// ("Hello, World!", "", nil)
 func WhileNotN(p Predicate, n uint) Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
 		pos, runes := 0, uint(0)
-		for pos < len(s) {
-			c, size := utf8.DecodeRuneInString(s[pos:])
+		for pos < len(rest) {
+			c, size := utf8.DecodeRuneInString(rest[pos:])
 			if p.Match(c) {
 				break
 			}
@@ -262,13 +265,13 @@ func WhileNotN(p Predicate, n uint) Combinator[string] {
 
 		if runes < n {
 			return s, "", RangedParserError{
-				Err:  CombinatorParseError{Text: s, Type: p.String()},
+				Err:  CombinatorParseError{State: s, Type: p.String()},
 				Exec: RangeExecution(runes, n),
 				Type: "while_not_n",
 			}
 		}
 
-		return s[pos:], s[:pos], nil
+		return s.Advance(pos), rest[:pos], nil
 	}
 }
 
@@ -277,13 +280,14 @@ func WhileNotN(p Predicate, n uint) Combinator[string] {
 // m characters. If n is zero, this becomes an optional combinator. It has the
 // inverse behavior of [WhileNM].
 //
-//	chomp.WhileNotNM(chomp.IsLetter, 1, 9)("20240709 was a great day")
+//	chomp.WhileNotNM(chomp.IsLetter, 1, 9).Run("20240709 was a great day")
 //	// ("was a great day", "20240709 ", nil)
 func WhileNotNM(p Predicate, n, m uint) Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
 		pos, runes := 0, uint(0)
-		for pos < len(s) {
-			c, size := utf8.DecodeRuneInString(s[pos:])
+		for pos < len(rest) {
+			c, size := utf8.DecodeRuneInString(rest[pos:])
 			if p.Match(c) {
 				break
 			}
@@ -293,20 +297,20 @@ func WhileNotNM(p Predicate, n, m uint) Combinator[string] {
 
 		if runes < n || runes > m {
 			return s, "", RangedParserError{
-				Err:  CombinatorParseError{Text: s, Type: p.String()},
+				Err:  CombinatorParseError{State: s, Type: p.String()},
 				Exec: RangeExecution(runes, n, m),
 				Type: "while_not_n_m",
 			}
 		}
 
-		return s[pos:], s[:pos], nil
+		return s.Advance(pos), rest[:pos], nil
 	}
 }
 
 // Alpha matches one or more ASCII or Unicode letters.
 // Equivalent to While(IsLetter).
 //
-//	chomp.Alpha()("Hello123")
+//	chomp.Alpha().Run("Hello123")
 //	// ("123", "Hello", nil)
 func Alpha() Combinator[string] {
 	return While(IsLetter)
@@ -315,7 +319,7 @@ func Alpha() Combinator[string] {
 // Alpha0 matches zero or more ASCII or Unicode letters.
 // Equivalent to WhileN(IsLetter, 0).
 //
-//	chomp.Alpha0()("123Hello")
+//	chomp.Alpha0().Run("123Hello")
 //	// ("123Hello", "", nil)
 func Alpha0() Combinator[string] {
 	return WhileN(IsLetter, 0)
@@ -324,7 +328,7 @@ func Alpha0() Combinator[string] {
 // Digit matches one or more decimal digits.
 // Equivalent to While(IsDigit).
 //
-//	chomp.Digit()("123abc")
+//	chomp.Digit().Run("123abc")
 //	// ("abc", "123", nil)
 func Digit() Combinator[string] {
 	return While(IsDigit)
@@ -333,7 +337,7 @@ func Digit() Combinator[string] {
 // Digit0 matches zero or more decimal digits.
 // Equivalent to WhileN(IsDigit, 0).
 //
-//	chomp.Digit0()("abc123")
+//	chomp.Digit0().Run("abc123")
 //	// ("abc123", "", nil)
 func Digit0() Combinator[string] {
 	return WhileN(IsDigit, 0)
@@ -342,7 +346,7 @@ func Digit0() Combinator[string] {
 // Alphanumeric matches one or more alphanumeric characters.
 // Equivalent to While(IsAlphanumeric).
 //
-//	chomp.Alphanumeric()("Hello123!")
+//	chomp.Alphanumeric().Run("Hello123!")
 //	// ("!", "Hello123", nil)
 func Alphanumeric() Combinator[string] {
 	return While(IsAlphanumeric)
@@ -351,7 +355,7 @@ func Alphanumeric() Combinator[string] {
 // Alphanumeric0 matches zero or more alphanumeric characters.
 // Equivalent to WhileN(IsAlphanumeric, 0).
 //
-//	chomp.Alphanumeric0()("!Hello123")
+//	chomp.Alphanumeric0().Run("!Hello123")
 //	// ("!Hello123", "", nil)
 func Alphanumeric0() Combinator[string] {
 	return WhileN(IsAlphanumeric, 0)
@@ -360,7 +364,7 @@ func Alphanumeric0() Combinator[string] {
 // Space matches one or more space or tab characters.
 // Equivalent to While(IsSpace).
 //
-//	chomp.Space()("   Hello")
+//	chomp.Space().Run("   Hello")
 //	// ("Hello", "   ", nil)
 func Space() Combinator[string] {
 	return While(IsSpace)
@@ -369,7 +373,7 @@ func Space() Combinator[string] {
 // Space0 matches zero or more space or tab characters.
 // Equivalent to WhileN(IsSpace, 0).
 //
-//	chomp.Space0()("Hello")
+//	chomp.Space0().Run("Hello")
 //	// ("Hello", "", nil)
 func Space0() Combinator[string] {
 	return WhileN(IsSpace, 0)
@@ -378,7 +382,7 @@ func Space0() Combinator[string] {
 // Multispace matches one or more whitespace characters (space, tab, newline, carriage return).
 // Equivalent to While(IsMultispace).
 //
-//	chomp.Multispace()("  \n\tHello")
+//	chomp.Multispace().Run("  \n\tHello")
 //	// ("Hello", "  \n\t", nil)
 func Multispace() Combinator[string] {
 	return While(IsMultispace)
@@ -387,7 +391,7 @@ func Multispace() Combinator[string] {
 // Multispace0 matches zero or more whitespace characters (space, tab, newline, carriage return).
 // Equivalent to WhileN(IsMultispace, 0).
 //
-//	chomp.Multispace0()("Hello")
+//	chomp.Multispace0().Run("Hello")
 //	// ("Hello", "", nil)
 func Multispace0() Combinator[string] {
 	return WhileN(IsMultispace, 0)
@@ -396,7 +400,7 @@ func Multispace0() Combinator[string] {
 // HexDigit matches one or more hexadecimal digits (0-9, a-f, A-F).
 // Equivalent to While(IsHexDigit).
 //
-//	chomp.HexDigit()("1a2B3c rest")
+//	chomp.HexDigit().Run("1a2B3c rest")
 //	// (" rest", "1a2B3c", nil)
 func HexDigit() Combinator[string] {
 	return While(IsHexDigit)
@@ -405,7 +409,7 @@ func HexDigit() Combinator[string] {
 // HexDigit0 matches zero or more hexadecimal digits (0-9, a-f, A-F).
 // Equivalent to WhileN(IsHexDigit, 0).
 //
-//	chomp.HexDigit0()("xyz")
+//	chomp.HexDigit0().Run("xyz")
 //	// ("xyz", "", nil)
 func HexDigit0() Combinator[string] {
 	return WhileN(IsHexDigit, 0)
@@ -414,7 +418,7 @@ func HexDigit0() Combinator[string] {
 // OctalDigit matches one or more octal digits (0-7).
 // Equivalent to While(IsOctalDigit).
 //
-//	chomp.OctalDigit()("0127 rest")
+//	chomp.OctalDigit().Run("0127 rest")
 //	// (" rest", "0127", nil)
 func OctalDigit() Combinator[string] {
 	return While(IsOctalDigit)
@@ -423,7 +427,7 @@ func OctalDigit() Combinator[string] {
 // OctalDigit0 matches zero or more octal digits (0-7).
 // Equivalent to WhileN(IsOctalDigit, 0).
 //
-//	chomp.OctalDigit0()("89")
+//	chomp.OctalDigit0().Run("89")
 //	// ("89", "", nil)
 func OctalDigit0() Combinator[string] {
 	return WhileN(IsOctalDigit, 0)
@@ -432,7 +436,7 @@ func OctalDigit0() Combinator[string] {
 // BinaryDigit matches one or more binary digits (0-1).
 // Equivalent to While(IsBinaryDigit).
 //
-//	chomp.BinaryDigit()("1010 rest")
+//	chomp.BinaryDigit().Run("1010 rest")
 //	// (" rest", "1010", nil)
 func BinaryDigit() Combinator[string] {
 	return While(IsBinaryDigit)
@@ -441,7 +445,7 @@ func BinaryDigit() Combinator[string] {
 // BinaryDigit0 matches zero or more binary digits (0-1).
 // Equivalent to WhileN(IsBinaryDigit, 0).
 //
-//	chomp.BinaryDigit0()("234")
+//	chomp.BinaryDigit0().Run("234")
 //	// ("234", "", nil)
 func BinaryDigit0() Combinator[string] {
 	return WhileN(IsBinaryDigit, 0)
@@ -449,34 +453,36 @@ func BinaryDigit0() Combinator[string] {
 
 // Newline matches a single newline character '\n'.
 //
-//	chomp.Newline()("\nHello")
+//	chomp.Newline().Run("\nHello")
 //	// ("Hello", "\n", nil)
 func Newline() Combinator[string] {
-	return func(s string) (string, string, error) {
-		if s != "" && s[0] == '\n' {
-			return s[1:], "\n", nil
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		if rest != "" && rest[0] == '\n' {
+			return s.Advance(1), "\n", nil
 		}
-		return s, "", CombinatorParseError{Text: s, Type: "newline"}
+		return s, "", CombinatorParseError{State: s, Type: "newline"}
 	}
 }
 
 // Tab matches a single tab character '\t'.
 //
-//	chomp.Tab()("\tHello")
+//	chomp.Tab().Run("\tHello")
 //	// ("Hello", "\t", nil)
 func Tab() Combinator[string] {
-	return func(s string) (string, string, error) {
-		if s != "" && s[0] == '\t' {
-			return s[1:], "\t", nil
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		if rest != "" && rest[0] == '\t' {
+			return s.Advance(1), "\t", nil
 		}
-		return s, "", CombinatorParseError{Text: s, Type: "tab"}
+		return s, "", CombinatorParseError{State: s, Type: "tab"}
 	}
 }
 
 // NotLineEnding matches any characters until a line ending ('\n' or '\r').
 // Requires at least one character to be matched.
 //
-//	chomp.NotLineEnding()("Hello, World!\nNext line")
+//	chomp.NotLineEnding().Run("Hello, World!\nNext line")
 //	// ("\nNext line", "Hello, World!", nil)
 func NotLineEnding() Combinator[string] {
 	return WhileNot(IsLineEnding)
@@ -484,7 +490,7 @@ func NotLineEnding() Combinator[string] {
 
 // AnyDigit matches a single decimal digit (0-9).
 //
-//	chomp.AnyDigit()("123")
+//	chomp.AnyDigit().Run("123")
 //	// ("23", "1", nil)
 func AnyDigit() Combinator[string] {
 	return Satisfy(IsDigit.Match)
@@ -492,7 +498,7 @@ func AnyDigit() Combinator[string] {
 
 // AnyLetter matches a single ASCII or Unicode letter.
 //
-//	chomp.AnyLetter()("Hello")
+//	chomp.AnyLetter().Run("Hello")
 //	// ("ello", "H", nil)
 func AnyLetter() Combinator[string] {
 	return Satisfy(IsLetter.Match)
@@ -500,7 +506,7 @@ func AnyLetter() Combinator[string] {
 
 // AnyAlphanumeric matches a single alphanumeric character.
 //
-//	chomp.AnyAlphanumeric()("a1!")
+//	chomp.AnyAlphanumeric().Run("a1!")
 //	// ("1!", "a", nil)
 func AnyAlphanumeric() Combinator[string] {
 	return Satisfy(IsAlphanumeric.Match)
@@ -508,7 +514,7 @@ func AnyAlphanumeric() Combinator[string] {
 
 // AnyHexDigit matches a single hexadecimal digit (0-9, a-f, A-F).
 //
-//	chomp.AnyHexDigit()("fF0")
+//	chomp.AnyHexDigit().Run("fF0")
 //	// ("F0", "f", nil)
 func AnyHexDigit() Combinator[string] {
 	return Satisfy(IsHexDigit.Match)
@@ -516,7 +522,7 @@ func AnyHexDigit() Combinator[string] {
 
 // AnyOctalDigit matches a single octal digit (0-7).
 //
-//	chomp.AnyOctalDigit()("752")
+//	chomp.AnyOctalDigit().Run("752")
 //	// ("52", "7", nil)
 func AnyOctalDigit() Combinator[string] {
 	return Satisfy(IsOctalDigit.Match)
@@ -524,7 +530,7 @@ func AnyOctalDigit() Combinator[string] {
 
 // AnyBinaryDigit matches a single binary digit (0-1).
 //
-//	chomp.AnyBinaryDigit()("101")
+//	chomp.AnyBinaryDigit().Run("101")
 //	// ("01", "1", nil)
 func AnyBinaryDigit() Combinator[string] {
 	return Satisfy(IsBinaryDigit.Match)

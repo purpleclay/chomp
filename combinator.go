@@ -12,9 +12,41 @@ type Result interface {
 
 // Combinator is a higher-order function capable of parsing text under a defined
 // condition. Combinators can be combined to form more complex parsers. Upon success,
-// a combinator will return both the unparsed and parsed text. All combinators are
+// a combinator will return both the unparsed and parsed [State]. All combinators are
 // strict and must parse its input. Any failure to do so should raise a [CombinatorParseError].
-type Combinator[T Result] func(string) (string, T, error)
+//
+// Raw invocation c(state) is the composition surface used by combinators calling
+// combinators (and custom drivers); its errors are unfinalised and may still
+// reference the live input. Use [Combinator.Run] as the string-in/string-out entry
+// point, which finalises any error via [Finalize] before returning it.
+type Combinator[T Result] func(State) (State, T, error)
+
+// run is shared by [Combinator.Run] and [MappedCombinator.Run].
+func run[T any](c func(State) (State, T, error), input string) (string, T, error) { //nolint:ireturn // T is caller-constrained (Result or any wrapped by MappedCombinator), not an open interface.
+	rem, ext, err := c(NewState(input))
+	if err != nil {
+		return rem.Rest(), ext, Finalize(err)
+	}
+
+	return rem.Rest(), ext, nil
+}
+
+// Run applies c against input, the sole string-in/string-out entry point.
+// Unlike raw invocation c(state), any returned error is passed through
+// [Finalize] first.
+func (c Combinator[T]) Run(input string) (string, T, error) { //nolint:ireturn // T is closed over Result (string | []string), not an open interface.
+	return run[T](c, input)
+}
+
+// Finalize prepares an error returned by a raw combinator invocation for use
+// outside a parse. It is the boundary [Combinator.Run] applies errors to
+// before returning them; custom drivers built on raw c(state) invocation
+// should apply it at their own boundary. It is currently the identity
+// function - a reserved seam for future work bounding the memory an escaped
+// error retains.
+func Finalize(err error) error {
+	return err
+}
 
 const truncateErrAt = 50
 
@@ -25,9 +57,9 @@ type CombinatorParseError struct {
 	// not require any input to parse the text.
 	Input string
 
-	// Text that was being parsed by the [Combinator]. This will be truncated
-	// in the error message.
-	Text string
+	// State at the point of failure, capturing the absolute position
+	// within the original input alongside the unparsed suffix.
+	State State
 
 	// Type of [Combinator] that failed.
 	Type string
@@ -35,7 +67,7 @@ type CombinatorParseError struct {
 
 // Error returns a friendly string representation of the current error.
 func (e CombinatorParseError) Error() string {
-	text := e.Text
+	text := e.State.Rest()
 	if len(text) > truncateErrAt {
 		text = fmt.Sprintf("%s...(truncated)", text[:truncateErrAt])
 	}

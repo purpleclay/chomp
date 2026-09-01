@@ -8,10 +8,10 @@ import (
 // Pair will scan the input text and match each [Combinator] in turn.
 // Both combinators must match.
 //
-//	chomp.Pair(chomp.Tag("Hello,"), chomp.Tag(" World"))("Hello, World!")
+//	chomp.Pair(chomp.Tag("Hello,"), chomp.Tag(" World")).Run("Hello, World!")
 //	// ("!", []string{"Hello,", " World"}, nil)
 func Pair[T, U Result](c1 Combinator[T], c2 Combinator[U]) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s State) (State, []string, error) {
 		rem, out1, err := c1(s)
 		if err != nil {
 			return s, nil, ParserError{Err: err, Type: "pair"}
@@ -48,10 +48,10 @@ func combine(in []string, elems ...any) []string {
 //	chomp.SepPair(
 //		chomp.Tag("Hello"),
 //		chomp.Tag(", "),
-//		chomp.Tag("World"))("Hello, World!")
+//		chomp.Tag("World")).Run("Hello, World!")
 //	// ("!", []string{"Hello", "World"}, nil)
 func SepPair[T, U, V Result](c1 Combinator[T], sep Combinator[U], c2 Combinator[V]) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s State) (State, []string, error) {
 		rem, out1, err := c1(s)
 		if err != nil {
 			return s, nil, ParserError{Err: err, Type: "sep_pair"}
@@ -77,10 +77,10 @@ func SepPair[T, U, V Result](c1 Combinator[T], sep Combinator[U], c2 Combinator[
 // Repeat will scan the input text and match the combinator the defined
 // number of times. Every execution must match.
 //
-//	chomp.Repeat(chomp.Parentheses(), 2)("(Hello)(World)(!)")
+//	chomp.Repeat(chomp.Parentheses(), 2).Run("(Hello)(World)(!)")
 //	// ("(!)", []string{"Hello", "World"}, nil)
 func Repeat[T Result](c Combinator[T], n uint) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s State) (State, []string, error) {
 		var ext []string
 
 		rem := s
@@ -105,10 +105,10 @@ func Repeat[T Result](c Combinator[T], n uint) Combinator[[]string] {
 // a minimum and maximum number of times. It must match the expected minimum
 // number of times.
 //
-//	chomp.RepeatRange(chomp.OneOf("Hleo"), 1, 8)("Hello, World!")
+//	chomp.RepeatRange(chomp.OneOf("Hleo"), 1, 8).Run("Hello, World!")
 //	// (", World!", []string{"H", "e", "l", "l", "o"}, nil)
 func RepeatRange[T Result](c Combinator[T], n, m uint) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s State) (State, []string, error) {
 		var ext []string
 
 		if n > m {
@@ -142,10 +142,10 @@ func RepeatRange[T Result](c Combinator[T], n, m uint) Combinator[[]string] {
 //	chomp.Delimited(
 //		chomp.Tag("'"),
 //		chomp.Tag("Hello, World!"),
-//		chomp.Tag("'"))("'Hello, World!'")
+//		chomp.Tag("'")).Run("'Hello, World!'")
 //	// ("", "Hello, World!", nil)
 func Delimited[T, U, V Result](left Combinator[T], str Combinator[U], right Combinator[V]) Combinator[U] {
-	return func(s string) (string, U, error) {
+	return func(s State) (State, U, error) {
 		var def U
 
 		rem, _, err := left(s)
@@ -170,10 +170,10 @@ func Delimited[T, U, V Result](left Combinator[T], str Combinator[U], right Comb
 // QuoteDouble will match any text delimited (or surrounded) by a
 // pair of "double quotes".
 //
-//	chomp.QuoteDouble()(`"Hello, World!"`)
+//	chomp.QuoteDouble().Run(`"Hello, World!"`)
 //	// ("", "Hello, World!", nil)
 func QuoteDouble() Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
 		return Delimited(Tag("\""), Until("\""), Tag("\""))(s)
 	}
 }
@@ -181,10 +181,10 @@ func QuoteDouble() Combinator[string] {
 // QuoteSingle will match any text delimited (or surrounded) by a
 // pair of 'single quotes'.
 //
-//	chomp.QuoteSingle()("'Hello, World!'")
+//	chomp.QuoteSingle().Run("'Hello, World!'")
 //	// ("", "Hello, World!", nil)
 func QuoteSingle() Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
 		return Delimited(Tag("'"), Until("'"), Tag("'"))(s)
 	}
 }
@@ -192,10 +192,10 @@ func QuoteSingle() Combinator[string] {
 // BracketSquare will match any text delimited (or surrounded) by
 // a pair of [square brackets].
 //
-//	chomp.BracketSquare()("[Hello, World!]")
+//	chomp.BracketSquare().Run("[Hello, World!]")
 //	// ("", "Hello, World!", nil)
 func BracketSquare() Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
 		return Delimited(Tag("["), Until("]"), Tag("]"))(s)
 	}
 }
@@ -203,10 +203,10 @@ func BracketSquare() Combinator[string] {
 // Parentheses will match any text delimited (or surrounded) by
 // a pair of (parentheses).
 //
-//	chomp.Parentheses()("(Hello, World!)")
+//	chomp.Parentheses().Run("(Hello, World!)")
 //	// ("", "Hello, World!", nil)
 func Parentheses() Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
 		return Delimited(Tag("("), Until(")"), Tag(")"))(s)
 	}
 }
@@ -214,10 +214,10 @@ func Parentheses() Combinator[string] {
 // BracketAngled will match any text delimited (or surrounded) by
 // a pair of <angled brackets>.
 //
-//	chomp.BracketAngled()("<Hello, World!>")
+//	chomp.BracketAngled().Run("<Hello, World!>")
 //	// ("", "Hello, World!", nil)
 func BracketAngled() Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
 		return Delimited(Tag("<"), Until(">"), Tag(">"))(s)
 	}
 }
@@ -232,10 +232,10 @@ func BracketAngled() Combinator[string] {
 //
 //	chomp.First(
 //		chomp.Tag("Good Morning"),
-//		chomp.Tag("Hello"))("Good Morning, World!")
+//		chomp.Tag("Hello")).Run("Good Morning, World!")
 //	// (", World!", "Good Morning", nil)
 func First[T Result](c ...Combinator[T]) Combinator[T] {
-	return func(s string) (string, T, error) {
+	return func(s State) (State, T, error) {
 		for _, comb := range c {
 			rem, ext, err := comb(s)
 			if err == nil {
@@ -251,7 +251,7 @@ func First[T Result](c ...Combinator[T]) Combinator[T] {
 		}
 
 		var out T
-		return s, out, CombinatorParseError{Text: s, Type: "first"}
+		return s, out, CombinatorParseError{State: s, Type: "first"}
 	}
 }
 
@@ -261,10 +261,10 @@ func First[T Result](c ...Combinator[T]) Combinator[T] {
 //	chomp.All(
 //		chomp.Tag("Hello"),
 //		chomp.Until("W"),
-//		chomp.Tag("World!"))("Hello, World!")
+//		chomp.Tag("World!")).Run("Hello, World!")
 //	// ("", []string{"Hello", ", ", "World!"}, nil)
 func All[T Result](c ...Combinator[T]) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s State) (State, []string, error) {
 		var ext []string
 		var err error
 
@@ -286,7 +286,7 @@ func All[T Result](c ...Combinator[T]) Combinator[[]string] {
 // failed match. It is the equivalent of calling [ManyN] with an argument of 1.
 // See [ManyN] for its zero-width matching behaviour.
 //
-//	chomp.Many(chomp.OneOf("Ho"))("Hello, World!")
+//	chomp.Many(chomp.OneOf("Ho")).Run("Hello, World!")
 //	// ("ello, World!", []string{"H"}, nil)
 func Many[T Result](c Combinator[T]) Combinator[[]string] {
 	return ManyN(c, 1)
@@ -297,10 +297,10 @@ func Many[T Result](c Combinator[T]) Combinator[[]string] {
 // the first failed match. An iteration that succeeds without consuming input
 // stops the loop instead of being counted, so it can never repeat forever.
 //
-//	chomp.ManyN(chomp.OneOf("W"), 0)("Hello, World!")
+//	chomp.ManyN(chomp.OneOf("W"), 0).Run("Hello, World!")
 //	// ("Hello, World!", nil, nil)
 func ManyN[T Result](c Combinator[T], n uint) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s State) (State, []string, error) {
 		var ext []string
 		var err error
 		var count uint
@@ -308,14 +308,14 @@ func ManyN[T Result](c Combinator[T], n uint) Combinator[[]string] {
 		rem := s
 		for {
 			var out T
-			var tmpRem string
+			var tmpRem State
 
 			if tmpRem, out, err = c(rem); err != nil {
 				break
 			}
-			if len(tmpRem) == len(rem) {
+			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: cannot make progress, stop to avoid looping forever
-				err = CombinatorParseError{Text: rem, Type: "many_n"}
+				err = CombinatorParseError{State: rem, Type: "many_n"}
 				break
 			}
 			rem = tmpRem
@@ -341,10 +341,10 @@ func ManyN[T Result](c Combinator[T], n uint) Combinator[[]string] {
 //
 //	chomp.Prefixed(
 //		chomp.Tag("Hello"),
-//		chomp.Tag(`"`))(`"Hello, World!"`)
+//		chomp.Tag(`"`)).Run(`"Hello, World!"`)
 //	// (`, World!"`, "Hello", nil)
 func Prefixed(c, pre Combinator[string]) Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
 		rem, _, err := pre(s)
 		if err != nil {
 			return s, "", err
@@ -364,10 +364,10 @@ func Prefixed(c, pre Combinator[string]) Combinator[string] {
 //
 //	chomp.Suffixed(
 //		chomp.Tag("Hello"),
-//		chomp.Tag(", "))("Hello, World!")
+//		chomp.Tag(", ")).Run("Hello, World!")
 //	// ("World!", "Hello", nil)
 func Suffixed(c, suf Combinator[string]) Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
 		rem, ext, err := c(s)
 		if err != nil {
 			return s, "", err
@@ -387,10 +387,10 @@ func Suffixed(c, suf Combinator[string]) Combinator[string] {
 // output is discarded. If a separator and element together succeed without
 // consuming input, iteration stops instead of repeating forever.
 //
-//	chomp.SeparatedList(chomp.Alpha(), chomp.Tag(","))("a,b,c,")
+//	chomp.SeparatedList(chomp.Alpha(), chomp.Tag(",")).Run("a,b,c,")
 //	// (",", []string{"a", "b", "c"}, nil)
 func SeparatedList[T, U Result](c Combinator[T], sep Combinator[U]) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s State) (State, []string, error) {
 		var ext []string
 		var err error
 
@@ -410,18 +410,18 @@ func SeparatedList[T, U Result](c Combinator[T], sep Combinator[U]) Combinator[[
 		// Subsequent elements (sep + element pairs)
 		for {
 			// Try separator - if fails, we're done
-			var sepRem string
+			var sepRem State
 			if sepRem, _, err = sep(rem); err != nil {
 				break
 			}
 
 			// Parse element after separator
-			var tmpRem string
+			var tmpRem State
 			if tmpRem, out, err = c(sepRem); err != nil {
 				break
 			}
 
-			if len(tmpRem) == len(rem) {
+			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: separator and element together made
 				// no progress, stop to avoid looping forever
 				break
@@ -440,10 +440,10 @@ func SeparatedList[T, U Result](c Combinator[T], sep Combinator[U]) Combinator[[
 // output is discarded. If a separator and element together succeed without
 // consuming input, iteration stops instead of repeating forever.
 //
-//	chomp.SeparatedList0(chomp.Alpha(), chomp.Tag(","))("123")
+//	chomp.SeparatedList0(chomp.Alpha(), chomp.Tag(",")).Run("123")
 //	// ("123", []string{}, nil)
 func SeparatedList0[T, U Result](c Combinator[T], sep Combinator[U]) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s State) (State, []string, error) {
 		// Try to match first element
 		rem, out, err := c(s)
 		if err != nil {
@@ -457,18 +457,18 @@ func SeparatedList0[T, U Result](c Combinator[T], sep Combinator[U]) Combinator[
 		// Subsequent elements (sep + element pairs)
 		for {
 			// Try separator - if fails, we're done
-			var sepRem string
+			var sepRem State
 			if sepRem, _, err = sep(rem); err != nil {
 				break
 			}
 
 			// Parse element after separator
-			var tmpRem string
+			var tmpRem State
 			if tmpRem, out, err = c(sepRem); err != nil {
 				break
 			}
 
-			if len(tmpRem) == len(rem) {
+			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: separator and element together made
 				// no progress, stop to avoid looping forever
 				break
@@ -488,10 +488,10 @@ func SeparatedList0[T, U Result](c Combinator[T], sep Combinator[U]) Combinator[
 // element succeeds without consuming input, the terminator can never be
 // reached, so parsing fails instead of looping forever.
 //
-//	chomp.ManyTill(chomp.AnyChar(), chomp.Tag("END"))("abcEND")
+//	chomp.ManyTill(chomp.AnyChar(), chomp.Tag("END")).Run("abcEND")
 //	// ("", []string{"a", "b", "c"}, nil)
 func ManyTill[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s State) (State, []string, error) {
 		var ext []string
 		var err error
 		var count uint
@@ -502,7 +502,7 @@ func ManyTill[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]str
 			if tmpRem, _, termErr := term(rem); termErr == nil {
 				if count == 0 {
 					return s, nil, RangedParserError{
-						Err:  CombinatorParseError{Text: s, Type: "many_till"},
+						Err:  CombinatorParseError{State: s, Type: "many_till"},
 						Exec: RangeExecution(0, 1),
 						Type: "many_till",
 					}
@@ -512,15 +512,15 @@ func ManyTill[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]str
 
 			// Parse element
 			var out T
-			var tmpRem string
+			var tmpRem State
 			if tmpRem, out, err = c(rem); err != nil {
 				return s, nil, ParserError{Err: err, Type: "many_till"}
 			}
 
-			if len(tmpRem) == len(rem) {
+			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: the terminator can never be reached
 				return s, nil, ParserError{
-					Err:  CombinatorParseError{Text: rem, Type: "many_till"},
+					Err:  CombinatorParseError{State: rem, Type: "many_till"},
 					Type: "many_till",
 				}
 			}
@@ -538,10 +538,10 @@ func ManyTill[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]str
 // element succeeds without consuming input, the terminator can never be
 // reached, so parsing fails instead of looping forever.
 //
-//	chomp.ManyTill0(chomp.AnyChar(), chomp.Tag("END"))("END")
+//	chomp.ManyTill0(chomp.AnyChar(), chomp.Tag("END")).Run("END")
 //	// ("", nil, nil)
 func ManyTill0[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s State) (State, []string, error) {
 		var ext []string
 		var err error
 
@@ -552,15 +552,15 @@ func ManyTill0[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]st
 			}
 
 			var out T
-			var tmpRem string
+			var tmpRem State
 			if tmpRem, out, err = c(rem); err != nil {
 				return s, nil, ParserError{Err: err, Type: "many_till_0"}
 			}
 
-			if len(tmpRem) == len(rem) {
+			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: the terminator can never be reached
 				return s, nil, ParserError{
-					Err:  CombinatorParseError{Text: rem, Type: "many_till_0"},
+					Err:  CombinatorParseError{State: rem, Type: "many_till_0"},
 					Type: "many_till_0",
 				}
 			}
@@ -579,10 +579,10 @@ func ManyTill0[T, U Result](c Combinator[T], term Combinator[U]) Combinator[[]st
 //	chomp.FoldMany(chomp.AnyDigit(), 0, func(acc int, val string) int {
 //	    n, _ := strconv.Atoi(val)
 //	    return acc + n
-//	})("123abc")
+//	}).Run("123abc")
 //	// ("abc", 6, nil)
 func FoldMany[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) MappedCombinator[S, T] {
-	return func(s string) (string, S, error) {
+	return func(s State) (State, S, error) {
 		acc := init
 		var err error
 		var count uint
@@ -590,13 +590,13 @@ func FoldMany[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) Ma
 		rem := s
 		for {
 			var out T
-			var tmpRem string
+			var tmpRem State
 			if tmpRem, out, err = c(rem); err != nil {
 				break
 			}
-			if len(tmpRem) == len(rem) {
+			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: cannot make progress, stop to avoid looping forever
-				err = CombinatorParseError{Text: rem, Type: "fold_many"}
+				err = CombinatorParseError{State: rem, Type: "fold_many"}
 				break
 			}
 			rem = tmpRem
@@ -624,10 +624,10 @@ func FoldMany[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) Ma
 //	chomp.FoldMany0(chomp.AnyDigit(), 0, func(acc int, val string) int {
 //	    n, _ := strconv.Atoi(val)
 //	    return acc + n
-//	})("abc")
+//	}).Run("abc")
 //	// ("abc", 0, nil)
 func FoldMany0[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) MappedCombinator[S, T] {
-	return func(s string) (string, S, error) {
+	return func(s State) (State, S, error) {
 		acc := init
 
 		rem := s
@@ -636,7 +636,7 @@ func FoldMany0[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) M
 			if err != nil {
 				break
 			}
-			if len(tmpRem) == len(rem) {
+			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: cannot make progress, stop to avoid looping forever
 				break
 			}
@@ -654,22 +654,22 @@ func FoldMany0[S any, T Result](c Combinator[T], init S, reducer func(S, T) S) M
 // succeeds without consuming input stops counting instead of repeating
 // forever.
 //
-//	chomp.ManyCount(chomp.AnyLetter())("abc123")
+//	chomp.ManyCount(chomp.AnyLetter()).Run("abc123")
 //	// ("123", 3, nil)
 func ManyCount[T Result](c Combinator[T]) MappedCombinator[uint, T] {
-	return func(s string) (string, uint, error) {
+	return func(s State) (State, uint, error) {
 		var count uint
 		var err error
 
 		rem := s
 		for {
-			var tmpRem string
+			var tmpRem State
 			if tmpRem, _, err = c(rem); err != nil {
 				break
 			}
-			if len(tmpRem) == len(rem) {
+			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: cannot make progress, stop to avoid looping forever
-				err = CombinatorParseError{Text: rem, Type: "many_count"}
+				err = CombinatorParseError{State: rem, Type: "many_count"}
 				break
 			}
 			rem = tmpRem
@@ -694,10 +694,10 @@ func ManyCount[T Result](c Combinator[T]) MappedCombinator[uint, T] {
 // succeeds without consuming input stops counting instead of repeating
 // forever.
 //
-//	chomp.ManyCount0(chomp.AnyLetter())("123")
+//	chomp.ManyCount0(chomp.AnyLetter()).Run("123")
 //	// ("123", 0, nil)
 func ManyCount0[T Result](c Combinator[T]) MappedCombinator[uint, T] {
-	return func(s string) (string, uint, error) {
+	return func(s State) (State, uint, error) {
 		var count uint
 
 		rem := s
@@ -706,7 +706,7 @@ func ManyCount0[T Result](c Combinator[T]) MappedCombinator[uint, T] {
 			if err != nil {
 				break
 			}
-			if len(tmpRem) == len(rem) {
+			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: cannot make progress, stop to avoid looping forever
 				break
 			}
@@ -727,10 +727,10 @@ func ManyCount0[T Result](c Combinator[T]) MappedCombinator[uint, T] {
 //	        return uint(n)
 //	    }),
 //	    chomp.AnyLetter(),
-//	)("3abc")
+//	).Run("3abc")
 //	// ("", []string{"a", "b", "c"}, nil)
 func LengthCount[T Result](length MappedCombinator[uint, string], c Combinator[T]) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s State) (State, []string, error) {
 		rem, count, err := length(s)
 		if err != nil {
 			return s, nil, ParserError{Err: err, Type: "length_count"}
@@ -748,7 +748,7 @@ func LengthCount[T Result](length MappedCombinator[uint, string], c Combinator[T
 // Fill will scan the input text and match the [Combinator] exactly n times,
 // populating the result slice. All n matches must succeed.
 //
-//	chomp.Fill(chomp.AnyLetter(), 3)("abcdef")
+//	chomp.Fill(chomp.AnyLetter(), 3).Run("abcdef")
 //	// ("def", []string{"a", "b", "c"}, nil)
 func Fill[T Result](c Combinator[T], n uint) Combinator[[]string] {
 	return Repeat(c, n)
@@ -760,15 +760,15 @@ func Fill[T Result](c Combinator[T], n uint) Combinator[[]string] {
 //
 //	chomp.Verify(chomp.Alpha(), func(s string) bool {
 //	    return len(s) >= 3
-//	})("Hello, World!")
+//	}).Run("Hello, World!")
 //	// (", World!", "Hello", nil)
 //
 //	chomp.Verify(chomp.Alpha(), func(s string) bool {
 //	    return len(s) >= 10
-//	})("Hello, World!")
+//	}).Run("Hello, World!")
 //	// ("Hello, World!", "", error)
 func Verify[T Result](c Combinator[T], predicate func(T) bool) Combinator[T] {
-	return func(s string) (string, T, error) {
+	return func(s State) (State, T, error) {
 		var def T
 
 		rem, out, err := c(s)
@@ -777,7 +777,7 @@ func Verify[T Result](c Combinator[T], predicate func(T) bool) Combinator[T] {
 		}
 
 		if !predicate(out) {
-			return s, def, CombinatorParseError{Text: s, Type: "verify"}
+			return s, def, CombinatorParseError{State: s, Type: "verify"}
 		}
 
 		return rem, out, nil
@@ -790,16 +790,16 @@ func Verify[T Result](c Combinator[T], predicate func(T) bool) Combinator[T] {
 //	chomp.Recognize(chomp.SepPair(
 //	    chomp.Alpha(),
 //	    chomp.Tag(", "),
-//	    chomp.Alpha()))("Hello, World!")
+//	    chomp.Alpha())).Run("Hello, World!")
 //	// ("!", "Hello, World", nil)
 func Recognize[T Result](c Combinator[T]) Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
 		rem, _, err := c(s)
 		if err != nil {
 			return s, "", err
 		}
 
-		consumed := s[:len(s)-len(rem)]
+		consumed := rem.since(s)
 		return rem, consumed, nil
 	}
 }
@@ -810,16 +810,16 @@ func Recognize[T Result](c Combinator[T]) Combinator[string] {
 //	chomp.Consumed(chomp.SepPair(
 //	    chomp.Alpha(),
 //	    chomp.Tag(", "),
-//	    chomp.Alpha()))("Hello, World!")
+//	    chomp.Alpha())).Run("Hello, World!")
 //	// ("!", []string{"Hello, World", "Hello", "World"}, nil)
 func Consumed[T Result](c Combinator[T]) Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s State) (State, []string, error) {
 		rem, out, err := c(s)
 		if err != nil {
 			return s, nil, err
 		}
 
-		consumed := s[:len(s)-len(rem)]
+		consumed := rem.since(s)
 		var ext []string
 		ext = append(ext, consumed)
 		ext = combine(ext, out)
@@ -831,30 +831,30 @@ func Consumed[T Result](c Combinator[T]) Combinator[[]string] {
 // Eof matches only when at the end of input, returning an empty string
 // on success. Prevents partial parsing by ensuring no input remains.
 //
-//	chomp.Eof()("")
+//	chomp.Eof().Run("")
 //	// ("", "", nil)
 //
-//	chomp.Eof()("remaining")
+//	chomp.Eof().Run("remaining")
 //	// ("remaining", "", error)
 func Eof() Combinator[string] {
-	return func(s string) (string, string, error) {
-		if s == "" {
+	return func(s State) (State, string, error) {
+		if s.Rest() == "" {
 			return s, "", nil
 		}
-		return s, "", CombinatorParseError{Text: s, Type: "eof"}
+		return s, "", CombinatorParseError{State: s, Type: "eof"}
 	}
 }
 
 // AllConsuming ensures the entire input is consumed by the inner parser,
 // failing if any text remains unparsed.
 //
-//	chomp.AllConsuming(chomp.Tag("Hello"))("Hello")
+//	chomp.AllConsuming(chomp.Tag("Hello")).Run("Hello")
 //	// ("", "Hello", nil)
 //
-//	chomp.AllConsuming(chomp.Tag("Hello"))("Hello, World!")
+//	chomp.AllConsuming(chomp.Tag("Hello")).Run("Hello, World!")
 //	// ("Hello, World!", "", error)
 func AllConsuming[T Result](c Combinator[T]) Combinator[T] {
-	return func(s string) (string, T, error) {
+	return func(s State) (State, T, error) {
 		var def T
 
 		rem, out, err := c(s)
@@ -862,10 +862,10 @@ func AllConsuming[T Result](c Combinator[T]) Combinator[T] {
 			return s, def, err
 		}
 
-		if rem != "" {
+		if rem.Rest() != "" {
 			return s, def, CombinatorParseError{
-				Input: rem,
-				Text:  s,
+				Input: rem.Rest(),
+				State: s,
 				Type:  "all_consuming",
 			}
 		}
@@ -877,27 +877,28 @@ func AllConsuming[T Result](c Combinator[T]) Combinator[T] {
 // Rest returns all remaining unconsumed input as a string value.
 // Always succeeds, even with empty input.
 //
-//	chomp.Rest()("Hello, World!")
+//	chomp.Rest().Run("Hello, World!")
 //	// ("", "Hello, World!", nil)
 //
-//	chomp.Rest()("")
+//	chomp.Rest().Run("")
 //	// ("", "", nil)
 func Rest() Combinator[string] {
-	return func(s string) (string, string, error) {
-		return "", s, nil
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		return s.Advance(len(rest)), rest, nil
 	}
 }
 
 // Value returns a fixed value upon parser success, discarding the actual
 // parse result. Useful for assigning semantic meaning to parsed tokens.
 //
-//	chomp.Value(chomp.Tag("true"), true)("true")
+//	chomp.Value(chomp.Tag("true"), true).Run("true")
 //	// ("", true, nil)
 //
-//	chomp.Value(chomp.Tag("false"), false)("false")
+//	chomp.Value(chomp.Tag("false"), false).Run("false")
 //	// ("", false, nil)
 func Value[S any, T Result](c Combinator[T], val S) MappedCombinator[S, T] {
-	return func(s string) (string, S, error) {
+	return func(s State) (State, S, error) {
 		var def S
 
 		rem, _, err := c(s)
@@ -913,13 +914,13 @@ func Value[S any, T Result](c Combinator[T], val S) MappedCombinator[S, T] {
 // condition is true, the parser is applied. Otherwise, it returns an
 // empty result without consuming input. Enables optional parsing logic.
 //
-//	chomp.Cond(true, chomp.Tag("Hello"))("Hello, World!")
+//	chomp.Cond(true, chomp.Tag("Hello")).Run("Hello, World!")
 //	// (", World!", "Hello", nil)
 //
-//	chomp.Cond(false, chomp.Tag("Hello"))("Hello, World!")
+//	chomp.Cond(false, chomp.Tag("Hello")).Run("Hello, World!")
 //	// ("Hello, World!", "", nil)
 func Cond[T Result](cond bool, c Combinator[T]) Combinator[T] {
-	return func(s string) (string, T, error) {
+	return func(s State) (State, T, error) {
 		var def T
 		if !cond {
 			return s, def, nil
@@ -955,10 +956,10 @@ func (e CutError) Unwrap() error {
 //	    chomp.All(
 //	        chomp.Tag("if"),
 //	        chomp.Cut(chomp.Tag("("))),
-//	    chomp.S(chomp.Tag("identifier")))("if x")
+//	    chomp.S(chomp.Tag("identifier"))).Run("if x")
 //	// ("if x", nil, CutError{...})
 func Cut[T Result](c Combinator[T]) Combinator[T] {
-	return func(s string) (string, T, error) {
+	return func(s State) (State, T, error) {
 		rem, out, err := c(s)
 		if err != nil {
 			var def T
@@ -973,16 +974,16 @@ func Cut[T Result](c Combinator[T]) Combinator[T] {
 // empty string without consuming any input. Pairs with [Peek] for
 // positive lookahead.
 //
-//	chomp.PeekNot(chomp.Tag("Hello"))("World!")
+//	chomp.PeekNot(chomp.Tag("Hello")).Run("World!")
 //	// ("World!", "", nil)
 //
-//	chomp.PeekNot(chomp.Tag("Hello"))("Hello, World!")
+//	chomp.PeekNot(chomp.Tag("Hello")).Run("Hello, World!")
 //	// ("Hello, World!", "", error)
 func PeekNot[T Result](c Combinator[T]) Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
 		_, _, err := c(s)
 		if err == nil {
-			return s, "", CombinatorParseError{Text: s, Type: "peek_not"}
+			return s, "", CombinatorParseError{State: s, Type: "peek_not"}
 		}
 		return s, "", nil
 	}

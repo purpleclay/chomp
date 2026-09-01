@@ -40,372 +40,372 @@ func TestContract_FailureNonConsuming(t *testing.T) {
 	// basic.go
 	t.Run("Char", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Char", "", chomp.Char('a'))
-		assertFailureNonConsuming(t, "Char", "xyz", chomp.Char('a'))
+		assertFailureNonConsuming(t, "Char", "", chomp.Char('a').Run)
+		assertFailureNonConsuming(t, "Char", "xyz", chomp.Char('a').Run)
 	})
 	t.Run("AnyChar", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "AnyChar", "", chomp.AnyChar())
+		assertFailureNonConsuming(t, "AnyChar", "", chomp.AnyChar().Run)
 	})
 	t.Run("Satisfy", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Satisfy", "hello", chomp.Satisfy(unicode.IsUpper))
+		assertFailureNonConsuming(t, "Satisfy", "hello", chomp.Satisfy(unicode.IsUpper).Run)
 	})
 	t.Run("Tag", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Tag", "World", chomp.Tag("Hello"))
+		assertFailureNonConsuming(t, "Tag", "World", chomp.Tag("Hello").Run)
 	})
 	t.Run("TagNoCase", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "TagNoCase", "World", chomp.TagNoCase("hello"))
+		assertFailureNonConsuming(t, "TagNoCase", "World", chomp.TagNoCase("hello").Run)
 	})
 	t.Run("Any", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Any", "xyz", chomp.Any("eH"))
+		assertFailureNonConsuming(t, "Any", "xyz", chomp.Any("eH").Run)
 	})
 	t.Run("Not", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Not", "oxyz", chomp.Not("ol"))
+		assertFailureNonConsuming(t, "Not", "oxyz", chomp.Not("ol").Run)
 	})
 	t.Run("OneOf", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "OneOf", "xyz", chomp.OneOf("eH"))
+		assertFailureNonConsuming(t, "OneOf", "xyz", chomp.OneOf("eH").Run)
 	})
 	t.Run("NoneOf", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "NoneOf", "epic", chomp.NoneOf("loWrd!e"))
+		assertFailureNonConsuming(t, "NoneOf", "epic", chomp.NoneOf("loWrd!e").Run)
 	})
 	t.Run("Until", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Until", "Hello there", chomp.Until("World"))
+		assertFailureNonConsuming(t, "Until", "Hello there", chomp.Until("World").Run)
 	})
 	t.Run("Take", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Take", "Hi", chomp.Take(5))
+		assertFailureNonConsuming(t, "Take", "Hi", chomp.Take(5).Run)
 	})
 	t.Run("TakeUntil1", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "TakeUntil1", ",World!", chomp.TakeUntil1(","))
+		assertFailureNonConsuming(t, "TakeUntil1", ",World!", chomp.TakeUntil1(",").Run)
 	})
 	t.Run("Escaped", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Escaped", "123",
-			chomp.Escaped(chomp.While(chomp.IsLetter), '\\', chomp.OneOf(`"n\`)))
+			chomp.Escaped(chomp.While(chomp.IsLetter), '\\', chomp.OneOf(`"n\`)).Run)
 	})
 	t.Run("EscapedTransform", func(t *testing.T) {
 		t.Parallel()
-		transform := func(s string) (string, string, error) {
-			return s, "", chomp.CombinatorParseError{Text: s, Type: "test_transform"}
+		transform := func(s chomp.State) (chomp.State, string, error) {
+			return s, "", chomp.CombinatorParseError{State: s, Type: "test_transform"}
 		}
 		assertFailureNonConsuming(t, "EscapedTransform", "123",
-			chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', transform))
+			chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', transform).Run)
 	})
 
 	// predicate.go
 	t.Run("While", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "While", "123", chomp.While(chomp.IsLetter))
+		assertFailureNonConsuming(t, "While", "123", chomp.While(chomp.IsLetter).Run)
 	})
 	t.Run("WhileN", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "WhileN", "1a", chomp.WhileN(chomp.IsDigit, 2))
+		assertFailureNonConsuming(t, "WhileN", "1a", chomp.WhileN(chomp.IsDigit, 2).Run)
 	})
 	t.Run("WhileNM", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "WhileNM", "123", chomp.WhileNM(chomp.IsLetter, 1, 5))
+		assertFailureNonConsuming(t, "WhileNM", "123", chomp.WhileNM(chomp.IsLetter, 1, 5).Run)
 	})
 	t.Run("WhileNot", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "WhileNot", "123abc", chomp.WhileNot(chomp.IsDigit))
+		assertFailureNonConsuming(t, "WhileNot", "123abc", chomp.WhileNot(chomp.IsDigit).Run)
 	})
 	t.Run("WhileNotN", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "WhileNotN", "123abc", chomp.WhileNotN(chomp.IsDigit, 1))
+		assertFailureNonConsuming(t, "WhileNotN", "123abc", chomp.WhileNotN(chomp.IsDigit, 1).Run)
 	})
 	t.Run("WhileNotNM", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "WhileNotNM", "abcdefgh", chomp.WhileNotNM(chomp.IsLetter, 1, 8))
+		assertFailureNonConsuming(t, "WhileNotNM", "abcdefgh", chomp.WhileNotNM(chomp.IsLetter, 1, 8).Run)
 	})
 	t.Run("Alpha", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Alpha", "123", chomp.Alpha())
+		assertFailureNonConsuming(t, "Alpha", "123", chomp.Alpha().Run)
 	})
 	t.Run("Digit", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Digit", "abc", chomp.Digit())
+		assertFailureNonConsuming(t, "Digit", "abc", chomp.Digit().Run)
 	})
 	t.Run("Alphanumeric", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Alphanumeric", "!!!", chomp.Alphanumeric())
+		assertFailureNonConsuming(t, "Alphanumeric", "!!!", chomp.Alphanumeric().Run)
 	})
 	t.Run("Space", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Space", "abc", chomp.Space())
+		assertFailureNonConsuming(t, "Space", "abc", chomp.Space().Run)
 	})
 	t.Run("Multispace", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Multispace", "abc", chomp.Multispace())
+		assertFailureNonConsuming(t, "Multispace", "abc", chomp.Multispace().Run)
 	})
 	t.Run("HexDigit", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "HexDigit", "xyz", chomp.HexDigit())
+		assertFailureNonConsuming(t, "HexDigit", "xyz", chomp.HexDigit().Run)
 	})
 	t.Run("OctalDigit", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "OctalDigit", "89", chomp.OctalDigit())
+		assertFailureNonConsuming(t, "OctalDigit", "89", chomp.OctalDigit().Run)
 	})
 	t.Run("BinaryDigit", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "BinaryDigit", "234", chomp.BinaryDigit())
+		assertFailureNonConsuming(t, "BinaryDigit", "234", chomp.BinaryDigit().Run)
 	})
 	t.Run("Newline", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Newline", "Hello", chomp.Newline())
+		assertFailureNonConsuming(t, "Newline", "Hello", chomp.Newline().Run)
 	})
 	t.Run("Tab", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Tab", "Hello", chomp.Tab())
+		assertFailureNonConsuming(t, "Tab", "Hello", chomp.Tab().Run)
 	})
 	t.Run("NotLineEnding", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "NotLineEnding", "\nHello", chomp.NotLineEnding())
+		assertFailureNonConsuming(t, "NotLineEnding", "\nHello", chomp.NotLineEnding().Run)
 	})
 	t.Run("AnyDigit", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "AnyDigit", "abc", chomp.AnyDigit())
+		assertFailureNonConsuming(t, "AnyDigit", "abc", chomp.AnyDigit().Run)
 	})
 	t.Run("AnyLetter", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "AnyLetter", "123", chomp.AnyLetter())
+		assertFailureNonConsuming(t, "AnyLetter", "123", chomp.AnyLetter().Run)
 	})
 	t.Run("AnyAlphanumeric", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "AnyAlphanumeric", "!!!", chomp.AnyAlphanumeric())
+		assertFailureNonConsuming(t, "AnyAlphanumeric", "!!!", chomp.AnyAlphanumeric().Run)
 	})
 	t.Run("AnyHexDigit", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "AnyHexDigit", "xyz", chomp.AnyHexDigit())
+		assertFailureNonConsuming(t, "AnyHexDigit", "xyz", chomp.AnyHexDigit().Run)
 	})
 	t.Run("AnyOctalDigit", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "AnyOctalDigit", "89", chomp.AnyOctalDigit())
+		assertFailureNonConsuming(t, "AnyOctalDigit", "89", chomp.AnyOctalDigit().Run)
 	})
 	t.Run("AnyBinaryDigit", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "AnyBinaryDigit", "234", chomp.AnyBinaryDigit())
+		assertFailureNonConsuming(t, "AnyBinaryDigit", "234", chomp.AnyBinaryDigit().Run)
 	})
 
 	// parser.go
 	t.Run("Crlf", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Crlf", "Hello", chomp.Crlf())
+		assertFailureNonConsuming(t, "Crlf", "Hello", chomp.Crlf().Run)
 	})
 	t.Run("LineEnding", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "LineEnding", "Hello", chomp.LineEnding())
+		assertFailureNonConsuming(t, "LineEnding", "Hello", chomp.LineEnding().Run)
 	})
 
 	// sequence.go
 	t.Run("Pair_FirstFails", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Pair", "xyz", chomp.Pair(chomp.Tag("Hello,"), chomp.Tag(" World")))
+		assertFailureNonConsuming(t, "Pair", "xyz", chomp.Pair(chomp.Tag("Hello,"), chomp.Tag(" World")).Run)
 	})
 	t.Run("Pair_SecondFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Pair", "Hello,World",
-			chomp.Pair(chomp.Tag("Hello,"), chomp.Tag(" World")))
+			chomp.Pair(chomp.Tag("Hello,"), chomp.Tag(" World")).Run)
 	})
 	t.Run("SepPair_FirstFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "SepPair", "xyz",
-			chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")))
+			chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")).Run)
 	})
 	t.Run("SepPair_SepFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "SepPair", "HelloWorld",
-			chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")))
+			chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")).Run)
 	})
 	t.Run("SepPair_SecondFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "SepPair", "Hello, xyz",
-			chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")))
+			chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")).Run)
 	})
 	t.Run("Repeat", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Repeat", "ababxy", chomp.Repeat(chomp.Tag("ab"), 3))
+		assertFailureNonConsuming(t, "Repeat", "ababxy", chomp.Repeat(chomp.Tag("ab"), 3).Run)
 	})
 	t.Run("RepeatRange", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "RepeatRange", "abxy", chomp.RepeatRange(chomp.Tag("ab"), 3, 5))
+		assertFailureNonConsuming(t, "RepeatRange", "abxy", chomp.RepeatRange(chomp.Tag("ab"), 3, 5).Run)
 	})
 	t.Run("Delimited_LeftFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Delimited", `no quotes`,
-			chomp.Delimited(chomp.Tag(`"`), chomp.Until(`"`), chomp.Tag(`"`)))
+			chomp.Delimited(chomp.Tag(`"`), chomp.Until(`"`), chomp.Tag(`"`)).Run)
 	})
 	t.Run("Delimited_MiddleFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Delimited", `"unterminated`,
-			chomp.Delimited(chomp.Tag(`"`), chomp.Tag("unterminated"), chomp.Tag(`"`)))
+			chomp.Delimited(chomp.Tag(`"`), chomp.Tag("unterminated"), chomp.Tag(`"`)).Run)
 	})
 	t.Run("Delimited_RightFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Delimited", `"Hello, World!`,
-			chomp.Delimited(chomp.Tag(`"`), chomp.Until(`"`), chomp.Tag(`"`)))
+			chomp.Delimited(chomp.Tag(`"`), chomp.Until(`"`), chomp.Tag(`"`)).Run)
 	})
 	t.Run("QuoteDouble", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "QuoteDouble", "no quotes", chomp.QuoteDouble())
+		assertFailureNonConsuming(t, "QuoteDouble", "no quotes", chomp.QuoteDouble().Run)
 	})
 	t.Run("QuoteSingle", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "QuoteSingle", "no quotes", chomp.QuoteSingle())
+		assertFailureNonConsuming(t, "QuoteSingle", "no quotes", chomp.QuoteSingle().Run)
 	})
 	t.Run("BracketSquare", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "BracketSquare", "no brackets", chomp.BracketSquare())
+		assertFailureNonConsuming(t, "BracketSquare", "no brackets", chomp.BracketSquare().Run)
 	})
 	t.Run("Parentheses", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Parentheses", "no parens", chomp.Parentheses())
+		assertFailureNonConsuming(t, "Parentheses", "no parens", chomp.Parentheses().Run)
 	})
 	t.Run("BracketAngled", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "BracketAngled", "no angles", chomp.BracketAngled())
+		assertFailureNonConsuming(t, "BracketAngled", "no angles", chomp.BracketAngled().Run)
 	})
 	t.Run("First", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "First", "xyz", chomp.First(chomp.Tag("Hello"), chomp.Tag("World")))
+		assertFailureNonConsuming(t, "First", "xyz", chomp.First(chomp.Tag("Hello"), chomp.Tag("World")).Run)
 	})
 	t.Run("All", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "All", "abx", chomp.All(chomp.Tag("a"), chomp.Tag("b"), chomp.Tag("c")))
+		assertFailureNonConsuming(t, "All", "abx", chomp.All(chomp.Tag("a"), chomp.Tag("b"), chomp.Tag("c")).Run)
 	})
 	t.Run("Many", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Many", "xyz", chomp.Many(chomp.Tag("a")))
+		assertFailureNonConsuming(t, "Many", "xyz", chomp.Many(chomp.Tag("a")).Run)
 	})
 	t.Run("ManyN", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "ManyN", "aax", chomp.ManyN(chomp.Tag("a"), 3))
+		assertFailureNonConsuming(t, "ManyN", "aax", chomp.ManyN(chomp.Tag("a"), 3).Run)
 	})
 	t.Run("Prefixed_PreFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Prefixed", `Hello, World!"`,
-			chomp.Prefixed(chomp.Tag("Hello"), chomp.Tag(`"`)))
+			chomp.Prefixed(chomp.Tag("Hello"), chomp.Tag(`"`)).Run)
 	})
 	t.Run("Prefixed_CFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Prefixed", `"Goodbye, World!"`,
-			chomp.Prefixed(chomp.Tag("Hello"), chomp.Tag(`"`)))
+			chomp.Prefixed(chomp.Tag("Hello"), chomp.Tag(`"`)).Run)
 	})
 	t.Run("Suffixed_CFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Suffixed", "Goodbye, World!",
-			chomp.Suffixed(chomp.Tag("Hello"), chomp.Tag(", ")))
+			chomp.Suffixed(chomp.Tag("Hello"), chomp.Tag(", ")).Run)
 	})
 	t.Run("Suffixed_SufFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Suffixed", "Hello World!",
-			chomp.Suffixed(chomp.Tag("Hello"), chomp.Tag(", ")))
+			chomp.Suffixed(chomp.Tag("Hello"), chomp.Tag(", ")).Run)
 	})
 	t.Run("SeparatedList", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "SeparatedList", "123", chomp.SeparatedList(chomp.Alpha(), chomp.Tag(",")))
+		assertFailureNonConsuming(t, "SeparatedList", "123", chomp.SeparatedList(chomp.Alpha(), chomp.Tag(",")).Run)
 	})
 	t.Run("ManyTill_NoElements", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "ManyTill", "END", chomp.ManyTill(chomp.AnyChar(), chomp.Tag("END")))
+		assertFailureNonConsuming(t, "ManyTill", "END", chomp.ManyTill(chomp.AnyChar(), chomp.Tag("END")).Run)
 	})
 	t.Run("ManyTill_ElementFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "ManyTill", "ab123",
-			chomp.ManyTill(chomp.AnyLetter(), chomp.Tag("END")))
+			chomp.ManyTill(chomp.AnyLetter(), chomp.Tag("END")).Run)
 	})
 	t.Run("ManyTill0_ElementFails", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "ManyTill0", "ab123",
-			chomp.ManyTill0(chomp.AnyLetter(), chomp.Tag("END")))
+			chomp.ManyTill0(chomp.AnyLetter(), chomp.Tag("END")).Run)
 	})
 	t.Run("FoldMany", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "FoldMany", "abc",
-			chomp.FoldMany(chomp.AnyDigit(), 0, func(acc int, val string) int { return acc + int(val[0]-'0') }))
+			chomp.FoldMany(chomp.AnyDigit(), 0, func(acc int, val string) int { return acc + int(val[0]-'0') }).Run)
 	})
 	t.Run("ManyCount", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "ManyCount", "123", chomp.ManyCount(chomp.AnyLetter()))
+		assertFailureNonConsuming(t, "ManyCount", "123", chomp.ManyCount(chomp.AnyLetter()).Run)
 	})
 	t.Run("LengthCount_LengthFails", func(t *testing.T) {
 		t.Parallel()
 		lengthParser := chomp.Map(chomp.AnyDigit(), func(s string) uint { return uint(s[0] - '0') })
-		assertFailureNonConsuming(t, "LengthCount", "abcdef", chomp.LengthCount(lengthParser, chomp.AnyLetter()))
+		assertFailureNonConsuming(t, "LengthCount", "abcdef", chomp.LengthCount(lengthParser, chomp.AnyLetter()).Run)
 	})
 	t.Run("LengthCount_ElementFails", func(t *testing.T) {
 		t.Parallel()
 		lengthParser := chomp.Map(chomp.AnyDigit(), func(s string) uint { return uint(s[0] - '0') })
-		assertFailureNonConsuming(t, "LengthCount", "3ab123", chomp.LengthCount(lengthParser, chomp.AnyLetter()))
+		assertFailureNonConsuming(t, "LengthCount", "3ab123", chomp.LengthCount(lengthParser, chomp.AnyLetter()).Run)
 	})
 	t.Run("Fill", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Fill", "abc", chomp.Fill(chomp.AnyLetter(), 5))
+		assertFailureNonConsuming(t, "Fill", "abc", chomp.Fill(chomp.AnyLetter(), 5).Run)
 	})
 	t.Run("Verify", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Verify", "Hi", chomp.Verify(chomp.Alpha(), func(s string) bool { return len(s) >= 3 }))
+		assertFailureNonConsuming(t, "Verify", "Hi", chomp.Verify(chomp.Alpha(), func(s string) bool { return len(s) >= 3 }).Run)
 	})
 	t.Run("Recognize", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Recognize", "xyz", chomp.Recognize(chomp.Tag("Hello")))
+		assertFailureNonConsuming(t, "Recognize", "xyz", chomp.Recognize(chomp.Tag("Hello")).Run)
 	})
 	t.Run("Consumed", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Consumed", "xyz", chomp.Consumed(chomp.Tag("Hello")))
+		assertFailureNonConsuming(t, "Consumed", "xyz", chomp.Consumed(chomp.Tag("Hello")).Run)
 	})
 	t.Run("Eof", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Eof", "remaining", chomp.Eof())
+		assertFailureNonConsuming(t, "Eof", "remaining", chomp.Eof().Run)
 	})
 	t.Run("AllConsuming", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "AllConsuming", "Hello, World!", chomp.AllConsuming(chomp.Tag("Hello")))
+		assertFailureNonConsuming(t, "AllConsuming", "Hello, World!", chomp.AllConsuming(chomp.Tag("Hello")).Run)
 	})
 	t.Run("Cut", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Cut", "World", chomp.Cut(chomp.Tag("Hello")))
+		assertFailureNonConsuming(t, "Cut", "World", chomp.Cut(chomp.Tag("Hello")).Run)
 	})
 	t.Run("PeekNot", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "PeekNot", "Hello, World!", chomp.PeekNot(chomp.Tag("Hello")))
+		assertFailureNonConsuming(t, "PeekNot", "Hello, World!", chomp.PeekNot(chomp.Tag("Hello")).Run)
 	})
 
 	// modifier.go
 	t.Run("Map", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Map", "xyz",
-			chomp.Map(chomp.While(chomp.IsDigit), func(in string) int { return len(in) }))
+			chomp.Map(chomp.While(chomp.IsDigit), func(in string) int { return len(in) }).Run)
 	})
 	t.Run("S", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "S", "xyz", chomp.S(chomp.Tag("Hello")))
+		assertFailureNonConsuming(t, "S", "xyz", chomp.S(chomp.Tag("Hello")).Run)
 	})
 	t.Run("I", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "I", "xyz",
-			chomp.I(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 1))
+			chomp.I(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 1).Run)
 	})
 	t.Run("I_IndexOutOfBounds", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "I", "Hello, World!",
-			chomp.I(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 5))
+			chomp.I(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 5).Run)
 	})
 	t.Run("Peek", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Peek", "World", chomp.Peek(chomp.Tag("Hello")))
+		assertFailureNonConsuming(t, "Peek", "World", chomp.Peek(chomp.Tag("Hello")).Run)
 	})
 	t.Run("Flatten", func(t *testing.T) {
 		t.Parallel()
-		assertFailureNonConsuming(t, "Flatten", "xyz", chomp.Flatten(chomp.Many(chomp.Parentheses())))
+		assertFailureNonConsuming(t, "Flatten", "xyz", chomp.Flatten(chomp.Many(chomp.Parentheses())).Run)
 	})
 }
 
@@ -414,128 +414,128 @@ func TestContract_SuccessIsPrefix(t *testing.T) {
 
 	t.Run("Char", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Char", "xyz", chomp.Char('x'))
+		assertSuccessIsPrefix(t, "Char", "xyz", chomp.Char('x').Run)
 	})
 	t.Run("AnyChar", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "AnyChar", "abc", chomp.AnyChar())
+		assertSuccessIsPrefix(t, "AnyChar", "abc", chomp.AnyChar().Run)
 	})
 	t.Run("Satisfy", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Satisfy", "Hello", chomp.Satisfy(unicode.IsUpper))
+		assertSuccessIsPrefix(t, "Satisfy", "Hello", chomp.Satisfy(unicode.IsUpper).Run)
 	})
 	t.Run("Tag", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Tag", "Hello, World!", chomp.Tag("Hello"))
+		assertSuccessIsPrefix(t, "Tag", "Hello, World!", chomp.Tag("Hello").Run)
 	})
 	t.Run("TagNoCase", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "TagNoCase", "HELLO, World!", chomp.TagNoCase("hello"))
+		assertSuccessIsPrefix(t, "TagNoCase", "HELLO, World!", chomp.TagNoCase("hello").Run)
 	})
 	t.Run("Any", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Any", "Hello, World!", chomp.Any("eH"))
+		assertSuccessIsPrefix(t, "Any", "Hello, World!", chomp.Any("eH").Run)
 	})
 	t.Run("Not", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Not", "Hello, World!", chomp.Not("ol"))
+		assertSuccessIsPrefix(t, "Not", "Hello, World!", chomp.Not("ol").Run)
 	})
 	t.Run("OneOf", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "OneOf", "Hello, World!", chomp.OneOf("!,eH"))
+		assertSuccessIsPrefix(t, "OneOf", "Hello, World!", chomp.OneOf("!,eH").Run)
 	})
 	t.Run("NoneOf", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "NoneOf", "Hello, World!", chomp.NoneOf("loWrd!e"))
+		assertSuccessIsPrefix(t, "NoneOf", "Hello, World!", chomp.NoneOf("loWrd!e").Run)
 	})
 	t.Run("Until", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Until", "Hello, World!", chomp.Until("World"))
+		assertSuccessIsPrefix(t, "Until", "Hello, World!", chomp.Until("World").Run)
 	})
 	t.Run("Take", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Take", "Hello, World!", chomp.Take(5))
+		assertSuccessIsPrefix(t, "Take", "Hello, World!", chomp.Take(5).Run)
 	})
 	t.Run("TakeUntil1", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "TakeUntil1", "Hello, World!", chomp.TakeUntil1(","))
+		assertSuccessIsPrefix(t, "TakeUntil1", "Hello, World!", chomp.TakeUntil1(",").Run)
 	})
 	t.Run("Escaped", func(t *testing.T) {
 		t.Parallel()
 		assertSuccessIsPrefix(t, "Escaped", `Hello\"World`,
-			chomp.Escaped(chomp.While(chomp.IsLetter), '\\', chomp.OneOf(`"n\`)))
+			chomp.Escaped(chomp.While(chomp.IsLetter), '\\', chomp.OneOf(`"n\`)).Run)
 	})
 	t.Run("While", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "While", "Hello, World!", chomp.While(chomp.IsLetter))
+		assertSuccessIsPrefix(t, "While", "Hello, World!", chomp.While(chomp.IsLetter).Run)
 	})
 	t.Run("WhileN", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "WhileN", "123abc", chomp.WhileN(chomp.IsDigit, 2))
+		assertSuccessIsPrefix(t, "WhileN", "123abc", chomp.WhileN(chomp.IsDigit, 2).Run)
 	})
 	t.Run("WhileNM", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "WhileNM", "abc123", chomp.WhileNM(chomp.IsLetter, 1, 5))
+		assertSuccessIsPrefix(t, "WhileNM", "abc123", chomp.WhileNM(chomp.IsLetter, 1, 5).Run)
 	})
 	t.Run("WhileNot", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "WhileNot", "abc123", chomp.WhileNot(chomp.IsDigit))
+		assertSuccessIsPrefix(t, "WhileNot", "abc123", chomp.WhileNot(chomp.IsDigit).Run)
 	})
 	t.Run("WhileNotN", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "WhileNotN", "abc123", chomp.WhileNotN(chomp.IsDigit, 1))
+		assertSuccessIsPrefix(t, "WhileNotN", "abc123", chomp.WhileNotN(chomp.IsDigit, 1).Run)
 	})
 	t.Run("WhileNotNM", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "WhileNotNM", "2024abcd", chomp.WhileNotNM(chomp.IsLetter, 1, 8))
+		assertSuccessIsPrefix(t, "WhileNotNM", "2024abcd", chomp.WhileNotNM(chomp.IsLetter, 1, 8).Run)
 	})
 	t.Run("Alpha", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Alpha", "Hello123", chomp.Alpha())
+		assertSuccessIsPrefix(t, "Alpha", "Hello123", chomp.Alpha().Run)
 	})
 	t.Run("Digit", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Digit", "123abc", chomp.Digit())
+		assertSuccessIsPrefix(t, "Digit", "123abc", chomp.Digit().Run)
 	})
 	t.Run("Newline", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Newline", "\nHello", chomp.Newline())
+		assertSuccessIsPrefix(t, "Newline", "\nHello", chomp.Newline().Run)
 	})
 	t.Run("Tab", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Tab", "\tHello", chomp.Tab())
+		assertSuccessIsPrefix(t, "Tab", "\tHello", chomp.Tab().Run)
 	})
 	t.Run("NotLineEnding", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "NotLineEnding", "Hello, World!\nNext line", chomp.NotLineEnding())
+		assertSuccessIsPrefix(t, "NotLineEnding", "Hello, World!\nNext line", chomp.NotLineEnding().Run)
 	})
 	t.Run("AnyDigit", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "AnyDigit", "123", chomp.AnyDigit())
+		assertSuccessIsPrefix(t, "AnyDigit", "123", chomp.AnyDigit().Run)
 	})
 	t.Run("AnyLetter", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "AnyLetter", "Hello", chomp.AnyLetter())
+		assertSuccessIsPrefix(t, "AnyLetter", "Hello", chomp.AnyLetter().Run)
 	})
 	t.Run("Crlf", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Crlf", "\r\nHello", chomp.Crlf())
+		assertSuccessIsPrefix(t, "Crlf", "\r\nHello", chomp.Crlf().Run)
 	})
 	t.Run("LineEnding", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "LineEnding", "\r\nHello", chomp.LineEnding())
+		assertSuccessIsPrefix(t, "LineEnding", "\r\nHello", chomp.LineEnding().Run)
 	})
 	t.Run("Recognize", func(t *testing.T) {
 		t.Parallel()
 		assertSuccessIsPrefix(t, "Recognize", "Hello, World!",
-			chomp.Recognize(chomp.SepPair(chomp.Alpha(), chomp.Tag(", "), chomp.Alpha())))
+			chomp.Recognize(chomp.SepPair(chomp.Alpha(), chomp.Tag(", "), chomp.Alpha())).Run)
 	})
 	t.Run("Rest", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "Rest", "Hello, World!", chomp.Rest())
+		assertSuccessIsPrefix(t, "Rest", "Hello, World!", chomp.Rest().Run)
 	})
 	t.Run("PeekNot", func(t *testing.T) {
 		t.Parallel()
-		assertSuccessIsPrefix(t, "PeekNot", "World!", chomp.PeekNot(chomp.Tag("Hello")))
+		assertSuccessIsPrefix(t, "PeekNot", "World!", chomp.PeekNot(chomp.Tag("Hello")).Run)
 	})
 }

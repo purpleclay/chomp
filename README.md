@@ -29,7 +29,7 @@ go get github.com/purpleclay/chomp
 
 ## How It Works
 
-At the heart of `chomp` is the **combinator** - a function that attempts to parse text and returns a tuple `(rem, ext, err)`:
+At the heart of `chomp` is the **combinator** - a function that attempts to parse a [State](https://pkg.go.dev/github.com/purpleclay/chomp#State) (the original input plus a cursor) and returns a tuple `(rem, ext, err)`. `Run` is the string-in/string-out entry point for a top-level parse:
 
 ```
                        input
@@ -50,7 +50,7 @@ At the heart of `chomp` is the **combinator** - a function that attempts to pars
 
 ```go
 // Parse a simple tag
-rem, ext, _ := chomp.Tag("Hello")("Hello, World!")
+rem, ext, _ := chomp.Tag("Hello").Run("Hello, World!")
 // ext: "Hello"
 // rem: ", World!"
 ```
@@ -67,7 +67,7 @@ func KeyValue() chomp.Combinator[[]string] {
     )
 }
 
-rem, kv, _ := KeyValue()("name=alice&age=30")
+rem, kv, _ := KeyValue().Run("name=alice&age=30")
 // kv: ["name", "alice"]
 // rem: "&age=30"
 ```
@@ -76,7 +76,7 @@ rem, kv, _ := KeyValue()("name=alice&age=30")
 
 Every combinator honours a single documented contract, so combinators compose predictably regardless of who wrote them:
 
-1. **Failure is non-consuming.** On error, a combinator returns the original input string unchanged (and the zero value for `ext`).
+1. **Failure is non-consuming.** On error, a combinator returns the `State` it was given unchanged (and the zero value for `ext`).
 2. **Success extraction is a prefix.** On success, for a `Combinator[string]`, `ext` is exactly the consumed prefix: `input == ext + rem`. Combinators that transform their output, or intentionally discard part of the matched text (delimiters, prefixes, suffixes, separators), are documented as such and are exempt from this clause only.
 3. **Zero-width success terminates repetition.** A repetition combinator stops iterating when an iteration succeeds without consuming input.
 
