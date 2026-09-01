@@ -9,15 +9,16 @@ import (
 // how a bare CR is otherwise handled. Inspects at most the first two bytes
 // of the input, regardless of its length.
 //
-//	chomp.Crlf()("\r\nHello")
+//	chomp.Crlf().Run("\r\nHello")
 //	// ("Hello", "\r\n", nil)
 func Crlf() Combinator[string] {
-	return func(s string) (string, string, error) {
-		if len(s) >= 2 && s[0] == '\r' && s[1] == '\n' {
-			return s[2:], s[:2], nil
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		if len(rest) >= 2 && rest[0] == '\r' && rest[1] == '\n' {
+			return s.Advance(2), rest[:2], nil
 		}
 
-		return s, "", CombinatorParseError{Text: s, Type: "crlf"}
+		return s, "", CombinatorParseError{State: s, Type: "crlf"}
 	}
 }
 
@@ -26,21 +27,22 @@ func Crlf() Combinator[string] {
 // legacy-Mac line terminator. Inspects at most the first two bytes of the
 // input, regardless of its length.
 //
-//	chomp.LineEnding()("\nHello")
+//	chomp.LineEnding().Run("\nHello")
 //	// ("Hello", "\n", nil)
 //
-//	chomp.LineEnding()("\r\nHello")
+//	chomp.LineEnding().Run("\r\nHello")
 //	// ("Hello", "\r\n", nil)
 func LineEnding() Combinator[string] {
-	return func(s string) (string, string, error) {
-		if len(s) >= 1 && s[0] == '\n' {
-			return s[1:], s[:1], nil
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		if len(rest) >= 1 && rest[0] == '\n' {
+			return s.Advance(1), rest[:1], nil
 		}
-		if len(s) >= 2 && s[0] == '\r' && s[1] == '\n' {
-			return s[2:], s[:2], nil
+		if len(rest) >= 2 && rest[0] == '\r' && rest[1] == '\n' {
+			return s.Advance(2), rest[:2], nil
 		}
 
-		return s, "", CombinatorParseError{Text: s, Type: "line_ending"}
+		return s, "", CombinatorParseError{State: s, Type: "line_ending"}
 	}
 }
 
@@ -48,30 +50,32 @@ func LineEnding() Combinator[string] {
 // characters. Line endings are discarded. Unlike [LineEnding], a bare CR
 // '\r' is also consumed here, treated as a legacy-Mac line terminator.
 //
-//	chomp.Eol()("Hello, World!\nIt's a great day!")
+//	chomp.Eol().Run("Hello, World!\nIt's a great day!")
 //	// ("It's a great day!", "Hello, World!", nil)
 func Eol() Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
 		pos := 0
-		for _, c := range s {
+		for _, c := range rest {
 			if c == '\n' || c == '\r' {
 				break
 			}
 			pos += utf8.RuneLen(c)
 		}
 
-		rem := s[pos:]
-		matched := s[:pos]
-		if rem != "" {
-			if rem[0] == '\n' {
-				rem = rem[1:]
-			} else if len(rem) >= 2 && rem[0] == '\r' && rem[1] == '\n' {
-				rem = rem[2:]
-			} else if rem[0] == '\r' {
-				rem = rem[1:]
+		matched := rest[:pos]
+		lineEnd := rest[pos:]
+		skip := 0
+		if lineEnd != "" {
+			if lineEnd[0] == '\n' {
+				skip = 1
+			} else if len(lineEnd) >= 2 && lineEnd[0] == '\r' && lineEnd[1] == '\n' {
+				skip = 2
+			} else if lineEnd[0] == '\r' {
+				skip = 1
 			}
 		}
 
-		return rem, matched, nil
+		return s.Advance(pos + skip), matched, nil
 	}
 }

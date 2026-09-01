@@ -8,55 +8,58 @@ import (
 
 // Char matches a specific single character at the beginning of the input text.
 //
-//	chomp.Char(',')(",,rest")
+//	chomp.Char(',').Run(",,rest")
 //	// (",rest", ",", nil)
 func Char(c rune) Combinator[string] {
-	return func(s string) (string, string, error) {
-		if s == "" {
-			return s, "", CombinatorParseError{Input: string(c), Text: s, Type: "char"}
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		if rest == "" {
+			return s, "", CombinatorParseError{Input: string(c), State: s, Type: "char"}
 		}
 
-		r, size := utf8.DecodeRuneInString(s)
+		r, size := utf8.DecodeRuneInString(rest)
 		if r == c {
-			return s[size:], s[:size], nil
+			return s.Advance(size), rest[:size], nil
 		}
 
-		return s, "", CombinatorParseError{Input: string(c), Text: s, Type: "char"}
+		return s, "", CombinatorParseError{Input: string(c), State: s, Type: "char"}
 	}
 }
 
 // AnyChar matches any single character at the beginning of the input text.
 //
-//	chomp.AnyChar()("Hello")
+//	chomp.AnyChar().Run("Hello")
 //	// ("ello", "H", nil)
 func AnyChar() Combinator[string] {
-	return func(s string) (string, string, error) {
-		if s == "" {
-			return s, "", CombinatorParseError{Text: s, Type: "any_char"}
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		if rest == "" {
+			return s, "", CombinatorParseError{State: s, Type: "any_char"}
 		}
 
-		_, size := utf8.DecodeRuneInString(s)
-		return s[size:], s[:size], nil
+		_, size := utf8.DecodeRuneInString(rest)
+		return s.Advance(size), rest[:size], nil
 	}
 }
 
 // Satisfy matches a single character at the beginning of the input text that
 // satisfies the given predicate function.
 //
-//	chomp.Satisfy(func(r rune) bool { return r >= 'A' && r <= 'Z' })("Hello")
+//	chomp.Satisfy(func(r rune) bool { return r >= 'A' && r <= 'Z' }).Run("Hello")
 //	// ("ello", "H", nil)
 func Satisfy(pred func(rune) bool) Combinator[string] {
-	return func(s string) (string, string, error) {
-		if s == "" {
-			return s, "", CombinatorParseError{Text: s, Type: "satisfy"}
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		if rest == "" {
+			return s, "", CombinatorParseError{State: s, Type: "satisfy"}
 		}
 
-		r, size := utf8.DecodeRuneInString(s)
+		r, size := utf8.DecodeRuneInString(rest)
 		if pred(r) {
-			return s[size:], s[:size], nil
+			return s.Advance(size), rest[:size], nil
 		}
 
-		return s, "", CombinatorParseError{Text: s, Type: "satisfy"}
+		return s, "", CombinatorParseError{State: s, Type: "satisfy"}
 	}
 }
 
@@ -64,15 +67,16 @@ func Satisfy(pred func(rune) bool) Combinator[string] {
 // in the exact order and case provided. An empty str matches trivially
 // without consuming any input.
 //
-//	chomp.Tag("Hello")("Hello, World!")
+//	chomp.Tag("Hello").Run("Hello, World!")
 //	// (", World!", "Hello", nil)
 func Tag(str string) Combinator[string] {
-	return func(s string) (string, string, error) {
-		if strings.HasPrefix(s, str) {
-			return s[len(str):], str, nil
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		if strings.HasPrefix(rest, str) {
+			return s.Advance(len(str)), str, nil
 		}
 
-		return s, "", CombinatorParseError{Input: str, Text: s, Type: "tag"}
+		return s, "", CombinatorParseError{Input: str, State: s, Type: "tag"}
 	}
 }
 
@@ -87,26 +91,27 @@ func Tag(str string) Combinator[string] {
 // the input is returned (preserving the original casing). An empty str
 // matches trivially without consuming any input, the same as Tag.
 //
-//	chomp.TagNoCase("hello")("HELLO, World!")
+//	chomp.TagNoCase("hello").Run("HELLO, World!")
 //	// (", World!", "HELLO", nil)
 func TagNoCase(str string) Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
 		pos, tagPos := 0, 0
 		for tagPos < len(str) {
 			want, wantSize := utf8.DecodeRuneInString(str[tagPos:])
-			if pos >= len(s) || (want == utf8.RuneError && wantSize <= 1) {
-				return s, "", CombinatorParseError{Input: str, Text: s, Type: "tag_no_case"}
+			if pos >= len(rest) || (want == utf8.RuneError && wantSize <= 1) {
+				return s, "", CombinatorParseError{Input: str, State: s, Type: "tag_no_case"}
 			}
 
-			got, size := utf8.DecodeRuneInString(s[pos:])
+			got, size := utf8.DecodeRuneInString(rest[pos:])
 			if (got == utf8.RuneError && size <= 1) || !foldEqual(got, want) {
-				return s, "", CombinatorParseError{Input: str, Text: s, Type: "tag_no_case"}
+				return s, "", CombinatorParseError{Input: str, State: s, Type: "tag_no_case"}
 			}
 			pos += size
 			tagPos += wantSize
 		}
 
-		return s[pos:], s[:pos], nil
+		return s.Advance(pos), rest[:pos], nil
 	}
 }
 
@@ -135,7 +140,7 @@ const charSetThreshold = 8
 // beginning of the input text. Parsing stops upon the first unmatched character.
 // An empty sequence can never satisfy "at least one", so this always fails.
 //
-//	chomp.Any("eH")("Hello, World!")
+//	chomp.Any("eH").Run("Hello, World!")
 //	// ("llo, World!", "He", nil)
 func Any(str string) Combinator[string] {
 	runeCount := utf8.RuneCountInString(str)
@@ -146,9 +151,10 @@ func Any(str string) Combinator[string] {
 			charSet[r] = struct{}{}
 		}
 
-		return func(s string) (string, string, error) {
+		return func(s State) (State, string, error) {
+			rest := s.Rest()
 			pos := 0
-			for _, sc := range s {
+			for _, sc := range rest {
 				if _, ok := charSet[sc]; !ok {
 					break
 				}
@@ -156,18 +162,19 @@ func Any(str string) Combinator[string] {
 			}
 
 			if pos == 0 {
-				return s, "", CombinatorParseError{Input: str, Text: s, Type: "any"}
+				return s, "", CombinatorParseError{Input: str, State: s, Type: "any"}
 			}
 
-			return s[pos:], s[:pos], nil
+			return s.Advance(pos), rest[:pos], nil
 		}
 	}
 
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
 		pos := 0
 
 	match:
-		for _, sc := range s {
+		for _, sc := range rest {
 			for _, strc := range str {
 				if sc == strc {
 					pos += utf8.RuneLen(sc)
@@ -178,10 +185,10 @@ func Any(str string) Combinator[string] {
 		}
 
 		if pos == 0 {
-			return s, "", CombinatorParseError{Input: str, Text: s, Type: "any"}
+			return s, "", CombinatorParseError{Input: str, State: s, Type: "any"}
 		}
 
-		return s[pos:], s[:pos], nil
+		return s.Advance(pos), rest[:pos], nil
 	}
 }
 
@@ -190,7 +197,7 @@ func Any(str string) Combinator[string] {
 // An empty sequence excludes nothing, so this matches the entire remaining
 // input when at least one character remains; an empty input still fails.
 //
-//	chomp.Not("ol")("Hello, World!")
+//	chomp.Not("ol").Run("Hello, World!")
 //	// ("llo, World!", "He", nil)
 func Not(str string) Combinator[string] {
 	runeCount := utf8.RuneCountInString(str)
@@ -201,9 +208,10 @@ func Not(str string) Combinator[string] {
 			charSet[r] = struct{}{}
 		}
 
-		return func(s string) (string, string, error) {
+		return func(s State) (State, string, error) {
+			rest := s.Rest()
 			pos := 0
-			for _, sc := range s {
+			for _, sc := range rest {
 				if _, ok := charSet[sc]; ok {
 					break
 				}
@@ -211,18 +219,19 @@ func Not(str string) Combinator[string] {
 			}
 
 			if pos == 0 {
-				return s, "", CombinatorParseError{Input: str, Text: s, Type: "not"}
+				return s, "", CombinatorParseError{Input: str, State: s, Type: "not"}
 			}
 
-			return s[pos:], s[:pos], nil
+			return s.Advance(pos), rest[:pos], nil
 		}
 	}
 
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
 		pos := 0
 
 	match:
-		for _, sc := range s {
+		for _, sc := range rest {
 			for _, strc := range str {
 				if sc == strc {
 					break match
@@ -232,10 +241,10 @@ func Not(str string) Combinator[string] {
 		}
 
 		if pos == 0 {
-			return s, "", CombinatorParseError{Input: str, Text: s, Type: "not"}
+			return s, "", CombinatorParseError{Input: str, State: s, Type: "not"}
 		}
 
-		return s[pos:], s[:pos], nil
+		return s.Advance(pos), rest[:pos], nil
 	}
 }
 
@@ -243,22 +252,23 @@ func Not(str string) Combinator[string] {
 // the provided sequence. An empty sequence can never be matched, so this
 // always fails.
 //
-//	chomp.OneOf("!,eH")("Hello, World!")
+//	chomp.OneOf("!,eH").Run("Hello, World!")
 //	// ("ello, World!", "H", nil)
 func OneOf(str string) Combinator[string] {
-	return func(s string) (string, string, error) {
-		if s == "" {
-			return s, "", CombinatorParseError{Input: str, Text: s, Type: "one_of"}
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		if rest == "" {
+			return s, "", CombinatorParseError{Input: str, State: s, Type: "one_of"}
 		}
 
-		r, size := utf8.DecodeRuneInString(s)
+		r, size := utf8.DecodeRuneInString(rest)
 		for _, strc := range str {
 			if r == strc {
-				return s[size:], s[:size], nil
+				return s.Advance(size), rest[:size], nil
 			}
 		}
 
-		return s, "", CombinatorParseError{Input: str, Text: s, Type: "one_of"}
+		return s, "", CombinatorParseError{Input: str, State: s, Type: "one_of"}
 	}
 }
 
@@ -266,22 +276,23 @@ func OneOf(str string) Combinator[string] {
 // from the provided sequence. An empty sequence excludes nothing, so this
 // degenerates to matching any single character, the same as [AnyChar].
 //
-//	chomp.NoneOf("loWrd!e")("Hello, World!")
+//	chomp.NoneOf("loWrd!e").Run("Hello, World!")
 //	// ("ello, World!", "H", nil)
 func NoneOf(str string) Combinator[string] {
-	return func(s string) (string, string, error) {
-		if s == "" {
-			return s, "", CombinatorParseError{Input: str, Text: s, Type: "none_of"}
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		if rest == "" {
+			return s, "", CombinatorParseError{Input: str, State: s, Type: "none_of"}
 		}
 
-		r, size := utf8.DecodeRuneInString(s)
+		r, size := utf8.DecodeRuneInString(rest)
 		for _, strc := range str {
 			if r == strc {
-				return s, "", CombinatorParseError{Input: str, Text: s, Type: "none_of"}
+				return s, "", CombinatorParseError{Input: str, State: s, Type: "none_of"}
 			}
 		}
 
-		return s[size:], s[:size], nil
+		return s.Advance(size), rest[:size], nil
 	}
 }
 
@@ -290,34 +301,36 @@ func NoneOf(str string) Combinator[string] {
 // An empty str matches at position 0, so this succeeds trivially without
 // consuming any input.
 //
-//	chomp.Until("World")("Hello, World!")
+//	chomp.Until("World").Run("Hello, World!")
 //	// ("World!", "Hello, ", nil)
 func Until(str string) Combinator[string] {
-	return func(s string) (string, string, error) {
-		if idx := strings.Index(s, str); idx != -1 {
-			return s[idx:], s[:idx], nil
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		if idx := strings.Index(rest, str); idx != -1 {
+			return s.Advance(idx), rest[:idx], nil
 		}
 
-		return s, "", CombinatorParseError{Input: str, Text: s, Type: "until"}
+		return s, "", CombinatorParseError{Input: str, State: s, Type: "until"}
 	}
 }
 
 // Take will consume exactly n characters from the beginning of the input text.
 // Unicode characters are handled correctly by counting runes, not bytes.
 //
-//	chomp.Take(5)("Hello, World!")
+//	chomp.Take(5).Run("Hello, World!")
 //	// (", World!", "Hello", nil)
 func Take(n uint) Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
 		pos := 0
 		for i := uint(0); i < n; i++ {
-			if pos >= len(s) {
-				return s, "", CombinatorParseError{Text: s, Type: "take"}
+			if pos >= len(rest) {
+				return s, "", CombinatorParseError{State: s, Type: "take"}
 			}
-			_, size := utf8.DecodeRuneInString(s[pos:])
+			_, size := utf8.DecodeRuneInString(rest[pos:])
 			pos += size
 		}
-		return s[pos:], s[:pos], nil
+		return s.Advance(pos), rest[:pos], nil
 	}
 }
 
@@ -327,18 +340,19 @@ func Take(n uint) Combinator[string] {
 // An empty str always matches at position 0, which never satisfies "at
 // least one", so this always fails.
 //
-//	chomp.TakeUntil1(",")("Hello, World!")
+//	chomp.TakeUntil1(",").Run("Hello, World!")
 //	// (", World!", "Hello", nil)
 //
-//	chomp.TakeUntil1(",")(",World!")
+//	chomp.TakeUntil1(",").Run(",World!")
 //	// Error: must match at least one character
 func TakeUntil1(str string) Combinator[string] {
-	return func(s string) (string, string, error) {
-		if idx := strings.Index(s, str); idx > 0 {
-			return s[idx:], s[:idx], nil
+	return func(s State) (State, string, error) {
+		rest := s.Rest()
+		if idx := strings.Index(rest, str); idx > 0 {
+			return s.Advance(idx), rest[:idx], nil
 		}
 
-		return s, "", CombinatorParseError{Input: str, Text: s, Type: "take_until_1"}
+		return s, "", CombinatorParseError{Input: str, State: s, Type: "take_until_1"}
 	}
 }
 
@@ -346,31 +360,28 @@ func TakeUntil1(str string) Combinator[string] {
 // combinator, an escape character, and a combinator that matches valid characters
 // after the escape. The escape sequences are preserved in the output as-is.
 //
-//	chomp.Escaped(chomp.While(chomp.IsLetter), '\\', chomp.OneOf(`"n\`))(`Hello\"World`)
+//	chomp.Escaped(chomp.While(chomp.IsLetter), '\\', chomp.OneOf(`"n\`)).Run(`Hello\"World`)
 //	// ("", `Hello\"World`, nil)
 func Escaped(normal Combinator[string], escape rune, escapable Combinator[string]) Combinator[string] {
-	return func(s string) (string, string, error) {
-		pos := 0
-		rem := s
+	return func(s State) (State, string, error) {
+		cur := s
 
-		for rem != "" {
-			if newRem, _, err := normal(rem); err == nil && len(newRem) < len(rem) {
-				pos += len(rem) - len(newRem)
-				rem = newRem
+		for cur.Rest() != "" {
+			if newCur, _, err := normal(cur); err == nil && newCur.Pos() > cur.Pos() {
+				cur = newCur
 				continue
 			}
 
-			r, _ := utf8.DecodeRuneInString(rem)
+			r, _ := utf8.DecodeRuneInString(cur.Rest())
 			if r == escape {
 				escLen := utf8.RuneLen(escape)
-				if len(rem) <= escLen {
+				if len(cur.Rest()) <= escLen {
 					break
 				}
 
-				escInput := rem[escLen:]
-				if newRem, _, err := escapable(escInput); err == nil && len(newRem) < len(escInput) {
-					pos += escLen + (len(escInput) - len(newRem))
-					rem = newRem
+				escState := cur.Advance(escLen)
+				if newCur, _, err := escapable(escState); err == nil && newCur.Pos() > escState.Pos() {
+					cur = newCur
 					continue
 				}
 			}
@@ -378,11 +389,11 @@ func Escaped(normal Combinator[string], escape rune, escapable Combinator[string
 			break
 		}
 
-		if pos == 0 {
-			return s, "", CombinatorParseError{Text: s, Type: "escaped"}
+		if cur.Pos() == s.Pos() {
+			return s, "", CombinatorParseError{State: s, Type: "escaped"}
 		}
 
-		return s[pos:], s[:pos], nil
+		return cur, cur.since(s), nil
 	}
 }
 
@@ -390,42 +401,42 @@ func Escaped(normal Combinator[string], escape rune, escapable Combinator[string
 // It takes a normal content combinator, an escape character, and a transform function
 // that converts escape sequences to their actual values.
 //
-//	transform := func(s string) (string, string, error) {
-//	    switch s[0] {
+//	transform := func(s chomp.State) (chomp.State, string, error) {
+//	    switch s.Rest()[0] {
 //	    case 'n':
-//	        return s[1:], "\n", nil
+//	        return s.Advance(1), "\n", nil
 //	    case '"':
-//	        return s[1:], "\"", nil
+//	        return s.Advance(1), "\"", nil
 //	    case '\\':
-//	        return s[1:], "\\", nil
+//	        return s.Advance(1), "\\", nil
 //	    }
 //	    return s, "", errors.New("invalid escape")
 //	}
-//	chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', transform)(`Hello\nWorld`)
+//	chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', transform).Run(`Hello\nWorld`)
 //	// ("", "Hello\nWorld", nil)
 func EscapedTransform(normal Combinator[string], escape rune, transform Combinator[string]) Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s State) (State, string, error) {
 		var result strings.Builder
-		rem := s
+		cur := s
 
-		for rem != "" {
-			if newRem, ext, err := normal(rem); err == nil && len(newRem) < len(rem) {
+		for cur.Rest() != "" {
+			if newCur, ext, err := normal(cur); err == nil && newCur.Pos() > cur.Pos() {
 				result.WriteString(ext)
-				rem = newRem
+				cur = newCur
 				continue
 			}
 
-			r, _ := utf8.DecodeRuneInString(rem)
+			r, _ := utf8.DecodeRuneInString(cur.Rest())
 			if r == escape {
 				escLen := utf8.RuneLen(escape)
-				if len(rem) <= escLen {
+				if len(cur.Rest()) <= escLen {
 					break
 				}
 
-				escInput := rem[escLen:]
-				if newRem, transformed, err := transform(escInput); err == nil && len(newRem) < len(escInput) {
+				escState := cur.Advance(escLen)
+				if newCur, transformed, err := transform(escState); err == nil && newCur.Pos() > escState.Pos() {
 					result.WriteString(transformed)
-					rem = newRem
+					cur = newCur
 					continue
 				}
 			}
@@ -434,9 +445,9 @@ func EscapedTransform(normal Combinator[string], escape rune, transform Combinat
 		}
 
 		if result.Len() == 0 {
-			return s, "", CombinatorParseError{Text: s, Type: "escaped_transform"}
+			return s, "", CombinatorParseError{State: s, Type: "escaped_transform"}
 		}
 
-		return rem, result.String(), nil
+		return cur, result.String(), nil
 	}
 }

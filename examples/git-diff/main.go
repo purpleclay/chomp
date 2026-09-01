@@ -74,7 +74,7 @@ type DiffChange struct {
 }
 
 func Parse(in string) (FileDiff, error) {
-	rem, path, err := diffPath()(in)
+	rem, path, err := diffPath()(chomp.NewState(in))
 	if err != nil {
 		return FileDiff{}, err
 	}
@@ -98,7 +98,7 @@ func Parse(in string) (FileDiff, error) {
 // diffPath parses the diff header line and extracts the file path.
 // Uses Recognize to capture the raw path text from "a/path" format.
 func diffPath() chomp.Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s chomp.State) (chomp.State, string, error) {
 		// diff --git a/scan/scanner.go b/scan/scanner.go
 		rem, _, err := chomp.Tag("diff --git ")(s)
 		if err != nil {
@@ -122,7 +122,7 @@ func diffPath() chomp.Combinator[string] {
 	}
 }
 
-func diffChunks(in string) ([]DiffChunk, error) {
+func diffChunks(in chomp.State) ([]DiffChunk, error) {
 	_, chunks, err := chomp.Map(chomp.Many(diffChunk()),
 		func(in []string) []DiffChunk {
 			var diffChunks []DiffChunk
@@ -164,7 +164,7 @@ func mustInt(in string) int {
 }
 
 func diffChunk() chomp.Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s chomp.State) (chomp.State, []string, error) {
 		/*
 			@@ -25 +3,3 @@ package scan
 			-import "bytes"
@@ -206,7 +206,7 @@ func diffChunk() chomp.Combinator[[]string] {
 // diffChunkHeaderChange parses line number and optional count from chunk header.
 // Uses Verify to ensure line numbers are valid positive integers.
 func diffChunkHeaderChange(prefix string) chomp.Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s chomp.State) (chomp.State, []string, error) {
 		// Matches patterns like "-25" or "+3,3"
 		rem, _, err := chomp.Tag(prefix)(s)
 		if err != nil {

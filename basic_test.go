@@ -15,7 +15,7 @@ import (
 // reports a non-empty ext - violating the assumption that a non-empty ext
 // implies real progress. Used to prove Escaped/EscapedTransform measure
 // progress from the remainder, not ext, and so never loop forever on it.
-func zeroWidthNonEmptyExt(s string) (string, string, error) {
+func zeroWidthNonEmptyExt(s chomp.State) (chomp.State, string, error) {
 	return s, "ok", nil
 }
 
@@ -23,11 +23,11 @@ func zeroWidthNonEmptyExt(s string) (string, string, error) {
 // violating the assumption that ext length reflects what was consumed.
 // Used to prove Escaped/EscapedTransform still credit real progress even
 // when ext is empty.
-func consumesButEmptyExt(s string) (string, string, error) {
-	if s == "" {
+func consumesButEmptyExt(s chomp.State) (chomp.State, string, error) {
+	if s.Rest() == "" {
 		return s, "", errors.New("empty")
 	}
-	return s[1:], "", nil
+	return s.Advance(1), "", nil
 }
 
 func TestChar(t *testing.T) {
@@ -58,7 +58,7 @@ func TestChar(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Char(tt.char)(tt.input)
+			rem, ext, err := chomp.Char(tt.char).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -92,7 +92,7 @@ func TestAnyChar(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.AnyChar()(tt.input)
+			rem, ext, err := chomp.AnyChar().Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -129,7 +129,7 @@ func TestSatisfy(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Satisfy(tt.pred)(tt.input)
+			rem, ext, err := chomp.Satisfy(tt.pred).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -163,7 +163,7 @@ func TestTag(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, tag, err := chomp.Tag(tt.tag)(tt.input)
+			rem, tag, err := chomp.Tag(tt.tag).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -200,7 +200,7 @@ func TestAny(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Any(tt.any)(tt.input)
+			rem, ext, err := chomp.Any(tt.any).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -237,7 +237,7 @@ func TestNot(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Not(tt.not)(tt.input)
+			rem, ext, err := chomp.Not(tt.not).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -274,7 +274,7 @@ func TestUntil(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Until(tt.until)(tt.input)
+			rem, ext, err := chomp.Until(tt.until).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -311,7 +311,7 @@ func TestOneOf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.OneOf(tt.oneOf)(tt.input)
+			rem, ext, err := chomp.OneOf(tt.oneOf).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -348,7 +348,7 @@ func TestNoneOf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.NoneOf(tt.noneOf)(tt.input)
+			rem, ext, err := chomp.NoneOf(tt.noneOf).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -399,7 +399,7 @@ func TestTagNoCase(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.TagNoCase(tt.tag)(tt.input)
+			rem, ext, err := chomp.TagNoCase(tt.tag).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -455,7 +455,7 @@ func TestTagNoCaseFoldLengthMismatch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.TagNoCase(tt.tag)(tt.input)
+			rem, ext, err := chomp.TagNoCase(tt.tag).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -467,7 +467,7 @@ func TestTagNoCaseFoldLengthMismatch(t *testing.T) {
 func TestTagNoCaseRejectsMalformedUTF8AsReplacementChar(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.TagNoCase("�")("\xff")
+	rem, ext, err := chomp.TagNoCase("�").Run("\xff")
 
 	require.Error(t, err)
 	assert.Equal(t, "\xff", rem)
@@ -477,7 +477,7 @@ func TestTagNoCaseRejectsMalformedUTF8AsReplacementChar(t *testing.T) {
 func TestTagNoCaseMatchesGenuineReplacementChar(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.TagNoCase("�")("�x")
+	rem, ext, err := chomp.TagNoCase("�").Run("�x")
 
 	require.NoError(t, err)
 	assert.Equal(t, "x", rem)
@@ -487,7 +487,7 @@ func TestTagNoCaseMatchesGenuineReplacementChar(t *testing.T) {
 func TestTagNoCaseRejectsMalformedTagAsReplacementChar(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.TagNoCase("\xff")("�x")
+	rem, ext, err := chomp.TagNoCase("\xff").Run("�x")
 
 	require.Error(t, err)
 	assert.Equal(t, "�x", rem)
@@ -535,7 +535,7 @@ func FuzzTagNoCase(f *testing.F) {
 			t.Skip()
 		}
 
-		rem, ext, err := chomp.TagNoCase(tag)(input)
+		rem, ext, err := chomp.TagNoCase(tag).Run(input)
 		wantRem, wantExt, wantFailed := referenceTagNoCase(tag, input)
 
 		if wantFailed {
@@ -586,7 +586,7 @@ func TestTake(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Take(tt.n)(tt.input)
+			rem, ext, err := chomp.Take(tt.n).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -630,7 +630,7 @@ func TestTakeUntil1(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.TakeUntil1(tt.until)(tt.input)
+			rem, ext, err := chomp.TakeUntil1(tt.until).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -686,7 +686,7 @@ func TestEscaped(t *testing.T) {
 				chomp.While(chomp.IsLetter),
 				'\\',
 				chomp.OneOf(`"n\`),
-			)(tt.input)
+			).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -724,7 +724,7 @@ func TestEscapedUnicode(t *testing.T) {
 				chomp.While(chomp.IsLetter),
 				'★',
 				chomp.OneOf("はに"),
-			)(tt.input)
+			).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -736,19 +736,20 @@ func TestEscapedUnicode(t *testing.T) {
 func TestEscapedTransform(t *testing.T) {
 	t.Parallel()
 
-	transform := func(s string) (string, string, error) {
-		if s == "" {
-			return s, "", chomp.CombinatorParseError{Text: s, Type: "transform"}
+	transform := func(s chomp.State) (chomp.State, string, error) {
+		rest := s.Rest()
+		if rest == "" {
+			return s, "", chomp.CombinatorParseError{State: s, Type: "transform"}
 		}
-		switch s[0] {
+		switch rest[0] {
 		case 'n':
-			return s[1:], "\n", nil
+			return s.Advance(1), "\n", nil
 		case '"':
-			return s[1:], "\"", nil
+			return s.Advance(1), "\"", nil
 		case '\\':
-			return s[1:], "\\", nil
+			return s.Advance(1), "\\", nil
 		}
-		return s, "", chomp.CombinatorParseError{Text: s, Type: "transform"}
+		return s, "", chomp.CombinatorParseError{State: s, Type: "transform"}
 	}
 
 	tests := []struct {
@@ -795,7 +796,7 @@ func TestEscapedTransform(t *testing.T) {
 				chomp.While(chomp.IsLetter),
 				'\\',
 				transform,
-			)(tt.input)
+			).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -807,18 +808,19 @@ func TestEscapedTransform(t *testing.T) {
 func TestEscapedTransformUnicode(t *testing.T) {
 	t.Parallel()
 
-	transform := func(s string) (string, string, error) {
-		if s == "" {
-			return s, "", chomp.CombinatorParseError{Text: s, Type: "transform"}
+	transform := func(s chomp.State) (chomp.State, string, error) {
+		rest := s.Rest()
+		if rest == "" {
+			return s, "", chomp.CombinatorParseError{State: s, Type: "transform"}
 		}
-		runes := []rune(s)
-		switch runes[0] {
+		r, size := utf8.DecodeRuneInString(rest)
+		switch r {
 		case 'は':
-			return string(runes[1:]), "【", nil
+			return s.Advance(size), "【", nil
 		case 'に':
-			return string(runes[1:]), "】", nil
+			return s.Advance(size), "】", nil
 		}
-		return s, "", chomp.CombinatorParseError{Text: s, Type: "transform"}
+		return s, "", chomp.CombinatorParseError{State: s, Type: "transform"}
 	}
 
 	tests := []struct {
@@ -847,7 +849,7 @@ func TestEscapedTransformUnicode(t *testing.T) {
 				chomp.While(chomp.IsLetter),
 				'★',
 				transform,
-			)(tt.input)
+			).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -859,7 +861,7 @@ func TestEscapedTransformUnicode(t *testing.T) {
 func TestEscapedTransformingNormal(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Escaped(chomp.Parentheses(), '\\', chomp.OneOf("n"))("(ab)(cd)")
+	rem, ext, err := chomp.Escaped(chomp.Parentheses(), '\\', chomp.OneOf("n")).Run("(ab)(cd)")
 
 	require.NoError(t, err)
 	assert.Equal(t, "", rem)
@@ -869,7 +871,7 @@ func TestEscapedTransformingNormal(t *testing.T) {
 func TestEscapedTransformingEscapable(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Escaped(chomp.Tag("a"), '\\', chomp.Parentheses())(`a\(x)a`)
+	rem, ext, err := chomp.Escaped(chomp.Tag("a"), '\\', chomp.Parentheses()).Run(`a\(x)a`)
 
 	require.NoError(t, err)
 	assert.Equal(t, "", rem)
@@ -879,7 +881,7 @@ func TestEscapedTransformingEscapable(t *testing.T) {
 func TestEscapedNeverStallsOnEmptyExt(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Escaped(consumesButEmptyExt, '\\', chomp.OneOf("n"))("abc")
+	rem, ext, err := chomp.Escaped(consumesButEmptyExt, '\\', chomp.OneOf("n")).Run("abc")
 
 	require.NoError(t, err)
 	assert.Equal(t, "", rem)
@@ -890,7 +892,7 @@ func TestEscapedNeverLoopsOnZeroWidthNonEmptyExt(t *testing.T) {
 	t.Parallel()
 
 	withTimeout(t, hangTimeout, func() {
-		_, _, err := chomp.Escaped(zeroWidthNonEmptyExt, '\\', chomp.OneOf("n"))("abc")
+		_, _, err := chomp.Escaped(zeroWidthNonEmptyExt, '\\', chomp.OneOf("n")).Run("abc")
 		require.Error(t, err)
 	})
 }
@@ -898,7 +900,7 @@ func TestEscapedNeverLoopsOnZeroWidthNonEmptyExt(t *testing.T) {
 func TestEscapedTransformNeverStallsOnEmptyTransform(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', consumesButEmptyExt)(`ab\xcd`)
+	rem, ext, err := chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', consumesButEmptyExt).Run(`ab\xcd`)
 
 	require.NoError(t, err)
 	assert.Equal(t, "", rem)
@@ -909,10 +911,10 @@ func TestEscapedTransformNeverLoopsOnZeroWidthNonEmptyExt(t *testing.T) {
 	t.Parallel()
 
 	withTimeout(t, hangTimeout, func() {
-		transform := func(s string) (string, string, error) {
+		transform := func(s chomp.State) (chomp.State, string, error) {
 			return s, "", errors.New("boom")
 		}
-		_, _, err := chomp.EscapedTransform(zeroWidthNonEmptyExt, '\\', transform)("abc")
+		_, _, err := chomp.EscapedTransform(zeroWidthNonEmptyExt, '\\', transform).Run("abc")
 		require.Error(t, err)
 	})
 }
@@ -920,7 +922,7 @@ func TestEscapedTransformNeverLoopsOnZeroWidthNonEmptyExt(t *testing.T) {
 func TestCombinatorError(t *testing.T) {
 	t.Parallel()
 
-	_, _, err := chomp.OneOf("!h")("Happy Monday")
+	_, _, err := chomp.OneOf("!h").Run("Happy Monday")
 
 	assert.EqualError(t, err, "(one_of) combinator failed to parse text 'Happy Monday' with input '!h'")
 }
@@ -931,7 +933,7 @@ func TestParserCombinatorError(t *testing.T) {
 	_, _, err := chomp.All(
 		chomp.Tag("the legend of batman"),
 		chomp.Tag(":"),
-		chomp.Tag("marvel"))("the legend of batman:dc:9781801260336:£19.99")
+		chomp.Tag("marvel")).Run("the legend of batman:dc:9781801260336:£19.99")
 
 	assert.EqualError(t, err, "(all) parser failed. (tag) combinator failed to parse text 'dc:9781801260336:£19.99' with input 'marvel'")
 }
@@ -1004,7 +1006,7 @@ func TestEmptyPatternBehaviour(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := tt.run(tt.input)
+			rem, ext, err := tt.run.Run(tt.input)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -1035,7 +1037,7 @@ func TestEmptyPatternZeroWidthCombinatorsDoNotHang(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			withTimeout(t, hangTimeout, func() {
-				rem, ext, err := chomp.ManyN(tt.c, 0)("abc")
+				rem, ext, err := chomp.ManyN(tt.c, 0).Run("abc")
 				require.NoError(t, err)
 				assert.Equal(t, "abc", rem)
 				assert.Empty(t, ext)
@@ -1051,7 +1053,7 @@ func TestEmptyPatternZeroWidthCombinatorsDoNotHang(t *testing.T) {
 func TestNotEmptySequenceOnEmptyInputFails(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Not("")("")
+	rem, ext, err := chomp.Not("").Run("")
 
 	require.Error(t, err)
 	assert.Equal(t, "", rem)

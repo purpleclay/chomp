@@ -2,6 +2,14 @@
 
 A comprehensive reference of all combinators provided by `chomp`.
 
+Every combinator has the shape `func(chomp.State) (chomp.State, T, error)` - `State` threads the original input plus a cursor, so any point in a parse can recover its absolute byte position. `Run(input string)` is the string-in/string-out entry point used throughout this reference:
+
+```go
+chomp.Tag("Hello").Run("Hello, World!")
+// rem: ", World!"
+// ext: "Hello"
+```
+
 - [Character Combinators](#character-combinators)
 - [Tag Combinators](#tag-combinators)
 - [Sequence Combinators](#sequence-combinators)
@@ -21,7 +29,7 @@ A comprehensive reference of all combinators provided by `chomp`.
 Matches a specific single character at the beginning of the input text.
 
 ```go
-chomp.Char(',')(",,rest")
+chomp.Char(',').Run(",,rest")
 // rem: ",rest"
 // ext: ","
 ```
@@ -31,7 +39,7 @@ chomp.Char(',')(",,rest")
 Matches any single character at the beginning of the input text.
 
 ```go
-chomp.AnyChar()("Hello")
+chomp.AnyChar().Run("Hello")
 // rem: "ello"
 // ext: "H"
 ```
@@ -41,7 +49,7 @@ chomp.AnyChar()("Hello")
 Matches a single character that satisfies the given predicate function.
 
 ```go
-chomp.Satisfy(func(r rune) bool { return r >= 'A' && r <= 'Z' })("Hello")
+chomp.Satisfy(func(r rune) bool { return r >= 'A' && r <= 'Z' }).Run("Hello")
 // rem: "ello"
 // ext: "H"
 ```
@@ -51,7 +59,7 @@ chomp.Satisfy(func(r rune) bool { return r >= 'A' && r <= 'Z' })("Hello")
 Matches a single character from the provided sequence.
 
 ```go
-chomp.OneOf("!,eH")("Hello, World!")
+chomp.OneOf("!,eH").Run("Hello, World!")
 // rem: "ello, World!"
 // ext: "H"
 ```
@@ -61,7 +69,7 @@ chomp.OneOf("!,eH")("Hello, World!")
 Matches a single character NOT in the provided sequence.
 
 ```go
-chomp.NoneOf("loWrd!e")("Hello, World!")
+chomp.NoneOf("loWrd!e").Run("Hello, World!")
 // rem: "ello, World!"
 // ext: "H"
 ```
@@ -71,7 +79,7 @@ chomp.NoneOf("loWrd!e")("Hello, World!")
 Matches one or more characters from the provided sequence. Stops at the first unmatched character.
 
 ```go
-chomp.Any("eH")("Hello, World!")
+chomp.Any("eH").Run("Hello, World!")
 // rem: "llo, World!"
 // ext: "He"
 ```
@@ -81,7 +89,7 @@ chomp.Any("eH")("Hello, World!")
 Matches one or more characters NOT in the provided sequence. Stops at the first matched character.
 
 ```go
-chomp.Not("ol")("Hello, World!")
+chomp.Not("ol").Run("Hello, World!")
 // rem: "llo, World!"
 // ext: "He"
 ```
@@ -91,7 +99,7 @@ chomp.Not("ol")("Hello, World!")
 Consumes exactly `n` characters. Unicode characters are handled correctly.
 
 ```go
-chomp.Take(5)("Hello, World!")
+chomp.Take(5).Run("Hello, World!")
 // rem: ", World!"
 // ext: "Hello"
 ```
@@ -105,7 +113,7 @@ chomp.Take(5)("Hello, World!")
 Matches an exact sequence of characters (case-sensitive).
 
 ```go
-chomp.Tag("Hello")("Hello, World!")
+chomp.Tag("Hello").Run("Hello, World!")
 // rem: ", World!"
 // ext: "Hello"
 ```
@@ -115,7 +123,7 @@ chomp.Tag("Hello")("Hello, World!")
 Matches a sequence of characters, ignoring case. Returns the original casing from input.
 
 ```go
-chomp.TagNoCase("hello")("HELLO, World!")
+chomp.TagNoCase("hello").Run("HELLO, World!")
 // rem: ", World!"
 // ext: "HELLO"
 ```
@@ -125,7 +133,7 @@ chomp.TagNoCase("hello")("HELLO, World!")
 Scans until the first occurrence of the given string. Everything before is matched.
 
 ```go
-chomp.Until("World")("Hello, World!")
+chomp.Until("World").Run("Hello, World!")
 // rem: "World!"
 // ext: "Hello, "
 ```
@@ -135,7 +143,7 @@ chomp.Until("World")("Hello, World!")
 Like `Until`, but requires at least one character to be matched before the delimiter.
 
 ```go
-chomp.TakeUntil1(",")("Hello, World!")
+chomp.TakeUntil1(",").Run("Hello, World!")
 // rem: ", World!"
 // ext: "Hello"
 ```
@@ -149,7 +157,7 @@ chomp.TakeUntil1(",")("Hello, World!")
 Matches two combinators in sequence. Both must match.
 
 ```go
-chomp.Pair(chomp.Tag("Hello,"), chomp.Tag(" World"))("Hello, World!")
+chomp.Pair(chomp.Tag("Hello,"), chomp.Tag(" World")).Run("Hello, World!")
 // rem: "!"
 // ext: ["Hello,", " World"]
 ```
@@ -159,7 +167,7 @@ chomp.Pair(chomp.Tag("Hello,"), chomp.Tag(" World"))("Hello, World!")
 Matches two combinators separated by a third (separator is discarded).
 
 ```go
-chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World"))("Hello, World!")
+chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")).Run("Hello, World!")
 // rem: "!"
 // ext: ["Hello", "World"]
 ```
@@ -169,7 +177,7 @@ chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World"))("Hello, W
 Matches all combinators in sequence. All must match in order.
 
 ```go
-chomp.All(chomp.Tag("Hello"), chomp.Until("W"), chomp.Tag("World!"))("Hello, World!")
+chomp.All(chomp.Tag("Hello"), chomp.Until("W"), chomp.Tag("World!")).Run("Hello, World!")
 // rem: ""
 // ext: ["Hello", ", ", "World!"]
 ```
@@ -179,7 +187,7 @@ chomp.All(chomp.Tag("Hello"), chomp.Until("W"), chomp.Tag("World!"))("Hello, Wor
 Tries each combinator in order, returning the first successful match.
 
 ```go
-chomp.First(chomp.Tag("Good Morning"), chomp.Tag("Hello"))("Hello, World!")
+chomp.First(chomp.Tag("Good Morning"), chomp.Tag("Hello")).Run("Hello, World!")
 // rem: ", World!"
 // ext: "Hello"
 ```
@@ -189,7 +197,7 @@ chomp.First(chomp.Tag("Good Morning"), chomp.Tag("Hello"))("Hello, World!")
 Matches a combinator exactly `n` times.
 
 ```go
-chomp.Repeat(chomp.Parentheses(), 2)("(Hello)(World)(!)")
+chomp.Repeat(chomp.Parentheses(), 2).Run("(Hello)(World)(!)")
 // rem: "(!)"
 // ext: ["Hello", "World"]
 ```
@@ -199,7 +207,7 @@ chomp.Repeat(chomp.Parentheses(), 2)("(Hello)(World)(!)")
 Matches a combinator between `n` (minimum) and `m` (maximum) times.
 
 ```go
-chomp.RepeatRange(chomp.OneOf("Helo"), 1, 8)("Hello, World!")
+chomp.RepeatRange(chomp.OneOf("Helo"), 1, 8).Run("Hello, World!")
 // rem: ", World!"
 // ext: ["H", "e", "l", "l", "o"]
 ```
@@ -209,7 +217,7 @@ chomp.RepeatRange(chomp.OneOf("Helo"), 1, 8)("Hello, World!")
 Matches a combinator one or more times (greedy). Equivalent to `ManyN(c, 1)`.
 
 ```go
-chomp.Many(chomp.OneOf("Ho"))("Hello, World!")
+chomp.Many(chomp.OneOf("Ho")).Run("Hello, World!")
 // rem: "ello, World!"
 // ext: ["H"]
 ```
@@ -219,7 +227,7 @@ chomp.Many(chomp.OneOf("Ho"))("Hello, World!")
 Matches a combinator at least `n` times (greedy).
 
 ```go
-chomp.ManyN(chomp.OneOf("Helo"), 0)("Hello, World!")
+chomp.ManyN(chomp.OneOf("Helo"), 0).Run("Hello, World!")
 // rem: ", World!"
 // ext: ["H", "e", "l", "l", "o"]
 ```
@@ -229,7 +237,7 @@ chomp.ManyN(chomp.OneOf("Helo"), 0)("Hello, World!")
 Matches content between left and right delimiters (delimiters are discarded).
 
 ```go
-chomp.Delimited(chomp.Tag("'"), chomp.Until("'"), chomp.Tag("'"))("'Hello, World!'")
+chomp.Delimited(chomp.Tag("'"), chomp.Until("'"), chomp.Tag("'")).Run("'Hello, World!'")
 // rem: ""
 // ext: "Hello, World!"
 ```
@@ -239,7 +247,7 @@ chomp.Delimited(chomp.Tag("'"), chomp.Until("'"), chomp.Tag("'"))("'Hello, World
 Matches a prefix (discarded) followed by content.
 
 ```go
-chomp.Prefixed(chomp.Tag("Hello"), chomp.Tag(`"`))(`"Hello, World!"`)
+chomp.Prefixed(chomp.Tag("Hello"), chomp.Tag(`"`)).Run(`"Hello, World!"`)
 // rem: `, World!"`
 // ext: "Hello"
 ```
@@ -249,7 +257,7 @@ chomp.Prefixed(chomp.Tag("Hello"), chomp.Tag(`"`))(`"Hello, World!"`)
 Matches content followed by a suffix (discarded).
 
 ```go
-chomp.Suffixed(chomp.Tag("Hello"), chomp.Tag(", "))("Hello, World!")
+chomp.Suffixed(chomp.Tag("Hello"), chomp.Tag(", ")).Run("Hello, World!")
 // rem: "World!"
 // ext: "Hello"
 ```
@@ -259,7 +267,7 @@ chomp.Suffixed(chomp.Tag("Hello"), chomp.Tag(", "))("Hello, World!")
 Matches text surrounded by double quotes.
 
 ```go
-chomp.QuoteDouble()(`"Hello, World!"`)
+chomp.QuoteDouble().Run(`"Hello, World!"`)
 // rem: ""
 // ext: "Hello, World!"
 ```
@@ -269,7 +277,7 @@ chomp.QuoteDouble()(`"Hello, World!"`)
 Matches text surrounded by single quotes.
 
 ```go
-chomp.QuoteSingle()("'Hello, World!'")
+chomp.QuoteSingle().Run("'Hello, World!'")
 // rem: ""
 // ext: "Hello, World!"
 ```
@@ -279,7 +287,7 @@ chomp.QuoteSingle()("'Hello, World!'")
 Matches text surrounded by square brackets.
 
 ```go
-chomp.BracketSquare()("[Hello, World!]")
+chomp.BracketSquare().Run("[Hello, World!]")
 // rem: ""
 // ext: "Hello, World!"
 ```
@@ -289,7 +297,7 @@ chomp.BracketSquare()("[Hello, World!]")
 Matches text surrounded by parentheses.
 
 ```go
-chomp.Parentheses()("(Hello, World!)")
+chomp.Parentheses().Run("(Hello, World!)")
 // rem: ""
 // ext: "Hello, World!"
 ```
@@ -299,7 +307,7 @@ chomp.Parentheses()("(Hello, World!)")
 Matches text surrounded by angled brackets.
 
 ```go
-chomp.BracketAngled()("<Hello, World!>")
+chomp.BracketAngled().Run("<Hello, World!>")
 // rem: ""
 // ext: "Hello, World!"
 ```
@@ -309,7 +317,7 @@ chomp.BracketAngled()("<Hello, World!>")
 Matches elements separated by a delimiter. At least one element must match. The separator is discarded.
 
 ```go
-chomp.SeparatedList(chomp.Alpha(), chomp.Tag(","))("apple,banana,cherry,")
+chomp.SeparatedList(chomp.Alpha(), chomp.Tag(",")).Run("apple,banana,cherry,")
 // rem: ","
 // ext: ["apple", "banana", "cherry"]
 ```
@@ -319,7 +327,7 @@ chomp.SeparatedList(chomp.Alpha(), chomp.Tag(","))("apple,banana,cherry,")
 Matches elements separated by a delimiter. Zero or more elements may match. The separator is discarded.
 
 ```go
-chomp.SeparatedList0(chomp.Alpha(), chomp.Tag(","))("123")
+chomp.SeparatedList0(chomp.Alpha(), chomp.Tag(",")).Run("123")
 // rem: "123"
 // ext: []
 ```
@@ -329,7 +337,7 @@ chomp.SeparatedList0(chomp.Alpha(), chomp.Tag(","))("123")
 Matches elements repeatedly until a terminator is found. The terminator is consumed but not included in the result. At least one element must match.
 
 ```go
-chomp.ManyTill(chomp.AnyChar(), chomp.Tag("END"))("abcEND")
+chomp.ManyTill(chomp.AnyChar(), chomp.Tag("END")).Run("abcEND")
 // rem: ""
 // ext: ["a", "b", "c"]
 ```
@@ -339,7 +347,7 @@ chomp.ManyTill(chomp.AnyChar(), chomp.Tag("END"))("abcEND")
 Matches elements repeatedly until a terminator is found. The terminator is consumed but not included in the result. Zero or more elements may match.
 
 ```go
-chomp.ManyTill0(chomp.AnyChar(), chomp.Tag("END"))("END")
+chomp.ManyTill0(chomp.AnyChar(), chomp.Tag("END")).Run("END")
 // rem: ""
 // ext: []
 ```
@@ -351,7 +359,7 @@ Matches a combinator repeatedly and accumulates results using a reducer function
 ```go
 chomp.FoldMany(chomp.OneOf("123"), 0, func(acc int, val string) int {
     return acc + int(val[0]-'0')
-})("123abc")
+}).Run("123abc")
 // rem: "abc"
 // ext: 6
 ```
@@ -363,7 +371,7 @@ Matches a combinator repeatedly and accumulates results using a reducer function
 ```go
 chomp.FoldMany0(chomp.OneOf("123"), 0, func(acc int, val string) int {
     return acc + int(val[0]-'0')
-})("abc")
+}).Run("abc")
 // rem: "abc"
 // ext: 0
 ```
@@ -373,7 +381,7 @@ chomp.FoldMany0(chomp.OneOf("123"), 0, func(acc int, val string) int {
 Counts the number of times a combinator matches without storing results. At least one match is required. Memory efficient for counting.
 
 ```go
-chomp.ManyCount(chomp.OneOf("abc"))("abc123")
+chomp.ManyCount(chomp.OneOf("abc")).Run("abc123")
 // rem: "123"
 // ext: 3
 ```
@@ -383,7 +391,7 @@ chomp.ManyCount(chomp.OneOf("abc"))("abc123")
 Counts the number of times a combinator matches without storing results. Zero or more matches allowed. Memory efficient for counting.
 
 ```go
-chomp.ManyCount0(chomp.OneOf("abc"))("123")
+chomp.ManyCount0(chomp.OneOf("abc")).Run("123")
 // rem: "123"
 // ext: 0
 ```
@@ -398,7 +406,7 @@ chomp.LengthCount(
         return uint(s[0] - '0')
     }),
     chomp.OneOf("abc"),
-)("3abcdef")
+).Run("3abcdef")
 // rem: "def"
 // ext: ["a", "b", "c"]
 ```
@@ -408,7 +416,7 @@ chomp.LengthCount(
 Matches a combinator exactly `n` times, populating a result slice. All `n` matches must succeed.
 
 ```go
-chomp.Fill(chomp.OneOf("abc"), 3)("abcdef")
+chomp.Fill(chomp.OneOf("abc"), 3).Run("abcdef")
 // rem: "def"
 // ext: ["a", "b", "c"]
 ```
@@ -424,7 +432,7 @@ Validates the parsed result against a predicate function without modifying the o
 ```go
 chomp.Verify(chomp.Alpha(), func(s string) bool {
     return len(s) >= 3
-})("Hello, World!")
+}).Run("Hello, World!")
 // rem: ", World!"
 // ext: "Hello"
 ```
@@ -434,7 +442,7 @@ chomp.Verify(chomp.Alpha(), func(s string) bool {
 Returns the consumed input as the output, regardless of the inner parser's result. Useful for capturing complex patterns as text.
 
 ```go
-chomp.Recognize(chomp.SepPair(chomp.Alpha(), chomp.Tag(", "), chomp.Alpha()))("Hello, World!")
+chomp.Recognize(chomp.SepPair(chomp.Alpha(), chomp.Tag(", "), chomp.Alpha())).Run("Hello, World!")
 // rem: "!"
 // ext: "Hello, World"
 ```
@@ -444,7 +452,7 @@ chomp.Recognize(chomp.SepPair(chomp.Alpha(), chomp.Tag(", "), chomp.Alpha()))("H
 Provides both the raw consumed text and the parsed output. The first element is the raw consumed text, followed by the parsed result.
 
 ```go
-chomp.Consumed(chomp.SepPair(chomp.Alpha(), chomp.Tag(", "), chomp.Alpha()))("Hello, World!")
+chomp.Consumed(chomp.SepPair(chomp.Alpha(), chomp.Tag(", "), chomp.Alpha())).Run("Hello, World!")
 // rem: "!"
 // ext: ["Hello, World", "Hello", "World"]
 ```
@@ -454,11 +462,11 @@ chomp.Consumed(chomp.SepPair(chomp.Alpha(), chomp.Tag(", "), chomp.Alpha()))("He
 Matches only when at the end of input, returning an empty string on success. Prevents partial parsing.
 
 ```go
-chomp.Eof()("")
+chomp.Eof().Run("")
 // rem: ""
 // ext: ""
 
-chomp.Pair(chomp.Tag("Hello"), chomp.Eof())("Hello")
+chomp.Pair(chomp.Tag("Hello"), chomp.Eof()).Run("Hello")
 // rem: ""
 // ext: ["Hello", ""]
 ```
@@ -468,11 +476,11 @@ chomp.Pair(chomp.Tag("Hello"), chomp.Eof())("Hello")
 Ensures the entire input is consumed by the inner parser, failing if any text remains unparsed.
 
 ```go
-chomp.AllConsuming(chomp.Tag("Hello"))("Hello")
+chomp.AllConsuming(chomp.Tag("Hello")).Run("Hello")
 // rem: ""
 // ext: "Hello"
 
-chomp.AllConsuming(chomp.Tag("Hello"))("Hello, World!")
+chomp.AllConsuming(chomp.Tag("Hello")).Run("Hello, World!")
 // error: all_consuming failed
 ```
 
@@ -481,11 +489,11 @@ chomp.AllConsuming(chomp.Tag("Hello"))("Hello, World!")
 Returns all remaining unconsumed input as a string value. Always succeeds, even with empty input.
 
 ```go
-chomp.Rest()("Hello, World!")
+chomp.Rest().Run("Hello, World!")
 // rem: ""
 // ext: "Hello, World!"
 
-chomp.Pair(chomp.Tag("Hello"), chomp.Rest())("Hello, World!")
+chomp.Pair(chomp.Tag("Hello"), chomp.Rest()).Run("Hello, World!")
 // rem: ""
 // ext: ["Hello", ", World!"]
 ```
@@ -495,11 +503,11 @@ chomp.Pair(chomp.Tag("Hello"), chomp.Rest())("Hello, World!")
 Returns a fixed value upon parser success, discarding the actual parse result. Useful for assigning semantic meaning to parsed tokens.
 
 ```go
-chomp.Value(chomp.Tag("true"), true)("true")
+chomp.Value(chomp.Tag("true"), true).Run("true")
 // rem: ""
 // ext: true
 
-chomp.Value(chomp.Tag("null"), nil)("null")
+chomp.Value(chomp.Tag("null"), nil).Run("null")
 // rem: ""
 // ext: nil
 ```
@@ -509,11 +517,11 @@ chomp.Value(chomp.Tag("null"), nil)("null")
 Conditionally applies a parser based on a boolean flag. If the condition is true, the parser is applied. Otherwise, returns an empty result without consuming input.
 
 ```go
-chomp.Cond(true, chomp.Tag("Hello"))("Hello, World!")
+chomp.Cond(true, chomp.Tag("Hello")).Run("Hello, World!")
 // rem: ", World!"
 // ext: "Hello"
 
-chomp.Cond(false, chomp.Tag("Hello"))("Hello, World!")
+chomp.Cond(false, chomp.Tag("Hello")).Run("Hello, World!")
 // rem: "Hello, World!"
 // ext: ""
 ```
@@ -529,7 +537,7 @@ chomp.First(
     chomp.Flatten(chomp.All(
         chomp.Tag("if"),
         chomp.Cut(chomp.Tag("(")))),
-    chomp.Tag("if x"))("if x")
+    chomp.Tag("if x")).Run("if x")
 // error: CutError (no backtracking to "if x")
 ```
 
@@ -538,11 +546,11 @@ chomp.First(
 Succeeds when the inner parser fails without consuming input. Implements negative lookahead for validation. Pairs with `Peek` for positive lookahead.
 
 ```go
-chomp.PeekNot(chomp.Tag("Hello"))("World!")
+chomp.PeekNot(chomp.Tag("Hello")).Run("World!")
 // rem: "World!"
 // ext: ""
 
-chomp.PeekNot(chomp.Tag("Hello"))("Hello, World!")
+chomp.PeekNot(chomp.Tag("Hello")).Run("Hello, World!")
 // error: peek_not failed
 ```
 
@@ -555,7 +563,7 @@ chomp.PeekNot(chomp.Tag("Hello"))("Hello, World!")
 Matches one or more characters that satisfy a predicate.
 
 ```go
-chomp.While(chomp.IsLetter)("Hello, World!")
+chomp.While(chomp.IsLetter).Run("Hello, World!")
 // rem: ", World!"
 // ext: "Hello"
 ```
@@ -565,7 +573,7 @@ chomp.While(chomp.IsLetter)("Hello, World!")
 Matches at least `n` characters that satisfy a predicate. If `n` is 0, becomes optional.
 
 ```go
-chomp.WhileN(chomp.IsDigit, 2)("12345abc")
+chomp.WhileN(chomp.IsDigit, 2).Run("12345abc")
 // rem: "abc"
 // ext: "12345"
 ```
@@ -575,7 +583,7 @@ chomp.WhileN(chomp.IsDigit, 2)("12345abc")
 Matches between `n` and `m` characters that satisfy a predicate.
 
 ```go
-chomp.WhileNM(chomp.IsLetter, 1, 3)("Hel1lo")
+chomp.WhileNM(chomp.IsLetter, 1, 3).Run("Hel1lo")
 // rem: "1lo"
 // ext: "Hel"
 ```
@@ -585,7 +593,7 @@ chomp.WhileNM(chomp.IsLetter, 1, 3)("Hel1lo")
 Matches one or more characters that do NOT satisfy a predicate.
 
 ```go
-chomp.WhileNot(chomp.IsDigit)("Hello123")
+chomp.WhileNot(chomp.IsDigit).Run("Hello123")
 // rem: "123"
 // ext: "Hello"
 ```
@@ -595,7 +603,7 @@ chomp.WhileNot(chomp.IsDigit)("Hello123")
 Matches at least `n` characters that do NOT satisfy a predicate.
 
 ```go
-chomp.WhileNotN(chomp.IsDigit, 1)("Hello123")
+chomp.WhileNotN(chomp.IsDigit, 1).Run("Hello123")
 // rem: "123"
 // ext: "Hello"
 ```
@@ -605,7 +613,7 @@ chomp.WhileNotN(chomp.IsDigit, 1)("Hello123")
 Matches between `n` and `m` characters that do NOT satisfy a predicate.
 
 ```go
-chomp.WhileNotNM(chomp.IsLetter, 1, 9)("20240709 was great")
+chomp.WhileNotNM(chomp.IsLetter, 1, 9).Run("20240709 was great")
 // rem: "was great"
 // ext: "20240709 "
 ```
@@ -656,7 +664,7 @@ Transforms the result of a combinator to any other type.
 chomp.Map(chomp.While(chomp.IsDigit), func(in string) int {
     n, _ := strconv.Atoi(in)
     return n
-})("123abc")
+}).Run("123abc")
 // rem: "abc"
 // ext: 123
 ```
@@ -666,7 +674,7 @@ chomp.Map(chomp.While(chomp.IsDigit), func(in string) int {
 Wraps a string result in a slice. Useful for chaining combinators with different return types.
 
 ```go
-chomp.S(chomp.Until(","))("Hello, World!")
+chomp.S(chomp.Until(",")).Run("Hello, World!")
 // rem: ", World!"
 // ext: ["Hello"]
 ```
@@ -676,7 +684,7 @@ chomp.S(chomp.Until(","))("Hello, World!")
 Extracts a single string from a slice result at index `i`.
 
 ```go
-chomp.I(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 1)("Hello, World!")
+chomp.I(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 1).Run("Hello, World!")
 // rem: "!"
 // ext: "World"
 ```
@@ -686,7 +694,7 @@ chomp.I(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 
 Applies a combinator without consuming input (lookahead).
 
 ```go
-chomp.Peek(chomp.Tag("Hello"))("Hello, World!")
+chomp.Peek(chomp.Tag("Hello")).Run("Hello, World!")
 // rem: "Hello, World!"
 // ext: "Hello"
 ```
@@ -696,7 +704,7 @@ chomp.Peek(chomp.Tag("Hello"))("Hello, World!")
 Makes a combinator optional. On failure, returns empty without error.
 
 ```go
-chomp.Opt(chomp.Tag("Hey"))("Hello, World!")
+chomp.Opt(chomp.Tag("Hey")).Run("Hello, World!")
 // rem: "Hello, World!"
 // ext: ""
 ```
@@ -706,7 +714,7 @@ chomp.Opt(chomp.Tag("Hey"))("Hello, World!")
 Joins all extracted values from a combinator into a single string.
 
 ```go
-chomp.Flatten(chomp.Many(chomp.Parentheses()))("(H)(el)(lo)")
+chomp.Flatten(chomp.Many(chomp.Parentheses())).Run("(H)(el)(lo)")
 // rem: ""
 // ext: "Hello"
 ```
@@ -716,7 +724,7 @@ chomp.Flatten(chomp.Many(chomp.Parentheses()))("(H)(el)(lo)")
 Parses strings containing escape sequences, preserving them as-is.
 
 ```go
-chomp.Escaped(chomp.While(chomp.IsLetter), '\\', chomp.OneOf(`"n\`))(`Hello\"World`)
+chomp.Escaped(chomp.While(chomp.IsLetter), '\\', chomp.OneOf(`"n\`)).Run(`Hello\"World`)
 // rem: ""
 // ext: `Hello\"World`
 ```
@@ -726,16 +734,16 @@ chomp.Escaped(chomp.While(chomp.IsLetter), '\\', chomp.OneOf(`"n\`))(`Hello\"Wor
 Parses and transforms escape sequences to their actual values.
 
 ```go
-transform := func(s string) (string, string, error) {
-    switch s[0] {
+transform := func(s chomp.State) (chomp.State, string, error) {
+    switch s.Rest()[0] {
     case 'n':
-        return s[1:], "\n", nil
+        return s.Advance(1), "\n", nil
     case '"':
-        return s[1:], "\"", nil
+        return s.Advance(1), "\"", nil
     }
     return s, "", errors.New("invalid escape")
 }
-chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', transform)(`Hello\nWorld`)
+chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', transform).Run(`Hello\nWorld`)
 // rem: ""
 // ext: "Hello\nWorld"  // actual newline character
 ```
@@ -749,7 +757,7 @@ chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', transform)(`Hello\nWor
 Matches a strict CRLF (`\r\n`) line ending only. Does not match a bare LF or bare CR.
 
 ```go
-chomp.Crlf()("\r\nHello")
+chomp.Crlf().Run("\r\nHello")
 // rem: "Hello"
 // ext: "\r\n"
 ```
@@ -759,7 +767,7 @@ chomp.Crlf()("\r\nHello")
 Matches either `\n` (LF) or `\r\n` (CRLF). Does not match a bare CR; see `Eol` if a bare CR should be treated as a legacy-Mac line terminator.
 
 ```go
-chomp.LineEnding()("\nHello")
+chomp.LineEnding().Run("\nHello")
 // rem: "Hello"
 // ext: "\n"
 ```
@@ -769,7 +777,7 @@ chomp.LineEnding()("\nHello")
 Scans and returns text before any line ending. The line ending is discarded. Unlike `LineEnding`, a bare CR is also consumed here, treated as a legacy-Mac line terminator.
 
 ```go
-chomp.Eol()("Hello, World!\nNext line")
+chomp.Eol().Run("Hello, World!\nNext line")
 // rem: "Next line"
 // ext: "Hello, World!"
 ```

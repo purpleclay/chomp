@@ -33,7 +33,7 @@ func TestAlpha(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Alpha()(tt.input)
+			rem, ext, err := chomp.Alpha().Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -45,7 +45,7 @@ func TestAlpha(t *testing.T) {
 func TestAlpha0(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Alpha0()("123Hello")
+	rem, ext, err := chomp.Alpha0().Run("123Hello")
 
 	require.NoError(t, err)
 	assert.Equal(t, "123Hello", rem)
@@ -77,7 +77,7 @@ func TestDigit(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Digit()(tt.input)
+			rem, ext, err := chomp.Digit().Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -89,7 +89,7 @@ func TestDigit(t *testing.T) {
 func TestDigit0(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Digit0()("abc123")
+	rem, ext, err := chomp.Digit0().Run("abc123")
 
 	require.NoError(t, err)
 	assert.Equal(t, "abc123", rem)
@@ -121,7 +121,7 @@ func TestAlphanumeric(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Alphanumeric()(tt.input)
+			rem, ext, err := chomp.Alphanumeric().Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -133,7 +133,7 @@ func TestAlphanumeric(t *testing.T) {
 func TestAlphanumeric0(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Alphanumeric0()("!Hello123")
+	rem, ext, err := chomp.Alphanumeric0().Run("!Hello123")
 
 	require.NoError(t, err)
 	assert.Equal(t, "!Hello123", rem)
@@ -143,7 +143,7 @@ func TestAlphanumeric0(t *testing.T) {
 func TestSpace(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Space()("   \tHello")
+	rem, ext, err := chomp.Space().Run("   \tHello")
 
 	require.NoError(t, err)
 	assert.Equal(t, "Hello", rem)
@@ -153,7 +153,7 @@ func TestSpace(t *testing.T) {
 func TestSpace0(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Space0()("Hello")
+	rem, ext, err := chomp.Space0().Run("Hello")
 
 	require.NoError(t, err)
 	assert.Equal(t, "Hello", rem)
@@ -163,7 +163,7 @@ func TestSpace0(t *testing.T) {
 func TestMultispace(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Multispace()("  \n\t\rHello")
+	rem, ext, err := chomp.Multispace().Run("  \n\t\rHello")
 
 	require.NoError(t, err)
 	assert.Equal(t, "Hello", rem)
@@ -173,7 +173,7 @@ func TestMultispace(t *testing.T) {
 func TestMultispace0(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Multispace0()("Hello")
+	rem, ext, err := chomp.Multispace0().Run("Hello")
 
 	require.NoError(t, err)
 	assert.Equal(t, "Hello", rem)
@@ -183,7 +183,7 @@ func TestMultispace0(t *testing.T) {
 func TestHexDigit(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.HexDigit()("1a2B3cFf rest")
+	rem, ext, err := chomp.HexDigit().Run("1a2B3cFf rest")
 
 	require.NoError(t, err)
 	assert.Equal(t, " rest", rem)
@@ -193,7 +193,7 @@ func TestHexDigit(t *testing.T) {
 func TestHexDigit0(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.HexDigit0()("xyz")
+	rem, ext, err := chomp.HexDigit0().Run("xyz")
 
 	require.NoError(t, err)
 	assert.Equal(t, "xyz", rem)
@@ -203,7 +203,7 @@ func TestHexDigit0(t *testing.T) {
 func TestOctalDigit(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.OctalDigit()("01onal")
+	rem, ext, err := chomp.OctalDigit().Run("01onal")
 
 	require.NoError(t, err)
 	assert.Equal(t, "onal", rem)
@@ -213,7 +213,7 @@ func TestOctalDigit(t *testing.T) {
 func TestOctalDigit0(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.OctalDigit0()("89")
+	rem, ext, err := chomp.OctalDigit0().Run("89")
 
 	require.NoError(t, err)
 	assert.Equal(t, "89", rem)
@@ -223,7 +223,7 @@ func TestOctalDigit0(t *testing.T) {
 func TestBinaryDigit(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.BinaryDigit()("1010 rest")
+	rem, ext, err := chomp.BinaryDigit().Run("1010 rest")
 
 	require.NoError(t, err)
 	assert.Equal(t, " rest", rem)
@@ -233,7 +233,7 @@ func TestBinaryDigit(t *testing.T) {
 func TestBinaryDigit0(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.BinaryDigit0()("234")
+	rem, ext, err := chomp.BinaryDigit0().Run("234")
 
 	require.NoError(t, err)
 	assert.Equal(t, "234", rem)
@@ -243,7 +243,7 @@ func TestBinaryDigit0(t *testing.T) {
 func TestNewline(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Newline()("\nHello")
+	rem, ext, err := chomp.Newline().Run("\nHello")
 
 	require.NoError(t, err)
 	assert.Equal(t, "Hello", rem)
@@ -253,7 +253,7 @@ func TestNewline(t *testing.T) {
 func TestTab(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Tab()("\tHello")
+	rem, ext, err := chomp.Tab().Run("\tHello")
 
 	require.NoError(t, err)
 	assert.Equal(t, "Hello", rem)
@@ -291,7 +291,7 @@ func TestNotLineEnding(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.NotLineEnding()(tt.input)
+			rem, ext, err := chomp.NotLineEnding().Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -325,7 +325,7 @@ func TestWhile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.While(chomp.IsLetter)(tt.input)
+			rem, ext, err := chomp.While(chomp.IsLetter).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -359,7 +359,7 @@ func TestWhileN(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.WhileN(chomp.IsDigit, 2)(tt.input)
+			rem, ext, err := chomp.WhileN(chomp.IsDigit, 2).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -393,7 +393,7 @@ func TestWhileNM(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.WhileNM(chomp.IsDigit, 1, 8)(tt.input)
+			rem, ext, err := chomp.WhileNM(chomp.IsDigit, 1, 8).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -427,7 +427,7 @@ func TestWhileNot(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.WhileNot(chomp.IsDigit)(tt.input)
+			rem, ext, err := chomp.WhileNot(chomp.IsDigit).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -461,7 +461,7 @@ func TestWhileNotN(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.WhileNotN(chomp.IsLetter, 2)(tt.input)
+			rem, ext, err := chomp.WhileNotN(chomp.IsLetter, 2).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -495,7 +495,7 @@ func TestWhileNotNM(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.WhileNotNM(chomp.IsLetter, 1, 8)(tt.input)
+			rem, ext, err := chomp.WhileNotNM(chomp.IsLetter, 1, 8).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -507,7 +507,7 @@ func TestWhileNotNM(t *testing.T) {
 func TestWhileNMultiByteBoundary(t *testing.T) {
 	t.Parallel()
 
-	_, _, err := chomp.WhileN(chomp.IsLetter, 6)("héllo")
+	_, _, err := chomp.WhileN(chomp.IsLetter, 6).Run("héllo")
 
 	require.Error(t, err)
 
@@ -519,7 +519,7 @@ func TestWhileNMultiByteBoundary(t *testing.T) {
 func TestWhileNMMultiByteBoundary(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.WhileNM(chomp.IsLetter, 1, 5)("héllo")
+	rem, ext, err := chomp.WhileNM(chomp.IsLetter, 1, 5).Run("héllo")
 
 	require.NoError(t, err)
 	assert.Equal(t, "", rem)
@@ -529,7 +529,7 @@ func TestWhileNMMultiByteBoundary(t *testing.T) {
 func TestWhileNotNMultiByteBoundary(t *testing.T) {
 	t.Parallel()
 
-	_, _, err := chomp.WhileNotN(chomp.IsDigit, 6)("héllo")
+	_, _, err := chomp.WhileNotN(chomp.IsDigit, 6).Run("héllo")
 
 	require.Error(t, err)
 
@@ -541,7 +541,7 @@ func TestWhileNotNMultiByteBoundary(t *testing.T) {
 func TestWhileNotNMMultiByteBoundary(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.WhileNotNM(chomp.IsDigit, 1, 5)("héllo")
+	rem, ext, err := chomp.WhileNotNM(chomp.IsDigit, 1, 5).Run("héllo")
 
 	require.NoError(t, err)
 	assert.Equal(t, "", rem)
@@ -560,7 +560,7 @@ func TestWhileNInvalidUTF8DoesNotPanic(t *testing.T) {
 
 	invalid := "\xff\xff\xff\xff\xff"
 
-	rem, ext, err := chomp.WhileN(matchAllPredicate{}, 1)(invalid)
+	rem, ext, err := chomp.WhileN(matchAllPredicate{}, 1).Run(invalid)
 
 	require.NoError(t, err)
 	assert.Equal(t, "", rem)
@@ -572,7 +572,7 @@ func TestWhileNMInvalidUTF8DoesNotPanic(t *testing.T) {
 
 	invalid := "\xff\xff\xff\xff\xff"
 
-	rem, ext, err := chomp.WhileNM(matchAllPredicate{}, 1, 10)(invalid)
+	rem, ext, err := chomp.WhileNM(matchAllPredicate{}, 1, 10).Run(invalid)
 
 	require.NoError(t, err)
 	assert.Equal(t, "", rem)
@@ -584,7 +584,7 @@ func TestWhileNotNInvalidUTF8DoesNotPanic(t *testing.T) {
 
 	invalid := "\xff\xff\xff\xff\xff"
 
-	rem, ext, err := chomp.WhileNotN(chomp.IsDigit, 1)(invalid)
+	rem, ext, err := chomp.WhileNotN(chomp.IsDigit, 1).Run(invalid)
 
 	require.NoError(t, err)
 	assert.Equal(t, "", rem)
@@ -596,7 +596,7 @@ func TestWhileNotNMInvalidUTF8DoesNotPanic(t *testing.T) {
 
 	invalid := "\xff\xff\xff\xff\xff"
 
-	rem, ext, err := chomp.WhileNotNM(chomp.IsDigit, 1, 10)(invalid)
+	rem, ext, err := chomp.WhileNotNM(chomp.IsDigit, 1, 10).Run(invalid)
 
 	require.NoError(t, err)
 	assert.Equal(t, "", rem)
@@ -606,7 +606,7 @@ func TestWhileNotNMInvalidUTF8DoesNotPanic(t *testing.T) {
 func TestAnyDigit(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.AnyDigit()("123")
+	rem, ext, err := chomp.AnyDigit().Run("123")
 
 	require.NoError(t, err)
 	assert.Equal(t, "23", rem)
@@ -616,7 +616,7 @@ func TestAnyDigit(t *testing.T) {
 func TestAnyDigitNoMatch(t *testing.T) {
 	t.Parallel()
 
-	_, _, err := chomp.AnyDigit()("abc")
+	_, _, err := chomp.AnyDigit().Run("abc")
 
 	require.Error(t, err)
 }
@@ -624,7 +624,7 @@ func TestAnyDigitNoMatch(t *testing.T) {
 func TestAnyLetter(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.AnyLetter()("Hello")
+	rem, ext, err := chomp.AnyLetter().Run("Hello")
 
 	require.NoError(t, err)
 	assert.Equal(t, "ello", rem)
@@ -634,7 +634,7 @@ func TestAnyLetter(t *testing.T) {
 func TestAnyLetterUnicode(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.AnyLetter()("こんにちは")
+	rem, ext, err := chomp.AnyLetter().Run("こんにちは")
 
 	require.NoError(t, err)
 	assert.Equal(t, "んにちは", rem)
@@ -644,7 +644,7 @@ func TestAnyLetterUnicode(t *testing.T) {
 func TestAnyAlphanumeric(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.AnyAlphanumeric()("a1!")
+	rem, ext, err := chomp.AnyAlphanumeric().Run("a1!")
 
 	require.NoError(t, err)
 	assert.Equal(t, "1!", rem)
@@ -654,7 +654,7 @@ func TestAnyAlphanumeric(t *testing.T) {
 func TestAnyHexDigit(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.AnyHexDigit()("fF0")
+	rem, ext, err := chomp.AnyHexDigit().Run("fF0")
 
 	require.NoError(t, err)
 	assert.Equal(t, "F0", rem)
@@ -664,7 +664,7 @@ func TestAnyHexDigit(t *testing.T) {
 func TestAnyOctalDigit(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.AnyOctalDigit()("752")
+	rem, ext, err := chomp.AnyOctalDigit().Run("752")
 
 	require.NoError(t, err)
 	assert.Equal(t, "52", rem)
@@ -674,7 +674,7 @@ func TestAnyOctalDigit(t *testing.T) {
 func TestAnyBinaryDigit(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.AnyBinaryDigit()("101")
+	rem, ext, err := chomp.AnyBinaryDigit().Run("101")
 
 	require.NoError(t, err)
 	assert.Equal(t, "01", rem)

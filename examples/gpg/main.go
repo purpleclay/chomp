@@ -60,7 +60,7 @@ func Parse(str string) (GpgPrivateKey, error) {
 	key := GpgPrivateKey{}
 
 	var err error
-	rem := str
+	rem := chomp.NewState(str)
 	if rem, key.SecretKey, err = secretKey(rem); err != nil {
 		return key, err
 	}
@@ -79,7 +79,7 @@ func Parse(str string) (GpgPrivateKey, error) {
 	return key, nil
 }
 
-func secretKey(in string) (string, GpgKeyDetails, error) {
+func secretKey(in chomp.State) (chomp.State, GpgKeyDetails, error) {
 	rem, keyExt, err := key()(in)
 	if err != nil {
 		return rem, GpgKeyDetails{}, err
@@ -108,10 +108,10 @@ func secretKey(in string) (string, GpgKeyDetails, error) {
 }
 
 func key() chomp.Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s chomp.State) (chomp.State, []string, error) {
 		// sec:-:4096:1:AAC7E54CBD73F690:1664450926:::-:::scESC:::+:::23::0:
 		// ssb:-:4096:1:17441D4227A0B812:1664450926::::::e:::+:::23:
-		var rem string
+		var rem chomp.State
 		var err error
 
 		if rem, _, err = chomp.Pair(
@@ -141,9 +141,9 @@ func colon() chomp.Combinator[string] {
 // fingerprint parses the fingerprint line (fpr) and validates it is 40 hex characters.
 // Uses Verify to ensure the fingerprint has the correct format.
 func fingerprint() chomp.Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s chomp.State) (chomp.State, string, error) {
 		// fpr:::::::::28BF65E18407FD2966565284AAC7E54CBD73F690:
-		var rem string
+		var rem chomp.State
 		var err error
 
 		if rem, _, err = chomp.Pair(chomp.Tag("fpr"), chomp.Repeat(chomp.Tag(":"), 9))(s); err != nil {
@@ -169,9 +169,9 @@ func fingerprint() chomp.Combinator[string] {
 // keygrip parses the keygrip line (grp) and validates it is 40 hex characters.
 // Uses Verify to ensure the keygrip has the correct format.
 func keygrip() chomp.Combinator[string] {
-	return func(s string) (string, string, error) {
+	return func(s chomp.State) (chomp.State, string, error) {
 		// grp:::::::::12E86CE47CEB942D2A65B4D02106657BA8D0C92B:
-		var rem string
+		var rem chomp.State
 		var err error
 
 		if rem, _, err = chomp.Pair(chomp.Tag("grp"), chomp.Repeat(chomp.Tag(":"), 9))(s); err != nil {
@@ -195,9 +195,9 @@ func keygrip() chomp.Combinator[string] {
 }
 
 func user() chomp.Combinator[[]string] {
-	return func(s string) (string, []string, error) {
+	return func(s chomp.State) (chomp.State, []string, error) {
 		// uid:-::::1664450926::E6F81442C4BEE48D9ED3E6EE4CAC21231D3C25EB::john.smith <john.smith@testing.com>::::::::::0:
-		var rem string
+		var rem chomp.State
 		var err error
 
 		if rem, _, err = chomp.Pair(

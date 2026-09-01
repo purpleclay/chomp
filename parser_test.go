@@ -33,7 +33,7 @@ func TestCrlf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Crlf()(tt.input)
+			rem, ext, err := chomp.Crlf().Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -56,7 +56,7 @@ func TestCrlfRejectsBareLineEndings(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Crlf()(tt.input)
+			rem, ext, err := chomp.Crlf().Run(tt.input)
 
 			require.Error(t, err)
 			assert.Equal(t, tt.input, rem)
@@ -96,7 +96,7 @@ func TestLineEnding(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.LineEnding()(tt.input)
+			rem, ext, err := chomp.LineEnding().Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -108,7 +108,7 @@ func TestLineEnding(t *testing.T) {
 func TestLineEndingRejectsBareCR(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.LineEnding()("\rHello")
+	rem, ext, err := chomp.LineEnding().Run("\rHello")
 
 	require.Error(t, err)
 	assert.Equal(t, "\rHello", rem)
@@ -148,7 +148,7 @@ It's a great day`,
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Eol()(tt.input)
+			rem, ext, err := chomp.Eol().Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)

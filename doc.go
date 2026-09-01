@@ -2,12 +2,17 @@
 // (a rune at a time) in Go. A more intuitive way to parse text without having
 // to write a single regex.
 //
+// Every combinator threads a [State] - the original input plus a cursor -
+// rather than a bare string, so any point in a parse can recover its
+// absolute byte position with no external bookkeeping. [Combinator.Run] is
+// the string-in/string-out entry point for a top-level parse.
+//
 // # The combinator contract
 //
 // Every combinator in this package honours the same contract:
 //
-//  1. Failure is non-consuming. On error, a combinator returns the original
-//     input string unchanged (and the zero value for ext).
+//  1. Failure is non-consuming. On error, a combinator returns the State it
+//     was given unchanged (and the zero value for ext).
 //  2. Success extraction is a prefix. On success, for Combinator[string],
 //     ext is exactly the consumed prefix: input == ext + rem. Combinators
 //     that transform their output, or intentionally discard part of the

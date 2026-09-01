@@ -26,7 +26,7 @@ func TestMap(t *testing.T) {
 
 			return Coord{X: x, Y: y}
 		},
-	)("1,2")
+	).Run("1,2")
 
 	require.NoError(t, err)
 	assert.Equal(t, 1, out.X)
@@ -36,7 +36,7 @@ func TestMap(t *testing.T) {
 func TestOpt(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Opt(chomp.Tag("the"))("dark knight")
+	rem, ext, err := chomp.Opt(chomp.Tag("the")).Run("dark knight")
 
 	require.NoError(t, err)
 	assert.Equal(t, "dark knight", rem)
@@ -54,7 +54,7 @@ func TestOptNeverTrustsInnerRemOnFailure(t *testing.T) {
 	t.Run("ReproducesRoadmapIssue", func(t *testing.T) {
 		t.Parallel()
 
-		rem, ext, err := chomp.Opt(chomp.Pair(chomp.Tag("a"), chomp.Tag("b")))("ac")
+		rem, ext, err := chomp.Opt(chomp.Pair(chomp.Tag("a"), chomp.Tag("b"))).Run("ac")
 
 		require.NoError(t, err)
 		assert.Equal(t, "ac", rem)
@@ -64,7 +64,7 @@ func TestOptNeverTrustsInnerRemOnFailure(t *testing.T) {
 	t.Run("SepPair", func(t *testing.T) {
 		t.Parallel()
 
-		rem, ext, err := chomp.Opt(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")))("HelloWorld")
+		rem, ext, err := chomp.Opt(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World"))).Run("HelloWorld")
 
 		require.NoError(t, err)
 		assert.Equal(t, "HelloWorld", rem)
@@ -74,7 +74,7 @@ func TestOptNeverTrustsInnerRemOnFailure(t *testing.T) {
 	t.Run("Many", func(t *testing.T) {
 		t.Parallel()
 
-		rem, ext, err := chomp.Opt(chomp.Many(chomp.Tag("a")))("xyz")
+		rem, ext, err := chomp.Opt(chomp.Many(chomp.Tag("a"))).Run("xyz")
 
 		require.NoError(t, err)
 		assert.Equal(t, "xyz", rem)
@@ -88,11 +88,11 @@ func TestOptNeverTrustsInnerRemOnFailure(t *testing.T) {
 		// partially-consumed remainder on failure, to prove Opt itself
 		// never trusts an inner combinator's rem when it errors, rather
 		// than relying on the inner combinator to behave.
-		var nonConforming chomp.Combinator[string] = func(s string) (string, string, error) {
-			return s[1:], "", errors.New("boom")
+		var nonConforming chomp.Combinator[string] = func(s chomp.State) (chomp.State, string, error) {
+			return s.Advance(1), "", errors.New("boom")
 		}
 
-		rem, ext, err := chomp.Opt(nonConforming)("abc")
+		rem, ext, err := chomp.Opt(nonConforming).Run("abc")
 
 		require.NoError(t, err)
 		assert.Equal(t, "abc", rem)
@@ -103,7 +103,7 @@ func TestOptNeverTrustsInnerRemOnFailure(t *testing.T) {
 func TestS(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.S(chomp.Tag("hello"))("hello and good morning")
+	rem, ext, err := chomp.S(chomp.Tag("hello")).Run("hello and good morning")
 
 	require.NoError(t, err)
 	assert.Equal(t, " and good morning", rem)
@@ -116,7 +116,7 @@ func TestI(t *testing.T) {
 
 	rem, ext, err := chomp.I(
 		chomp.Repeat(chomp.All(chomp.Until(" "), chomp.Tag(" ")), 3),
-		2)("hello and good morning")
+		2).Run("hello and good morning")
 
 	require.NoError(t, err)
 	assert.Equal(t, "morning", rem)
@@ -125,7 +125,7 @@ func TestI(t *testing.T) {
 
 func TestPeek(t *testing.T) {
 	t.Parallel()
-	rem, ext, err := chomp.Peek(chomp.Tag("Hello"))("Hello and Good Morning!")
+	rem, ext, err := chomp.Peek(chomp.Tag("Hello")).Run("Hello and Good Morning!")
 
 	require.NoError(t, err)
 	assert.Equal(t, "Hello and Good Morning!", rem)
@@ -136,7 +136,7 @@ func TestPeekUsingSequence(t *testing.T) {
 	t.Parallel()
 	rem, ext, err := chomp.Peek(
 		chomp.Many(chomp.Suffixed(chomp.Until(" "), chomp.Tag(" "))),
-	)("Hello and Good Morning!")
+	).Run("Hello and Good Morning!")
 
 	require.NoError(t, err)
 	assert.Equal(t, "Hello and Good Morning!", rem)
@@ -148,7 +148,7 @@ func TestFlatten(t *testing.T) {
 
 	rem, ext, err := chomp.Flatten(
 		chomp.Many(chomp.Parentheses()),
-	)("(H)(el)(lo) and Good Morning!")
+	).Run("(H)(el)(lo) and Good Morning!")
 
 	require.NoError(t, err)
 	assert.Equal(t, " and Good Morning!", rem)
