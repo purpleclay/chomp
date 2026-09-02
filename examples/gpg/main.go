@@ -67,7 +67,7 @@ func Parse(str string) (GpgPrivateKey, error) {
 	}
 
 	var userExt []string
-	if rem, userExt, err = user()(rem); err != nil {
+	if rem, userExt, err = chomp.Label("user", user())(rem); err != nil {
 		return key, err
 	}
 	key.UserName = userExt[0]
@@ -80,18 +80,21 @@ func Parse(str string) (GpgPrivateKey, error) {
 	return key, nil
 }
 
+// secretKey parses a "sec"/"ssb" block. Each field call below is wrapped
+// with Label, so a failure anywhere inside reports which field it was
+// parsing, e.g. "while parsing fingerprint".
 func secretKey(in chomp.State) (chomp.State, GpgKeyDetails, error) {
-	rem, keyExt, err := key()(in)
+	rem, keyExt, err := chomp.Label("key", key())(in)
 	if err != nil {
 		return rem, GpgKeyDetails{}, err
 	}
 
-	rem, fprExt, err := fingerprint()(rem)
+	rem, fprExt, err := chomp.Label("fingerprint", fingerprint())(rem)
 	if err != nil {
 		return rem, GpgKeyDetails{}, err
 	}
 
-	rem, grpExt, err := keygrip()(rem)
+	rem, grpExt, err := chomp.Label("keygrip", keygrip())(rem)
 	if err != nil {
 		return rem, GpgKeyDetails{}, err
 	}

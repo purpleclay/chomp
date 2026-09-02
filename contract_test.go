@@ -408,6 +408,12 @@ func TestContract_FailureNonConsuming(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Flatten", "xyz", chomp.Flatten(chomp.Many(chomp.Parentheses())).Run)
 	})
+
+	// label.go
+	t.Run("Label", func(t *testing.T) {
+		t.Parallel()
+		assertFailureNonConsuming(t, "Label", "xyz", chomp.Label("greeting", chomp.Tag("Hello")).Run)
+	})
 }
 
 func TestContract_SuccessIsPrefix(t *testing.T) {
@@ -538,5 +544,9 @@ func TestContract_SuccessIsPrefix(t *testing.T) {
 	t.Run("PeekNot", func(t *testing.T) {
 		t.Parallel()
 		assertSuccessIsPrefix(t, "PeekNot", "World!", chomp.PeekNot(chomp.Tag("Hello")).Run)
+	})
+	t.Run("Label", func(t *testing.T) {
+		t.Parallel()
+		assertSuccessIsPrefix(t, "Label", "Hello, World!", chomp.Label("greeting", chomp.Tag("Hello")).Run)
 	})
 }

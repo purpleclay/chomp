@@ -108,6 +108,15 @@ func (e CombinatorParseError) expected() string {
 	return strings.ReplaceAll(e.Type, "_", " ")
 }
 
+// labelSuffix returns " while parsing A > B" when Labels is non-empty
+// (outermost first), otherwise an empty string.
+func (e CombinatorParseError) labelSuffix() string {
+	if len(e.Labels) == 0 {
+		return ""
+	}
+	return " while parsing " + strings.Join(e.Labels, " > ")
+}
+
 // Error returns a single-line, grep-stable string representation of the
 // current error: "chomp: parse error at line %d, column %d (offset %d):
 // expected %s". It never contains a newline. For a human-facing,
@@ -115,14 +124,8 @@ func (e CombinatorParseError) expected() string {
 func (e CombinatorParseError) Error() string {
 	line, col := e.State.Position()
 
-	msg := fmt.Sprintf("chomp: parse error at line %d, column %d (offset %d): expected %s",
-		line, col, e.State.Pos(), e.expected())
-
-	if len(e.Labels) > 0 {
-		msg += " while parsing " + strings.Join(e.Labels, " > ")
-	}
-
-	return msg
+	return fmt.Sprintf("chomp: parse error at line %d, column %d (offset %d): expected %s%s",
+		line, col, e.State.Pos(), e.expected(), e.labelSuffix())
 }
 
 // snippetMaxWidth is the line length, in runes, beyond which [Snippet]
@@ -177,7 +180,7 @@ func (e CombinatorParseError) Snippet() string {
 	var buf strings.Builder
 	fmt.Fprintf(&buf, "%s |\n", blank)
 	fmt.Fprintf(&buf, "%s | %s%s%s\n", gutter, prefix, string(display), suffix)
-	fmt.Fprintf(&buf, "%s | %s^ expected %s", blank, pad.String(), e.expected())
+	fmt.Fprintf(&buf, "%s | %s^ expected %s%s", blank, pad.String(), e.expected(), e.labelSuffix())
 
 	return buf.String()
 }
