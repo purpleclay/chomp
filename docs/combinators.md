@@ -839,3 +839,21 @@ fmt.Println(err.Error() + "\n" + pe.Snippet())
 logger.Error("failed to parse manifest", "err", err)
 // {"level":"ERROR","msg":"failed to parse manifest","err":{"offset":14,"line":1,"column":15,"expected":"digit"}}
 ```
+
+### Label
+
+Attaches a grammar-level name to any failure beneath a combinator, so an error speaks in the grammar's own terms rather than internal combinator names. Nested `Label`s chain outermost-first.
+
+```go
+chomp.Label("manifest", chomp.Label("version", chomp.All(
+    chomp.Until("."),
+    chomp.Tag("."),
+    chomp.Digit(),
+    chomp.Tag("."),
+    chomp.Digit(),
+))).Run("version = 1.4.x")
+fmt.Println(err)
+// chomp: parse error at line 1, column 15 (offset 14): expected digit while parsing manifest > version
+```
+
+`Snippet()` and `LogValue()`'s `context` field render the same chain.
