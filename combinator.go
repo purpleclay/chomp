@@ -43,11 +43,33 @@ func (c Combinator[T]) Run(input string) (string, T, error) { //nolint:ireturn /
 // Finalize prepares an error returned by a raw combinator invocation for use
 // outside a parse. It is the boundary [Combinator.Run] applies errors to
 // before returning them; custom drivers built on raw c(state) invocation
-// should apply it at their own boundary. It is currently the identity
-// function - a reserved seam for future work bounding the memory an escaped
-// error retains.
+// should apply it at their own boundary.
+//
+// For every [CombinatorParseError] reached through err's chain (walking
+// down through [ParserError], [RangedParserError] and [CutError], the only
+// wrapper types this package produces), it captures the failure's position
+// once and clones Snippet's bounded display window into its own backing
+// array, then drops the reference to the original input. An escaped error
+// therefore holds O(1) memory regardless of input size, rather than
+// pinning the entire input for as long as the error lives. Errors outside
+// this closed set are returned unchanged. Applying Finalize more than once
+// is a no-op.
 func Finalize(err error) error {
-	return err
+	switch e := err.(type) {
+	case CombinatorParseError:
+		return e.finalize()
+	case ParserError:
+		e.Err = Finalize(e.Err)
+		return e
+	case RangedParserError:
+		e.Err = Finalize(e.Err)
+		return e
+	case CutError:
+		e.Err = Finalize(e.Err)
+		return e
+	default:
+		return err
+	}
 }
 
 // CombinatorParseError defines an error that is raised when a combinator
@@ -61,7 +83,13 @@ type CombinatorParseError struct {
 	Expected string
 
 	// State at the point of failure, capturing the absolute position
-	// within the original input alongside the unparsed suffix.
+	// within the original input alongside the unparsed suffix. Only
+	// meaningful before the error is finalised (see [Finalize]): a
+	// finalised error - any error returned by [Combinator.Run] - clears
+	// State, since retaining it would keep the entire original input
+	// reachable for as long as the error lives. Use
+	// [CombinatorParseError.Offset] and [CombinatorParseError.Position]
+	// instead, which work correctly either way.
 	State State
 
 	// Labels records the chain of grammar-level names (see the future
@@ -71,6 +99,89 @@ type CombinatorParseError struct {
 
 	// Type of [Combinator] that failed.
 	Type string
+
+	// finalized caches a bounded, self-contained snapshot of the failure
+	// position once Finalize runs, so Error/Snippet/LogValue no longer
+	// need State (and the input it retains) to keep working.
+	finalized *errSnapshot
+}
+
+// errSnapshot is the O(1), input-independent view [CombinatorParseError]
+// renders from: either derived live from State on every call, or computed
+// once and cached by [CombinatorParseError.finalize].
+type errSnapshot struct {
+	offset int
+	line   int
+	col    int
+
+	// prefix/content/suffix are Snippet's line display, already windowed to
+	// snippetMaxWidth; dispCol is the caret column within content (1-based).
+	prefix, content, suffix string
+	dispCol                 int
+}
+
+// snapshot resolves the current, O(1) view of where this error occurred:
+// the cached finalized snapshot if one exists, otherwise computed live
+// from State (cheap - the input is alive anyway during an in-flight parse).
+func (e CombinatorParseError) snapshot() errSnapshot {
+	if e.finalized != nil {
+		return *e.finalized
+	}
+
+	line, col, text := e.State.lineInfo()
+	prefix, content, suffix, dispCol := windowLine(text, col)
+
+	return errSnapshot{
+		offset:  e.State.Pos(),
+		line:    line,
+		col:     col,
+		prefix:  prefix,
+		content: content,
+		suffix:  suffix,
+		dispCol: dispCol,
+	}
+}
+
+// windowLine bounds text to a window around col (1-based) once it exceeds
+// snippetMaxWidth runes, inserting "… "/" …" ellipsis markers at
+// truncation points. Returns the content to display (excluding markers),
+// the markers themselves, and a caret column re-based to account for the
+// full rendered line (markers + content).
+func windowLine(text string, col int) (prefix, content, suffix string, dispCol int) {
+	runes := []rune(text)
+	col0 := col - 1
+	if len(runes) <= snippetMaxWidth {
+		return "", text, "", col
+	}
+
+	start, end := max(0, col0-snippetContext), min(len(runes), col0+snippetContext)
+	if start > 0 {
+		prefix = "… "
+	}
+	if end < len(runes) {
+		suffix = " …"
+	}
+	content = string(runes[start:end])
+	dispCol0 := col0 - start + len([]rune(prefix))
+
+	return prefix, content, suffix, dispCol0 + 1
+}
+
+// finalize returns a copy of e that no longer references the live input:
+// its position and Snippet's bounded display window are captured once and
+// cloned into their own backing array, and State is cleared. Applying
+// finalize more than once is a no-op.
+func (e CombinatorParseError) finalize() CombinatorParseError {
+	if e.finalized != nil {
+		return e
+	}
+
+	snap := e.snapshot()
+	snap.content = strings.Clone(snap.content)
+	e.finalized = &snap
+	e.State = State{}
+
+	return e
 }
 
 // typeFallback maps a Type with no natural literal to quote, and no "is_"
@@ -117,15 +228,30 @@ func (e CombinatorParseError) labelSuffix() string {
 	return " while parsing " + strings.Join(e.Labels, " > ")
 }
 
+// Offset returns the byte offset into the original input where parsing
+// failed. Unlike reading [CombinatorParseError.State] directly, this works
+// correctly whether or not the error has been finalised (see [Finalize]).
+func (e CombinatorParseError) Offset() int {
+	return e.snapshot().offset
+}
+
+// Position returns the 1-based line and rune-aware column where parsing
+// failed. Unlike reading [CombinatorParseError.State] directly, this works
+// correctly whether or not the error has been finalised (see [Finalize]).
+func (e CombinatorParseError) Position() (line, col int) {
+	s := e.snapshot()
+	return s.line, s.col
+}
+
 // Error returns a single-line, grep-stable string representation of the
 // current error: "chomp: parse error at line %d, column %d (offset %d):
 // expected %s". It never contains a newline. For a human-facing,
 // caret-annotated view of the failure, see [CombinatorParseError.Snippet].
 func (e CombinatorParseError) Error() string {
-	line, col := e.State.Position()
+	s := e.snapshot()
 
 	return fmt.Sprintf("chomp: parse error at line %d, column %d (offset %d): expected %s%s",
-		line, col, e.State.Pos(), e.expected(), e.labelSuffix())
+		s.line, s.col, s.offset, e.expected(), e.labelSuffix())
 }
 
 // snippetMaxWidth is the line length, in runes, beyond which [Snippet]
@@ -147,26 +273,11 @@ const snippetContext = 40
 // rune-count based: double-width glyphs (e.g. CJK) may visually drift the
 // caret, since that is inherently terminal-display-width dependent.
 func (e CombinatorParseError) Snippet() string {
-	line, col, text := e.State.lineInfo()
-	runes := []rune(text)
-	col0 := col - 1 // 0-based rune index into runes
-
-	display, displayCol0 := runes, col0
-	var prefix, suffix string
-	if len(runes) > snippetMaxWidth {
-		start, end := max(0, col0-snippetContext), min(len(runes), col0+snippetContext)
-		if start > 0 {
-			prefix = "… "
-		}
-		if end < len(runes) {
-			suffix = " …"
-		}
-		display = runes[start:end]
-		displayCol0 = col0 - start + len([]rune(prefix))
-	}
+	s := e.snapshot()
+	content := []rune(s.content)
 
 	var pad strings.Builder
-	for _, r := range display[:min(displayCol0, len(display))] {
+	for _, r := range content[:min(s.dispCol-1, len(content))] {
 		if r == '\t' {
 			pad.WriteRune('\t')
 		} else {
@@ -174,12 +285,12 @@ func (e CombinatorParseError) Snippet() string {
 		}
 	}
 
-	gutter := strconv.Itoa(line)
+	gutter := strconv.Itoa(s.line)
 	blank := strings.Repeat(" ", len(gutter))
 
 	var buf strings.Builder
 	fmt.Fprintf(&buf, "%s |\n", blank)
-	fmt.Fprintf(&buf, "%s | %s%s%s\n", gutter, prefix, string(display), suffix)
+	fmt.Fprintf(&buf, "%s | %s%s%s\n", gutter, s.prefix, s.content, s.suffix)
 	fmt.Fprintf(&buf, "%s | %s^ expected %s%s", blank, pad.String(), e.expected(), e.labelSuffix())
 
 	return buf.String()
@@ -189,12 +300,12 @@ func (e CombinatorParseError) Snippet() string {
 // expected (and context, once Labels is non-empty) as structured fields
 // instead of a string to be parsed.
 func (e CombinatorParseError) LogValue() slog.Value {
-	line, col := e.State.Position()
+	s := e.snapshot()
 
 	attrs := []slog.Attr{
-		slog.Int("offset", e.State.Pos()),
-		slog.Int("line", line),
-		slog.Int("column", col),
+		slog.Int("offset", s.offset),
+		slog.Int("line", s.line),
+		slog.Int("column", s.col),
 		slog.String("expected", e.expected()),
 	}
 

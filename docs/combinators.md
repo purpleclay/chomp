@@ -840,6 +840,8 @@ logger.Error("failed to parse manifest", "err", err)
 // {"level":"ERROR","msg":"failed to parse manifest","err":{"offset":14,"line":1,"column":15,"expected":"digit"}}
 ```
 
+`pe.Offset()` and `pe.Position()` give the byte offset and 1-based, rune-aware line/column directly, and work whether or not the error has escaped `Run` - reading `pe.State` directly only works before that point. An error returned by `Run` (or passed through `chomp.Finalize`) no longer references the original input at all, so holding onto it doesn't pin the whole input in memory, however large.
+
 ### Label
 
 Attaches a grammar-level name to any failure beneath a combinator, so an error speaks in the grammar's own terms rather than internal combinator names. Nested `Label`s chain outermost-first.
