@@ -139,8 +139,8 @@ func TestCombinatorParseError_Snippet(t *testing.T) {
 		var pe chomp.CombinatorParseError
 		require.True(t, errors.As(err, &pe))
 
-		assert.Equal(t, 18, pe.State.Pos(), "offset must be a byte offset")
-		line, col := pe.State.Position()
+		assert.Equal(t, 18, pe.Offset(), "offset must be a byte offset")
+		line, col := pe.Position()
 		assert.Equal(t, 1, line)
 		assert.Equal(t, 7, col, "column must be rune-counted, not byte-counted")
 
@@ -159,8 +159,8 @@ func TestCombinatorParseError_Snippet(t *testing.T) {
 		var pe chomp.CombinatorParseError
 		require.True(t, errors.As(err, &pe))
 
-		assert.Equal(t, 12, pe.State.Pos())
-		line, col := pe.State.Position()
+		assert.Equal(t, 12, pe.Offset())
+		line, col := pe.Position()
 		assert.Equal(t, 3, line, "two bare-CR line breaks precede the failure")
 		assert.Equal(t, 1, col)
 

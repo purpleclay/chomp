@@ -243,8 +243,7 @@ func First[T Result](c ...Combinator[T]) Combinator[T] {
 			}
 
 			// Check for CutError - stop backtracking immediately
-			var cutErr CutError
-			if errors.As(err, &cutErr) {
+			if isCut(err) {
 				var out T
 				return s, out, err
 			}
@@ -253,6 +252,21 @@ func First[T Result](c ...Combinator[T]) Combinator[T] {
 		var out T
 		return s, out, CombinatorParseError{State: s, Type: "first"}
 	}
+}
+
+// isCut reports whether err is, or wraps, a [CutError]. Written as a
+// manual Unwrap loop rather than errors.As: errors.As's target any
+// parameter defeats escape analysis, forcing a heap allocation on every
+// call regardless of whether a CutError is found - costly on First's hot
+// backtracking path, where this runs once per discarded alternative.
+func isCut(err error) bool {
+	for err != nil {
+		if _, ok := err.(CutError); ok {
+			return true
+		}
+		err = errors.Unwrap(err)
+	}
+	return false
 }
 
 // All will match the input text against a series of [Combinator]s.
