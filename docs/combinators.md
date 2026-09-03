@@ -155,22 +155,25 @@ chomp.TakeUntil1(",").Run("Hello, World!")
 
 ### Pair
 
-Matches two combinators in sequence. Both must match.
+Matches two combinators in sequence. Both must match. Returns a `Tuple2`
+holding both results, whatever their types — the two combinators need not
+return the same type.
 
 ```go
 chomp.Pair(chomp.Tag("Hello,"), chomp.Tag(" World")).Run("Hello, World!")
 // rem: "!"
-// ext: ["Hello,", " World"]
+// ext: Tuple2[string, string]{First: "Hello,", Second: " World"}
 ```
 
 ### SepPair
 
 Matches two combinators separated by a third (separator is discarded).
+Returns a `Tuple2` holding both results.
 
 ```go
 chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")).Run("Hello, World!")
 // rem: "!"
-// ext: ["Hello", "World"]
+// ext: Tuple2[string, string]{First: "Hello", Second: "World"}
 ```
 
 ### All
@@ -450,12 +453,15 @@ chomp.Recognize(chomp.SepPair(chomp.Alpha(), chomp.Tag(", "), chomp.Alpha())).Ru
 
 ### Consumed
 
-Provides both the raw consumed text and the parsed output. The first element is the raw consumed text, followed by the parsed result.
+Provides both the raw consumed text and the parsed output as a `Tuple2`: `First` is the raw consumed text, `Second` is the parsed result.
 
 ```go
 chomp.Consumed(chomp.SepPair(chomp.Alpha(), chomp.Tag(", "), chomp.Alpha())).Run("Hello, World!")
 // rem: "!"
-// ext: ["Hello, World", "Hello", "World"]
+// ext: Tuple2[string, Tuple2[string, string]]{
+//     First:  "Hello, World",
+//     Second: Tuple2[string, string]{First: "Hello", Second: "World"},
+// }
 ```
 
 ### Eof
@@ -469,7 +475,7 @@ chomp.Eof().Run("")
 
 chomp.Pair(chomp.Tag("Hello"), chomp.Eof()).Run("Hello")
 // rem: ""
-// ext: ["Hello", ""]
+// ext: Tuple2[string, string]{First: "Hello", Second: ""}
 ```
 
 ### AllConsuming
@@ -496,7 +502,7 @@ chomp.Rest().Run("Hello, World!")
 
 chomp.Pair(chomp.Tag("Hello"), chomp.Rest()).Run("Hello, World!")
 // rem: ""
-// ext: ["Hello", ", World!"]
+// ext: Tuple2[string, string]{First: "Hello", Second: ", World!"}
 ```
 
 ### Value
@@ -685,9 +691,9 @@ chomp.S(chomp.Until(",")).Run("Hello, World!")
 Extracts a single string from a slice result at index `i`.
 
 ```go
-chomp.I(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 1).Run("Hello, World!")
+chomp.I(chomp.All(chomp.Tag("Hello"), chomp.Tag(", World")), 1).Run("Hello, World!")
 // rem: "!"
-// ext: "World"
+// ext: ", World"
 ```
 
 ### Peek

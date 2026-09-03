@@ -160,8 +160,8 @@ func TestLabel_NonCombinatorParseErrorUnaffected(t *testing.T) {
 	t.Parallel()
 
 	labelled := chomp.Label("index",
-		chomp.I(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 5))
-	unlabelled := chomp.I(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 5)
+		chomp.I(chomp.All(chomp.Tag("Hello"), chomp.Tag(", World!")), 5))
+	unlabelled := chomp.I(chomp.All(chomp.Tag("Hello"), chomp.Tag(", World!")), 5)
 
 	_, _, labelledErr := labelled.Run("Hello, World!")
 	_, _, unlabelledErr := unlabelled.Run("Hello, World!")

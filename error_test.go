@@ -313,7 +313,7 @@ func TestIOutOfBoundsError(t *testing.T) {
 	t.Parallel()
 
 	_, _, err := chomp.I(
-		chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 5).
+		chomp.All(chomp.Tag("Hello"), chomp.Tag(", World!")), 5).
 		Run("Hello, World!")
 	require.Error(t, err)
 

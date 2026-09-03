@@ -16,7 +16,7 @@ import "strings"
 //
 //	chomp.Label("version", chomp.Digit()).Run("abc")
 //	// (..., "", chomp.CombinatorParseError{..., Labels: []string{"version"}})
-func Label[T Result](name string, c Combinator[T]) Combinator[T] {
+func Label[T any](name string, c Combinator[T]) Combinator[T] {
 	name = labelReplacer.Replace(name)
 
 	return func(s State) (State, T, error) {

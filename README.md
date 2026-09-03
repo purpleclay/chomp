@@ -59,7 +59,7 @@ Combinators can be composed together to build sophisticated parsers:
 
 ```go
 // Parse a key-value pair like "name=alice"
-func KeyValue() chomp.Combinator[[]string] {
+func KeyValue() chomp.Combinator[chomp.Tuple2[string, string]] {
     return chomp.SepPair(
         chomp.While(chomp.IsLetter),  // key: letters
         chomp.Tag("="),               // separator (discarded)
@@ -68,7 +68,7 @@ func KeyValue() chomp.Combinator[[]string] {
 }
 
 rem, kv, _ := KeyValue().Run("name=alice&age=30")
-// kv: ["name", "alice"]
+// kv: {First: "name", Second: "alice"}
 // rem: "&age=30"
 ```
 
