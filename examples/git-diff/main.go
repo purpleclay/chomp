@@ -125,27 +125,26 @@ func diffPath() chomp.Combinator[string] {
 
 func diffChunks(in chomp.State) ([]DiffChunk, error) {
 	_, chunks, err := chomp.Map(chomp.Many(diffChunk()),
-		func(in []string) []DiffChunk {
+		func(in [][]string) []DiffChunk {
 			var diffChunks []DiffChunk
 
-			for i := range len(in) / 6 {
+			for _, fields := range in {
 				// 0: removed line
 				// 1: removed count
 				// 2: added line
 				// 3: added count
 				// 4: removed lines
 				// 5: added lines
-				idx := i * 6
 				chunk := DiffChunk{
 					Removed: DiffChange{
-						LineNo: mustInt(in[idx]),
-						Count:  mustInt(in[idx+1]),
-						Change: in[idx+4],
+						LineNo: mustInt(fields[0]),
+						Count:  mustInt(fields[1]),
+						Change: fields[4],
 					},
 					Added: DiffChange{
-						LineNo: mustInt(in[idx+2]),
-						Count:  mustInt(in[idx+3]),
-						Change: in[idx+5],
+						LineNo: mustInt(fields[2]),
+						Count:  mustInt(fields[3]),
+						Change: fields[5],
 					},
 				}
 
@@ -200,7 +199,11 @@ func diffChunk() chomp.Combinator[[]string] {
 			return rem, nil, err
 		}
 
-		return rem, append(changes, removed, added), nil
+		ext := append([]string{}, changes.First...)
+		ext = append(ext, changes.Second...)
+		ext = append(ext, removed, added)
+
+		return rem, ext, nil
 	}
 }
 

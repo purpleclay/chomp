@@ -5,27 +5,13 @@ import (
 	"strings"
 )
 
-// MappedCombinator is a function capable of converting the output from a [Combinator]
-// into any given type. Upon success, it will return the unparsed [State], along with the
-// mapped value. All combinators are strict and must parse its input. Any failure to
-// so should raise a [CombinatorParseError]. It is designed for exclusive use by the
-// [Map] function
-type MappedCombinator[S any, T Result] func(State) (State, S, error)
-
-// Run applies c against input, the sole string-in/string-out entry point.
-// Unlike raw invocation c(state), any returned error is passed through
-// [Finalize] first.
-func (c MappedCombinator[S, T]) Run(input string) (string, S, error) { //nolint:ireturn // S is caller-supplied and not an open interface.
-	return run[S](c, input)
-}
-
 // Map the result of a [Combinator] to any other type
 //
 //	chomp.Map(
 //		chomp.While(chomp.IsDigit),
 //		func (in string) int { return len(in) }).Run("123456")
 //	// ("", 6, nil)
-func Map[S any, T Result](c Combinator[T], mapper func(in T) S) MappedCombinator[S, T] {
+func Map[S, T any](c Combinator[T], mapper func(in T) S) Combinator[S] {
 	return func(s State) (State, S, error) {
 		var mapped S
 
@@ -46,7 +32,7 @@ func Map[S any, T Result](c Combinator[T], mapper func(in T) S) MappedCombinator
 //
 //	chomp.Opt(chomp.Tag("Hey")).Run("Hello, World!")
 //	// ("Hello, World!", "", nil)
-func Opt[T Result](c Combinator[T]) Combinator[T] {
+func Opt[T any](c Combinator[T]) Combinator[T] {
 	return func(s State) (State, T, error) {
 		rem, out, err := c(s)
 		if err != nil {
@@ -112,7 +98,7 @@ func I(c Combinator[[]string], i int) Combinator[string] {
 //		chomp.Many(chomp.Suffixed(chomp.Until(" "), chomp.Tag(" "))),
 //	).Run("Hello and Good Morning!")
 //	// ("Hello and Good Morning!", []string{"Hello", "and", "Good"}, nil)
-func Peek[T Result](c Combinator[T]) Combinator[T] {
+func Peek[T any](c Combinator[T]) Combinator[T] {
 	return func(s State) (State, T, error) {
 		_, ext, err := c(s)
 		return s, ext, err

@@ -66,7 +66,7 @@ func TestFinalizeIsIdempotent(t *testing.T) {
 // assertSnippetStableAcrossFinalize proves Snippet renders identically
 // whether read from a raw, unfinalised error (c invoked directly against a
 // State) or from the finalised error Run returns for the same failure.
-func assertSnippetStableAcrossFinalize[T chomp.Result](t *testing.T, input string, c chomp.Combinator[T]) {
+func assertSnippetStableAcrossFinalize[T any](t *testing.T, input string, c chomp.Combinator[T]) {
 	t.Helper()
 
 	_, _, rawErr := c(chomp.NewState(input))

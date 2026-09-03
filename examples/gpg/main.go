@@ -66,12 +66,12 @@ func Parse(str string) (GpgPrivateKey, error) {
 		return key, err
 	}
 
-	var userExt []string
+	var userExt chomp.Tuple2[string, string]
 	if rem, userExt, err = chomp.Label("user", user())(rem); err != nil {
 		return key, err
 	}
-	key.UserName = userExt[0]
-	key.UserEmail = userExt[1]
+	key.UserName = userExt.First
+	key.UserEmail = userExt.Second
 
 	if rem, key.SecretSubKey, err = secretKey(rem); err != nil {
 		return key, err
@@ -198,28 +198,29 @@ func keygrip() chomp.Combinator[string] {
 	}
 }
 
-func user() chomp.Combinator[[]string] {
-	return func(s chomp.State) (chomp.State, []string, error) {
+func user() chomp.Combinator[chomp.Tuple2[string, string]] {
+	return func(s chomp.State) (chomp.State, chomp.Tuple2[string, string], error) {
 		// uid:-::::1664450926::E6F81442C4BEE48D9ED3E6EE4CAC21231D3C25EB::john.smith <john.smith@testing.com>::::::::::0:
 		var rem chomp.State
 		var err error
+		var def chomp.Tuple2[string, string]
 
 		if rem, _, err = chomp.Pair(
 			chomp.Tag("uid"),
 			chomp.Repeat(colon(), 9))(s); err != nil {
-			return rem, nil, err
+			return rem, def, err
 		}
 
-		var ext []string
+		var ext chomp.Tuple2[string, string]
 		if rem, ext, err = chomp.SepPair(
 			chomp.Until(" "),
 			chomp.Tag(" "),
 			chomp.BracketAngled())(rem); err != nil {
-			return rem, nil, err
+			return rem, def, err
 		}
 
 		if rem, _, err = chomp.Eol()(rem); err != nil {
-			return rem, nil, err
+			return rem, def, err
 		}
 		return rem, ext, nil
 	}

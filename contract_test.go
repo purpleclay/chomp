@@ -393,12 +393,12 @@ func TestContract_FailureNonConsuming(t *testing.T) {
 	t.Run("I", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "I", "xyz",
-			chomp.I(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 1).Run)
+			chomp.I(chomp.All(chomp.Tag("Hello"), chomp.Tag(", World")), 1).Run)
 	})
 	t.Run("I_IndexOutOfBounds", func(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "I", "Hello, World!",
-			chomp.I(chomp.SepPair(chomp.Tag("Hello"), chomp.Tag(", "), chomp.Tag("World")), 5).Run)
+			chomp.I(chomp.All(chomp.Tag("Hello"), chomp.Tag(", World!")), 5).Run)
 	})
 	t.Run("Peek", func(t *testing.T) {
 		t.Parallel()

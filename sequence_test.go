@@ -34,9 +34,8 @@ func TestPair(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "!", rem)
-	require.Len(t, ext, 2)
-	assert.Equal(t, "Hello,", ext[0])
-	assert.Equal(t, " World", ext[1])
+	assert.Equal(t, "Hello,", ext.First)
+	assert.Equal(t, " World", ext.Second)
 }
 
 func TestSepPair(t *testing.T) {
@@ -46,9 +45,8 @@ func TestSepPair(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "!", rem)
-	require.Len(t, ext, 2)
-	assert.Equal(t, "Hello", ext[0])
-	assert.Equal(t, "World", ext[1])
+	assert.Equal(t, "Hello", ext.First)
+	assert.Equal(t, "World", ext.Second)
 }
 
 func TestRepeat(t *testing.T) {
@@ -72,9 +70,9 @@ func TestRepeatRange(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Empty(t, rem)
-	require.Len(t, ext, 4)
-	assert.Equal(t, "Batman", ext[0])
-	assert.Equal(t, "Joker", ext[2])
+	require.Len(t, ext, 2)
+	assert.Equal(t, "Batman", ext[0].First)
+	assert.Equal(t, "Joker", ext[1].First)
 }
 
 func TestRepeatRangeDoesNotCorruptRemainderOnFailure(t *testing.T) {
@@ -84,9 +82,9 @@ func TestRepeatRangeDoesNotCorruptRemainderOnFailure(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "ac", rem)
-	require.Len(t, ext, 2)
-	assert.Equal(t, "a", ext[0])
-	assert.Equal(t, "b", ext[1])
+	require.Len(t, ext, 1)
+	assert.Equal(t, "a", ext[0].First)
+	assert.Equal(t, "b", ext[0].Second)
 }
 
 // TestRepeatRangeSelfDefendsAgainstNonConformingInner proves RepeatRange
@@ -561,21 +559,27 @@ func TestConsumed(t *testing.T) {
 		input string
 		sep   string
 		rem   string
-		ext   []string
+		ext   chomp.Tuple2[string, chomp.Tuple2[string, string]]
 	}{
 		{
 			name:  "Ascii",
 			input: "Hello, World!",
 			sep:   ", ",
 			rem:   "!",
-			ext:   []string{"Hello, World", "Hello", "World"},
+			ext: chomp.Tuple2[string, chomp.Tuple2[string, string]]{
+				First:  "Hello, World",
+				Second: chomp.Tuple2[string, string]{First: "Hello", Second: "World"},
+			},
 		},
 		{
 			name:  "Unicode",
 			input: "こんにちは、世界！",
 			sep:   "、",
 			rem:   "！",
-			ext:   []string{"こんにちは、世界", "こんにちは", "世界"},
+			ext: chomp.Tuple2[string, chomp.Tuple2[string, string]]{
+				First:  "こんにちは、世界",
+				Second: chomp.Tuple2[string, string]{First: "こんにちは", Second: "世界"},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -608,9 +612,8 @@ func TestEofAfterParsing(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "", rem)
-	require.Len(t, ext, 2)
-	assert.Equal(t, "Hello", ext[0])
-	assert.Equal(t, "", ext[1])
+	assert.Equal(t, "Hello", ext.First)
+	assert.Equal(t, "", ext.Second)
 }
 
 func TestAllConsuming(t *testing.T) {

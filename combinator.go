@@ -7,11 +7,6 @@ import (
 	"strings"
 )
 
-// Result is the expected output from a [Combinator].
-type Result interface {
-	string | []string
-}
-
 // Combinator is a higher-order function capable of parsing text under a defined
 // condition. Combinators can be combined to form more complex parsers. Upon success,
 // a combinator will return both the unparsed and parsed [State]. All combinators are
@@ -21,10 +16,17 @@ type Result interface {
 // combinators (and custom drivers); its errors are unfinalised and may still
 // reference the live input. Use [Combinator.Run] as the string-in/string-out entry
 // point, which finalises any error via [Finalize] before returning it.
-type Combinator[T Result] func(State) (State, T, error)
+type Combinator[T any] func(State) (State, T, error)
 
-// run is shared by [Combinator.Run] and [MappedCombinator.Run].
-func run[T any](c func(State) (State, T, error), input string) (string, T, error) { //nolint:ireturn // T is caller-constrained (Result or any wrapped by MappedCombinator), not an open interface.
+// Tuple2 holds the results of two combinators matched by [Pair], [SepPair],
+// or [Consumed].
+type Tuple2[A, B any] struct {
+	First  A
+	Second B
+}
+
+// run is shared by [Combinator.Run].
+func run[T any](c func(State) (State, T, error), input string) (string, T, error) { //nolint:ireturn // T is caller-supplied, not an open interface.
 	rem, ext, err := c(NewState(input))
 	if err != nil {
 		return rem.Rest(), ext, Finalize(err)
@@ -36,7 +38,7 @@ func run[T any](c func(State) (State, T, error), input string) (string, T, error
 // Run applies c against input, the sole string-in/string-out entry point.
 // Unlike raw invocation c(state), any returned error is passed through
 // [Finalize] first.
-func (c Combinator[T]) Run(input string) (string, T, error) { //nolint:ireturn // T is closed over Result (string | []string), not an open interface.
+func (c Combinator[T]) Run(input string) (string, T, error) { //nolint:ireturn // T is caller-supplied, not an open interface.
 	return run[T](c, input)
 }
 

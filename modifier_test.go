@@ -20,9 +20,9 @@ func TestMap(t *testing.T) {
 
 	_, out, err := chomp.Map(
 		chomp.SepPair(chomp.While(chomp.IsDigit), chomp.Tag(","), chomp.While(chomp.IsDigit)),
-		func(in []string) Coord {
-			x, _ := strconv.Atoi(in[0])
-			y, _ := strconv.Atoi(in[1])
+		func(in chomp.Tuple2[string, string]) Coord {
+			x, _ := strconv.Atoi(in.First)
+			y, _ := strconv.Atoi(in.Second)
 
 			return Coord{X: x, Y: y}
 		},
@@ -43,11 +43,6 @@ func TestOpt(t *testing.T) {
 	assert.Equal(t, "", ext)
 }
 
-// TestOptNeverTrustsInnerRemOnFailure asserts that Opt never advances the
-// input when its inner combinator fails, even when that combinator itself
-// partially consumes before failing. This must hold both for combinators
-// that already conform to the contract, and defensively for one that
-// deliberately doesn't.
 func TestOptNeverTrustsInnerRemOnFailure(t *testing.T) {
 	t.Parallel()
 
@@ -58,7 +53,7 @@ func TestOptNeverTrustsInnerRemOnFailure(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, "ac", rem)
-		assert.Nil(t, ext)
+		assert.Equal(t, chomp.Tuple2[string, string]{}, ext)
 	})
 
 	t.Run("SepPair", func(t *testing.T) {
@@ -68,7 +63,7 @@ func TestOptNeverTrustsInnerRemOnFailure(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, "HelloWorld", rem)
-		assert.Nil(t, ext)
+		assert.Equal(t, chomp.Tuple2[string, string]{}, ext)
 	})
 
 	t.Run("Many", func(t *testing.T) {
@@ -115,8 +110,8 @@ func TestI(t *testing.T) {
 	t.Parallel()
 
 	rem, ext, err := chomp.I(
-		chomp.Repeat(chomp.All(chomp.Until(" "), chomp.Tag(" ")), 3),
-		2).Run("hello and good morning")
+		chomp.Repeat(chomp.Suffixed(chomp.Until(" "), chomp.Tag(" ")), 3),
+		1).Run("hello and good morning")
 
 	require.NoError(t, err)
 	assert.Equal(t, "morning", rem)
