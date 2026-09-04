@@ -2,6 +2,7 @@ package chomp
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 )
 
@@ -64,8 +65,11 @@ func SepPair[A, U, B any](c1 Combinator[A], sep Combinator[U], c2 Combinator[B])
 //
 //	chomp.Repeat(chomp.Parentheses(), 2).Run("(Hello)(World)(!)")
 //	// ("(!)", []string{"Hello", "World"}, nil)
-func Repeat[T any](c Combinator[T], n uint) Combinator[[]T] {
+func Repeat[T any](c Combinator[T], n int) Combinator[[]T] {
 	return func(s State) (State, []T, error) {
+		if n < 0 {
+			return s, nil, ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), Type: "repeat"}
+		}
 		var ext []T
 
 		rem := s
@@ -92,8 +96,11 @@ func Repeat[T any](c Combinator[T], n uint) Combinator[[]T] {
 //
 //	chomp.RepeatRange(chomp.OneOf("Hleo"), 1, 8).Run("Hello, World!")
 //	// (", World!", []string{"H", "e", "l", "l", "o"}, nil)
-func RepeatRange[T any](c Combinator[T], n, m uint) Combinator[[]T] {
+func RepeatRange[T any](c Combinator[T], n, m int) Combinator[[]T] {
 	return func(s State) (State, []T, error) {
+		if n < 0 || m < 0 {
+			return s, nil, ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got n=%d, m=%d", n, m), Type: "repeat_range"}
+		}
 		var ext []T
 
 		if n > m {
@@ -298,11 +305,14 @@ func Many[T any](c Combinator[T]) Combinator[[]T] {
 //
 //	chomp.ManyN(chomp.OneOf("W"), 0).Run("Hello, World!")
 //	// ("Hello, World!", nil, nil)
-func ManyN[T any](c Combinator[T], n uint) Combinator[[]T] {
+func ManyN[T any](c Combinator[T], n int) Combinator[[]T] {
 	return func(s State) (State, []T, error) {
+		if n < 0 {
+			return s, nil, ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), Type: "many_n"}
+		}
 		var ext []T
 		var err error
-		var count uint
+		var count int
 
 		rem := s
 		for {
@@ -334,15 +344,15 @@ func ManyN[T any](c Combinator[T], n uint) Combinator[[]T] {
 	}
 }
 
-// Prefixed will scan the input text for a defined prefix and discard it
+// Preceded will scan the input text for a defined prefix and discard it
 // before matching the remaining text against the [Combinator]. Both
 // combinators must match.
 //
-//	chomp.Prefixed(
-//		chomp.Tag("Hello"),
-//		chomp.Tag(`"`)).Run(`"Hello, World!"`)
+//	chomp.Preceded(
+//		chomp.Tag(`"`),
+//		chomp.Tag("Hello")).Run(`"Hello, World!"`)
 //	// (`, World!"`, "Hello", nil)
-func Prefixed(c, pre Combinator[string]) Combinator[string] {
+func Preceded(pre, c Combinator[string]) Combinator[string] {
 	return func(s State) (State, string, error) {
 		rem, _, err := pre(s)
 		if err != nil {
@@ -358,14 +368,14 @@ func Prefixed(c, pre Combinator[string]) Combinator[string] {
 	}
 }
 
-// Suffixed will scan the input text against the [Combinator] before matching a
-// suffix and discarding it. Both combinators must match.
+// Terminated will scan the input text against the [Combinator] before
+// matching a suffix and discarding it. Both combinators must match.
 //
-//	chomp.Suffixed(
+//	chomp.Terminated(
 //		chomp.Tag("Hello"),
 //		chomp.Tag(", ")).Run("Hello, World!")
 //	// ("World!", "Hello", nil)
-func Suffixed(c, suf Combinator[string]) Combinator[string] {
+func Terminated(c, suf Combinator[string]) Combinator[string] {
 	return func(s State) (State, string, error) {
 		rem, ext, err := c(s)
 		if err != nil {
@@ -655,9 +665,9 @@ func FoldMany0[S, T any](c Combinator[T], init S, reducer func(S, T) S) Combinat
 //
 //	chomp.ManyCount(chomp.AnyLetter()).Run("abc123")
 //	// ("123", 3, nil)
-func ManyCount[T any](c Combinator[T]) Combinator[uint] {
-	return func(s State) (State, uint, error) {
-		var count uint
+func ManyCount[T any](c Combinator[T]) Combinator[int] {
+	return func(s State) (State, int, error) {
+		var count int
 		var err error
 
 		rem := s
@@ -695,9 +705,9 @@ func ManyCount[T any](c Combinator[T]) Combinator[uint] {
 //
 //	chomp.ManyCount0(chomp.AnyLetter()).Run("123")
 //	// ("123", 0, nil)
-func ManyCount0[T any](c Combinator[T]) Combinator[uint] {
-	return func(s State) (State, uint, error) {
-		var count uint
+func ManyCount0[T any](c Combinator[T]) Combinator[int] {
+	return func(s State) (State, int, error) {
+		var count int
 
 		rem := s
 		for {
@@ -721,14 +731,14 @@ func ManyCount0[T any](c Combinator[T]) Combinator[uint] {
 // then apply the element combinator that exact number of times.
 //
 //	chomp.LengthCount(
-//	    chomp.Map(chomp.AnyDigit(), func(s string) uint {
-//	        n, _ := strconv.ParseUint(s, 10, 64)
-//	        return uint(n)
+//	    chomp.Map(chomp.AnyDigit(), func(s string) int {
+//	        n, _ := strconv.Atoi(s)
+//	        return n
 //	    }),
 //	    chomp.AnyLetter(),
 //	).Run("3abc")
 //	// ("", []string{"a", "b", "c"}, nil)
-func LengthCount[T any](length Combinator[uint], c Combinator[T]) Combinator[[]T] {
+func LengthCount[T any](length Combinator[int], c Combinator[T]) Combinator[[]T] {
 	return func(s State) (State, []T, error) {
 		rem, count, err := length(s)
 		if err != nil {
@@ -742,15 +752,6 @@ func LengthCount[T any](length Combinator[uint], c Combinator[T]) Combinator[[]T
 
 		return rem, ext, nil
 	}
-}
-
-// Fill will scan the input text and match the [Combinator] exactly n times,
-// populating the result slice. All n matches must succeed.
-//
-//	chomp.Fill(chomp.AnyLetter(), 3).Run("abcdef")
-//	// ("def", []string{"a", "b", "c"}, nil)
-func Fill[T any](c Combinator[T], n uint) Combinator[[]T] {
-	return Repeat(c, n)
 }
 
 // Verify validates the parsed result against a predicate function without

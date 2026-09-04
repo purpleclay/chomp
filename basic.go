@@ -137,13 +137,13 @@ func foldEqual(a, b rune) bool {
 // becomes more efficient than linear scanning
 const charSetThreshold = 8
 
-// Any must match at least one character from the provided sequence at the
+// IsA must match at least one character from the provided sequence at the
 // beginning of the input text. Parsing stops upon the first unmatched character.
 // An empty sequence can never satisfy "at least one", so this always fails.
 //
-//	chomp.Any("eH").Run("Hello, World!")
+//	chomp.IsA("eH").Run("Hello, World!")
 //	// ("llo, World!", "He", nil)
-func Any(str string) Combinator[string] {
+func IsA(str string) Combinator[string] {
 	runeCount := utf8.RuneCountInString(str)
 
 	if runeCount >= charSetThreshold {
@@ -163,7 +163,7 @@ func Any(str string) Combinator[string] {
 			}
 
 			if pos == 0 {
-				return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character in %q", str), State: s, Type: "any"}
+				return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character in %q", str), State: s, Type: "is_a"}
 			}
 
 			return s.Advance(pos), rest[:pos], nil
@@ -186,21 +186,21 @@ func Any(str string) Combinator[string] {
 		}
 
 		if pos == 0 {
-			return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character in %q", str), State: s, Type: "any"}
+			return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character in %q", str), State: s, Type: "is_a"}
 		}
 
 		return s.Advance(pos), rest[:pos], nil
 	}
 }
 
-// Not must not match at least one character at the beginning of the input text
+// IsNot must not match at least one character at the beginning of the input text
 // from the provided sequence. Parsing stops upon the first matched character.
 // An empty sequence excludes nothing, so this matches the entire remaining
 // input when at least one character remains; an empty input still fails.
 //
-//	chomp.Not("ol").Run("Hello, World!")
+//	chomp.IsNot("ol").Run("Hello, World!")
 //	// ("llo, World!", "He", nil)
-func Not(str string) Combinator[string] {
+func IsNot(str string) Combinator[string] {
 	runeCount := utf8.RuneCountInString(str)
 
 	if runeCount >= charSetThreshold {
@@ -220,7 +220,7 @@ func Not(str string) Combinator[string] {
 			}
 
 			if pos == 0 {
-				return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character not in %q", str), State: s, Type: "not"}
+				return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character not in %q", str), State: s, Type: "is_not"}
 			}
 
 			return s.Advance(pos), rest[:pos], nil
@@ -242,7 +242,7 @@ func Not(str string) Combinator[string] {
 		}
 
 		if pos == 0 {
-			return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character not in %q", str), State: s, Type: "not"}
+			return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character not in %q", str), State: s, Type: "is_not"}
 		}
 
 		return s.Advance(pos), rest[:pos], nil
@@ -320,11 +320,14 @@ func Until(str string) Combinator[string] {
 //
 //	chomp.Take(5).Run("Hello, World!")
 //	// (", World!", "Hello", nil)
-func Take(n uint) Combinator[string] {
+func Take(n int) Combinator[string] {
 	return func(s State) (State, string, error) {
+		if n < 0 {
+			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), Type: "take"}
+		}
 		rest := s.Rest()
 		pos := 0
-		for i := uint(0); i < n; i++ {
+		for i := 0; i < n; i++ {
 			if pos >= len(rest) {
 				return s, "", CombinatorParseError{State: s, Type: "take"}
 			}

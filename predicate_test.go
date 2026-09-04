@@ -513,7 +513,7 @@ func TestWhileNMultiByteBoundary(t *testing.T) {
 
 	var rangedErr chomp.RangedParserError
 	require.ErrorAs(t, err, &rangedErr)
-	assert.Equal(t, uint(5), rangedErr.Exec.Count, "count must report runes, not bytes")
+	assert.Equal(t, 5, rangedErr.Exec.Count, "count must report runes, not bytes")
 }
 
 func TestWhileNMMultiByteBoundary(t *testing.T) {
@@ -535,7 +535,7 @@ func TestWhileNotNMultiByteBoundary(t *testing.T) {
 
 	var rangedErr chomp.RangedParserError
 	require.ErrorAs(t, err, &rangedErr)
-	assert.Equal(t, uint(5), rangedErr.Exec.Count, "count must report runes, not bytes")
+	assert.Equal(t, 5, rangedErr.Exec.Count, "count must report runes, not bytes")
 }
 
 func TestWhileNotNMMultiByteBoundary(t *testing.T) {

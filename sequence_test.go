@@ -87,10 +87,6 @@ func TestRepeatRangeDoesNotCorruptRemainderOnFailure(t *testing.T) {
 	assert.Equal(t, "b", ext[0].Second)
 }
 
-// TestRepeatRangeSelfDefendsAgainstNonConformingInner proves RepeatRange
-// never commits the remainder from a failing optional iteration, even when
-// the inner combinator itself partially consumes before erroring (which
-// none of chomp's own combinators do, but a caller-supplied one might).
 func TestRepeatRangeSelfDefendsAgainstNonConformingInner(t *testing.T) {
 	t.Parallel()
 
@@ -102,9 +98,6 @@ func TestRepeatRangeSelfDefendsAgainstNonConformingInner(t *testing.T) {
 	assert.Equal(t, "ab", ext[0])
 }
 
-// TestRepeatSelfDefendsAgainstNonConformingInner proves Repeat never
-// returns a corrupted remainder on failure, even when the inner combinator
-// itself partially consumes before erroring.
 func TestRepeatSelfDefendsAgainstNonConformingInner(t *testing.T) {
 	t.Parallel()
 
@@ -228,20 +221,20 @@ func TestManyNZeroMatches(t *testing.T) {
 	assert.Empty(t, ext)
 }
 
-func TestPrefixed(t *testing.T) {
+func TestPreceded(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Prefixed(chomp.Tag("Hello"), chomp.Tag(`"`)).Run(`"Hello, World"`)
+	rem, ext, err := chomp.Preceded(chomp.Tag(`"`), chomp.Tag("Hello")).Run(`"Hello, World"`)
 
 	require.NoError(t, err)
 	assert.Equal(t, `, World"`, rem)
 	assert.Equal(t, "Hello", ext)
 }
 
-func TestSuffixed(t *testing.T) {
+func TestTerminated(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Suffixed(chomp.Tag("Hello"), chomp.Tag(",")).Run("Hello, World")
+	rem, ext, err := chomp.Terminated(chomp.Tag("Hello"), chomp.Tag(",")).Run("Hello, World")
 
 	require.NoError(t, err)
 	assert.Equal(t, " World", rem)
@@ -398,7 +391,7 @@ func TestManyCount(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "123", rem)
-	assert.Equal(t, uint(3), count)
+	assert.Equal(t, 3, count)
 }
 
 func TestManyCountNoMatch(t *testing.T) {
@@ -416,7 +409,7 @@ func TestManyCount0(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "123", rem)
-	assert.Equal(t, uint(2), count)
+	assert.Equal(t, 2, count)
 }
 
 func TestManyCount0NoMatch(t *testing.T) {
@@ -426,14 +419,14 @@ func TestManyCount0NoMatch(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "123", rem)
-	assert.Equal(t, uint(0), count)
+	assert.Equal(t, 0, count)
 }
 
 func TestLengthCount(t *testing.T) {
 	t.Parallel()
 
-	lengthParser := chomp.Map(chomp.AnyDigit(), func(s string) uint {
-		return uint(s[0] - '0')
+	lengthParser := chomp.Map(chomp.AnyDigit(), func(s string) int {
+		return int(s[0] - '0')
 	})
 
 	rem, ext, err := chomp.LengthCount(lengthParser, chomp.AnyLetter()).Run("3abcdef")
@@ -444,27 +437,6 @@ func TestLengthCount(t *testing.T) {
 	assert.Equal(t, "a", ext[0])
 	assert.Equal(t, "b", ext[1])
 	assert.Equal(t, "c", ext[2])
-}
-
-func TestFill(t *testing.T) {
-	t.Parallel()
-
-	rem, ext, err := chomp.Fill(chomp.AnyLetter(), 3).Run("abcdef")
-
-	require.NoError(t, err)
-	assert.Equal(t, "def", rem)
-	require.Len(t, ext, 3)
-	assert.Equal(t, "a", ext[0])
-	assert.Equal(t, "b", ext[1])
-	assert.Equal(t, "c", ext[2])
-}
-
-func TestFillNotEnoughElements(t *testing.T) {
-	t.Parallel()
-
-	_, _, err := chomp.Fill(chomp.AnyLetter(), 5).Run("abc")
-
-	require.Error(t, err)
 }
 
 func TestVerify(t *testing.T) {

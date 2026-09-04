@@ -110,7 +110,7 @@ func TestI(t *testing.T) {
 	t.Parallel()
 
 	rem, ext, err := chomp.I(
-		chomp.Repeat(chomp.Suffixed(chomp.Until(" "), chomp.Tag(" ")), 3),
+		chomp.Repeat(chomp.Terminated(chomp.Until(" "), chomp.Tag(" ")), 3),
 		1).Run("hello and good morning")
 
 	require.NoError(t, err)
@@ -130,7 +130,7 @@ func TestPeek(t *testing.T) {
 func TestPeekUsingSequence(t *testing.T) {
 	t.Parallel()
 	rem, ext, err := chomp.Peek(
-		chomp.Many(chomp.Suffixed(chomp.Until(" "), chomp.Tag(" "))),
+		chomp.Many(chomp.Terminated(chomp.Until(" "), chomp.Tag(" "))),
 	).Run("Hello and Good Morning!")
 
 	require.NoError(t, err)

@@ -370,13 +370,13 @@ type RangedParserError struct {
 // RangedParserExec details how a ranged [Combinator] was executed.
 type RangedParserExec struct {
 	// Min is the minimum number of expected executions.
-	Min uint
+	Min int
 
 	// Max is the maximum number of possible executions.
-	Max uint
+	Max int
 
 	// Count contains the number of executions.
-	Count uint
+	Count int
 }
 
 // String returns a string representation of a [RangedParserExec].
@@ -402,7 +402,7 @@ func (e RangedParserExec) String() string {
 //     and [RangeParserExec.Max] are set.
 //   - If four or more arguments are provided, a default [RangedParserExec] will
 //     be returned.
-func RangeExecution(i ...uint) RangedParserExec {
+func RangeExecution(i ...int) RangedParserExec {
 	exec := RangedParserExec{}
 
 	switch len(i) {

@@ -183,7 +183,7 @@ func diffChunk() chomp.Combinator[[]string] {
 
 		var removed string
 		rem, removed, err = chomp.Map(
-			chomp.ManyN(chomp.Prefixed(chomp.Eol(), chomp.Tag(remPrefix)), 0),
+			chomp.ManyN(chomp.Preceded(chomp.Tag(remPrefix), chomp.Eol()), 0),
 			func(in []string) string { return strings.Join(in, "\n") },
 		)(rem)
 		if err != nil {
@@ -192,7 +192,7 @@ func diffChunk() chomp.Combinator[[]string] {
 
 		var added string
 		rem, added, err = chomp.Map(
-			chomp.ManyN(chomp.Prefixed(chomp.Eol(), chomp.Tag(addPrefix)), 0),
+			chomp.ManyN(chomp.Preceded(chomp.Tag(addPrefix), chomp.Eol()), 0),
 			func(in []string) string { return strings.Join(in, "\n") },
 		)(rem)
 		if err != nil {
@@ -224,7 +224,7 @@ func diffChunkHeaderChange(prefix string) chomp.Combinator[[]string] {
 				return err == nil && n >= 0
 			}),
 			// Optional count (,N) - defaults to empty string if not present
-			chomp.Opt(chomp.Prefixed(chomp.Digit(), chomp.Tag(","))),
+			chomp.Opt(chomp.Preceded(chomp.Tag(","), chomp.Digit())),
 		)(rem)
 	}
 }

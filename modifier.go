@@ -95,7 +95,7 @@ func I(c Combinator[[]string], i int) Combinator[string] {
 //	// ("Hello, World!", "Hello", nil)
 //
 //	chomp.Peek(
-//		chomp.Many(chomp.Suffixed(chomp.Until(" "), chomp.Tag(" "))),
+//		chomp.Many(chomp.Terminated(chomp.Until(" "), chomp.Tag(" "))),
 //	).Run("Hello and Good Morning!")
 //	// ("Hello and Good Morning!", []string{"Hello", "and", "Good"}, nil)
 func Peek[T any](c Combinator[T]) Combinator[T] {

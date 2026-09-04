@@ -129,7 +129,7 @@ func BenchmarkAnyChar(b *testing.B) {
 func BenchmarkTake(b *testing.B) {
 	tests := []struct {
 		name  string
-		n     uint
+		n     int
 		input string
 	}{
 		{
@@ -188,7 +188,7 @@ func BenchmarkUntil(b *testing.B) {
 	}
 }
 
-func BenchmarkAny(b *testing.B) {
+func BenchmarkIsA(b *testing.B) {
 	tests := []struct {
 		name  string
 		chars string
@@ -218,7 +218,7 @@ func BenchmarkAny(b *testing.B) {
 
 	for _, tt := range tests {
 		b.Run(tt.name, func(b *testing.B) {
-			parser := Any(tt.chars)
+			parser := IsA(tt.chars)
 			b.ReportAllocs()
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()
@@ -229,7 +229,7 @@ func BenchmarkAny(b *testing.B) {
 	}
 }
 
-func BenchmarkNot(b *testing.B) {
+func BenchmarkIsNot(b *testing.B) {
 	tests := []struct {
 		name  string
 		chars string
@@ -259,7 +259,7 @@ func BenchmarkNot(b *testing.B) {
 
 	for _, tt := range tests {
 		b.Run(tt.name, func(b *testing.B) {
-			parser := Not(tt.chars)
+			parser := IsNot(tt.chars)
 			b.ReportAllocs()
 			b.SetBytes(int64(len(tt.input)))
 			b.ResetTimer()

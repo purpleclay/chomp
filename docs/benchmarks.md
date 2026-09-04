@@ -10,31 +10,31 @@ go test -bench=. -benchmem ./...
 
 ### Basic Combinators
 
-| Benchmark         |  ns/op |  MB/s | B/op | allocs/op |
-| ----------------- | -----: | ----: | ---: | --------: |
-| Tag/Ascii         |   4.38 |  9824 |    0 |         0 |
-| Tag/Unicode       |   4.40 | 13630 |    0 |         0 |
-| TagNoCase/Ascii   |  49.43 |   870 |    0 |         0 |
-| Char/Ascii        |   3.35 | 12820 |    0 |         0 |
-| Char/Unicode      |   3.89 | 15429 |    0 |         0 |
-| AnyChar/Ascii     |   3.31 | 12988 |    0 |         0 |
-| AnyChar/Unicode   |   3.76 | 15944 |    0 |         0 |
-| Take/Ascii        |  17.86 |  2407 |    0 |         0 |
-| Take/Unicode      |  12.35 |  4858 |    0 |         0 |
-| Until/Ascii       |   8.19 |  5250 |    0 |         0 |
-| Until/Unicode     |  13.78 |  4354 |    0 |         0 |
-| Any/Small/Ascii   |  10.17 |  4228 |    0 |         0 |
-| Any/Large/Ascii   |  77.28 |   556 |    0 |         0 |
-| Any/Small/Unicode |  29.86 |  2009 |    0 |         0 |
-| Any/Large/Unicode |  63.51 |   945 |    0 |         0 |
-| Not/Small/Ascii   |  55.59 |   773 |    0 |         0 |
-| Not/Large/Ascii   | 119.70 |   359 |    0 |         0 |
-| Not/Small/Unicode |  97.57 |   615 |    0 |         0 |
-| Not/Large/Unicode | 117.40 |   511 |    0 |         0 |
-| OneOf/Ascii       |  13.78 |  3120 |    0 |         0 |
-| OneOf/Unicode     |   5.82 | 10313 |    0 |         0 |
-| NoneOf/Ascii      |   5.45 |  7889 |    0 |         0 |
-| NoneOf/Unicode    |   8.19 |  7330 |    0 |         0 |
+| Benchmark            |  ns/op |  MB/s | B/op | allocs/op |
+| -------------------- | -----: | ----: | ---: | --------: |
+| Tag/Ascii            |   4.38 |  9824 |    0 |         0 |
+| Tag/Unicode          |   4.40 | 13630 |    0 |         0 |
+| TagNoCase/Ascii      |  49.43 |   870 |    0 |         0 |
+| Char/Ascii           |   3.35 | 12820 |    0 |         0 |
+| Char/Unicode         |   3.89 | 15429 |    0 |         0 |
+| AnyChar/Ascii        |   3.31 | 12988 |    0 |         0 |
+| AnyChar/Unicode      |   3.76 | 15944 |    0 |         0 |
+| Take/Ascii           |  17.86 |  2407 |    0 |         0 |
+| Take/Unicode         |  12.35 |  4858 |    0 |         0 |
+| Until/Ascii          |   8.19 |  5250 |    0 |         0 |
+| Until/Unicode        |  13.78 |  4354 |    0 |         0 |
+| IsA/Small/Ascii      |  10.57 |  4067 |    0 |         0 |
+| IsA/Large/Ascii      |  75.41 |   570 |    0 |         0 |
+| IsA/Small/Unicode    |  28.91 |  2076 |    0 |         0 |
+| IsA/Large/Unicode    |  59.17 |  1014 |    0 |         0 |
+| IsNot/Small/Ascii    |  55.16 |   780 |    0 |         0 |
+| IsNot/Large/Ascii    | 117.40 |   366 |    0 |         0 |
+| IsNot/Small/Unicode  | 103.90 |   578 |    0 |         0 |
+| IsNot/Large/Unicode  | 115.20 |   521 |    0 |         0 |
+| OneOf/Ascii          |  13.78 |  3120 |    0 |         0 |
+| OneOf/Unicode        |   5.82 | 10313 |    0 |         0 |
+| NoneOf/Ascii         |   5.45 |  7889 |    0 |         0 |
+| NoneOf/Unicode       |   8.19 |  7330 |    0 |         0 |
 
 ### Predicate Combinators
 
