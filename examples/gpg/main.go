@@ -137,9 +137,9 @@ func key() chomp.Combinator[[]string] {
 	}
 }
 
-// colon parses a colon-delimited field, using Suffixed to consume the trailing colon.
+// colon parses a colon-delimited field, using Terminated to consume the trailing colon.
 func colon() chomp.Combinator[string] {
-	return chomp.Suffixed(chomp.Until(":"), chomp.Tag(":"))
+	return chomp.Terminated(chomp.Until(":"), chomp.Tag(":"))
 }
 
 // fingerprint parses the fingerprint line (fpr) and validates it is 40 hex characters.

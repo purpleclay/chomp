@@ -172,7 +172,7 @@ func TestTag(t *testing.T) {
 	}
 }
 
-func TestAny(t *testing.T) {
+func TestIsA(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -200,7 +200,7 @@ func TestAny(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Any(tt.any).Run(tt.input)
+			rem, ext, err := chomp.IsA(tt.any).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -209,7 +209,7 @@ func TestAny(t *testing.T) {
 	}
 }
 
-func TestNot(t *testing.T) {
+func TestIsNot(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -237,7 +237,7 @@ func TestNot(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			rem, ext, err := chomp.Not(tt.not).Run(tt.input)
+			rem, ext, err := chomp.IsNot(tt.not).Run(tt.input)
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.rem, rem)
@@ -557,7 +557,7 @@ func TestTake(t *testing.T) {
 	tests := []struct {
 		name  string
 		input string
-		n     uint
+		n     int
 		rem   string
 		ext   string
 	}{
@@ -977,14 +977,14 @@ func TestEmptyPatternBehaviour(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "Any",
-			run:     chomp.Any(""),
+			name:    "IsA",
+			run:     chomp.IsA(""),
 			input:   "abc",
 			wantErr: true,
 		},
 		{
-			name:  "Not",
-			run:   chomp.Not(""),
+			name:  "IsNot",
+			run:   chomp.IsNot(""),
 			input: "abc",
 			rem:   "",
 			ext:   "abc",
@@ -1046,14 +1046,10 @@ func TestEmptyPatternZeroWidthCombinatorsDoNotHang(t *testing.T) {
 	}
 }
 
-// TestNotEmptySequenceOnEmptyInputFails proves Not("") does not degenerate
-// into a zero-width success against an empty input: it still requires at
-// least one character, so an empty input fails just like a non-empty
-// exclusion sequence would.
-func TestNotEmptySequenceOnEmptyInputFails(t *testing.T) {
+func TestIsNotEmptySequenceOnEmptyInputFails(t *testing.T) {
 	t.Parallel()
 
-	rem, ext, err := chomp.Not("").Run("")
+	rem, ext, err := chomp.IsNot("").Run("")
 
 	require.Error(t, err)
 	assert.Equal(t, "", rem)

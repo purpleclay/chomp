@@ -128,6 +128,6 @@ func TestManyCount0ZeroWidthTerminates(t *testing.T) {
 		rem, count, err := chomp.ManyCount0(chomp.Digit0()).Run("abc")
 		require.NoError(t, err)
 		assert.Equal(t, "abc", rem)
-		assert.Equal(t, uint(0), count)
+		assert.Equal(t, 0, count)
 	})
 }

@@ -75,22 +75,22 @@ chomp.NoneOf("loWrd!e").Run("Hello, World!")
 // ext: "H"
 ```
 
-### Any
+### IsA
 
 Matches one or more characters from the provided sequence. Stops at the first unmatched character.
 
 ```go
-chomp.Any("eH").Run("Hello, World!")
+chomp.IsA("eH").Run("Hello, World!")
 // rem: "llo, World!"
 // ext: "He"
 ```
 
-### Not
+### IsNot
 
 Matches one or more characters NOT in the provided sequence. Stops at the first matched character.
 
 ```go
-chomp.Not("ol").Run("Hello, World!")
+chomp.IsNot("ol").Run("Hello, World!")
 // rem: "llo, World!"
 // ext: "He"
 ```
@@ -246,22 +246,22 @@ chomp.Delimited(chomp.Tag("'"), chomp.Until("'"), chomp.Tag("'")).Run("'Hello, W
 // ext: "Hello, World!"
 ```
 
-### Prefixed
+### Preceded
 
 Matches a prefix (discarded) followed by content.
 
 ```go
-chomp.Prefixed(chomp.Tag("Hello"), chomp.Tag(`"`)).Run(`"Hello, World!"`)
+chomp.Preceded(chomp.Tag(`"`), chomp.Tag("Hello")).Run(`"Hello, World!"`)
 // rem: `, World!"`
 // ext: "Hello"
 ```
 
-### Suffixed
+### Terminated
 
 Matches content followed by a suffix (discarded).
 
 ```go
-chomp.Suffixed(chomp.Tag("Hello"), chomp.Tag(", ")).Run("Hello, World!")
+chomp.Terminated(chomp.Tag("Hello"), chomp.Tag(", ")).Run("Hello, World!")
 // rem: "World!"
 // ext: "Hello"
 ```
@@ -406,21 +406,11 @@ Parses a length value first, then applies a combinator that exact number of time
 
 ```go
 chomp.LengthCount(
-    chomp.Map(chomp.OneOf("0123456789"), func(s string) uint {
-        return uint(s[0] - '0')
+    chomp.Map(chomp.OneOf("0123456789"), func(s string) int {
+        return int(s[0] - '0')
     }),
     chomp.OneOf("abc"),
 ).Run("3abcdef")
-// rem: "def"
-// ext: ["a", "b", "c"]
-```
-
-### Fill
-
-Matches a combinator exactly `n` times, populating a result slice. All `n` matches must succeed.
-
-```go
-chomp.Fill(chomp.OneOf("abc"), 3).Run("abcdef")
 // rem: "def"
 // ext: ["a", "b", "c"]
 ```
@@ -623,6 +613,18 @@ Matches between `n` and `m` characters that do NOT satisfy a predicate.
 chomp.WhileNotNM(chomp.IsLetter, 1, 9).Run("20240709 was great")
 // rem: "was great"
 // ext: "20240709 "
+```
+
+### Named
+
+Builds a `Predicate` from a plain function and a name, for use with `While` and friends, without hand-writing a struct that implements `Match`/`String`.
+
+```go
+chomp.While(chomp.Named("vowel", func(r rune) bool {
+    return strings.ContainsRune("aeiouAEIOU", r)
+})).Run("aeiou123")
+// rem: "123"
+// ext: "aeiou"
 ```
 
 ---

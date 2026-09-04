@@ -16,94 +16,24 @@ type Predicate interface {
 	fmt.Stringer
 }
 
-type isDigit struct{}
-
-func (isDigit) Match(r rune) bool {
-	return unicode.IsDigit(r)
+// namedPredicate adapts a plain predicate function into a [Predicate],
+// pairing it with a name used for error messages.
+type namedPredicate struct {
+	name string
+	fn   func(rune) bool
 }
 
-func (isDigit) String() string {
-	return "is_digit"
-}
+func (p namedPredicate) Match(r rune) bool { return p.fn(r) }
+func (p namedPredicate) String() string    { return p.name }
 
-type isLetter struct{}
-
-func (isLetter) Match(r rune) bool {
-	return unicode.IsLetter(r)
-}
-
-func (isLetter) String() string {
-	return "is_letter"
-}
-
-type isAlphanumeric struct{}
-
-func (isAlphanumeric) Match(r rune) bool {
-	return unicode.IsDigit(r) || unicode.IsLetter(r)
-}
-
-func (isAlphanumeric) String() string {
-	return "is_alphanumeric"
-}
-
-type isLineEnding struct{}
-
-func (isLineEnding) Match(r rune) bool {
-	return r == '\n' || r == '\r'
-}
-
-func (isLineEnding) String() string {
-	return "is_line_ending"
-}
-
-type isSpace struct{}
-
-func (isSpace) Match(r rune) bool {
-	return r == ' ' || r == '\t'
-}
-
-func (isSpace) String() string {
-	return "is_space"
-}
-
-type isMultispace struct{}
-
-func (isMultispace) Match(r rune) bool {
-	return r == ' ' || r == '\t' || r == '\n' || r == '\r'
-}
-
-func (isMultispace) String() string {
-	return "is_multispace"
-}
-
-type isHexDigit struct{}
-
-func (isHexDigit) Match(r rune) bool {
-	return (r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F')
-}
-
-func (isHexDigit) String() string {
-	return "is_hex_digit"
-}
-
-type isOctalDigit struct{}
-
-func (isOctalDigit) Match(r rune) bool {
-	return r >= '0' && r <= '7'
-}
-
-func (isOctalDigit) String() string {
-	return "is_octal_digit"
-}
-
-type isBinaryDigit struct{}
-
-func (isBinaryDigit) Match(r rune) bool {
-	return r == '0' || r == '1'
-}
-
-func (isBinaryDigit) String() string {
-	return "is_binary_digit"
+// Named builds a [Predicate] from a plain function and a name, without
+// requiring a hand-written struct implementing Match and String.
+//
+//	chomp.While(chomp.Named("vowel", func(r rune) bool {
+//		return strings.ContainsRune("aeiouAEIOU", r)
+//	})).Run("hello")
+func Named(name string, f func(rune) bool) Predicate { //nolint:ireturn // Predicate is this package's own exported interface, the documented return type for a predicate constructor.
+	return namedPredicate{name: name, fn: f}
 }
 
 var (
@@ -112,7 +42,7 @@ var (
 	// within the Unicode [Nd] category.
 	//
 	// [Nd]: https://www.fileformat.info/info/unicode/category/Nd/list.htm
-	IsDigit = isDigit{}
+	IsDigit = Named("is_digit", unicode.IsDigit)
 
 	// IsLetter determines if a rune is a letter. A rune is classed as a letter
 	// if it is between the ASCII range of 'a' and 'z' (including its uppercase
@@ -124,37 +54,51 @@ var (
 	// [Lt]: https://www.fileformat.info/info/unicode/category/Lt/list.htm
 	// [Lm]: https://www.fileformat.info/info/unicode/category/Lm/list.htm
 	// [Lo]: https://www.fileformat.info/info/unicode/category/Lo/list.htm
-	IsLetter = isLetter{}
+	IsLetter = Named("is_letter", unicode.IsLetter)
 
 	// IsAlphanumeric determines whether a rune is a decimal digit or a letter.
 	// This convenience method wraps the existing [IsDigit] and [IsLetter]
 	// predicates.
-	IsAlphanumeric = isAlphanumeric{}
+	IsAlphanumeric = Named("is_alphanumeric", func(r rune) bool {
+		return unicode.IsDigit(r) || unicode.IsLetter(r)
+	})
 
 	// IsLineEnding determines whether a rune is one of the following ASCII
 	// line ending characters '\r' or '\n'.
-	IsLineEnding = isLineEnding{}
+	IsLineEnding = Named("is_line_ending", func(r rune) bool {
+		return r == '\n' || r == '\r'
+	})
 
 	// IsSpace determines whether a rune is a space character. A rune is classed
 	// as a space if it is either a space ' ' or a tab '\t'.
-	IsSpace = isSpace{}
+	IsSpace = Named("is_space", func(r rune) bool {
+		return r == ' ' || r == '\t'
+	})
 
 	// IsMultispace determines whether a rune is a whitespace character. A rune
 	// is classed as whitespace if it is a space ' ', tab '\t', newline '\n',
 	// or carriage return '\r'.
-	IsMultispace = isMultispace{}
+	IsMultispace = Named("is_multispace", func(r rune) bool {
+		return r == ' ' || r == '\t' || r == '\n' || r == '\r'
+	})
 
 	// IsHexDigit determines whether a rune is a hexadecimal digit. A rune is
 	// classed as a hex digit if it is between '0'-'9', 'a'-'f', or 'A'-'F'.
-	IsHexDigit = isHexDigit{}
+	IsHexDigit = Named("is_hex_digit", func(r rune) bool {
+		return (r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F')
+	})
 
 	// IsOctalDigit determines whether a rune is an octal digit. A rune is classed
 	// as an octal digit if it is between '0' and '7'.
-	IsOctalDigit = isOctalDigit{}
+	IsOctalDigit = Named("is_octal_digit", func(r rune) bool {
+		return r >= '0' && r <= '7'
+	})
 
 	// IsBinaryDigit determines whether a rune is a binary digit. A rune is classed
 	// as a binary digit if it is either '0' or '1'.
-	IsBinaryDigit = isBinaryDigit{}
+	IsBinaryDigit = Named("is_binary_digit", func(r rune) bool {
+		return r == '0' || r == '1'
+	})
 )
 
 // While will scan the input text, testing each character against the provided
@@ -175,10 +119,13 @@ func While(p Predicate) Combinator[string] {
 //
 //	chomp.WhileN(chomp.IsDigit, 0).Run("Hello, World!")
 //	// ("Hello, World!", "", nil)
-func WhileN(p Predicate, n uint) Combinator[string] {
+func WhileN(p Predicate, n int) Combinator[string] {
 	return func(s State) (State, string, error) {
+		if n < 0 {
+			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), Type: "while_n"}
+		}
 		rest := s.Rest()
-		pos, runes := 0, uint(0)
+		pos, runes := 0, 0
 		for pos < len(rest) {
 			c, size := utf8.DecodeRuneInString(rest[pos:])
 			if !p.Match(c) {
@@ -206,10 +153,13 @@ func WhileN(p Predicate, n uint) Combinator[string] {
 //
 //	chomp.WhileNM(chomp.IsLetter, 1, 8).Run("Hello, World!")
 //	// (", World!", "Hello", nil)
-func WhileNM(p Predicate, n, m uint) Combinator[string] {
+func WhileNM(p Predicate, n, m int) Combinator[string] {
 	return func(s State) (State, string, error) {
+		if n < 0 || m < 0 {
+			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got n=%d, m=%d", n, m), Type: "while_n_m"}
+		}
 		rest := s.Rest()
-		pos, runes := 0, uint(0)
+		pos, runes := 0, 0
 		for pos < len(rest) {
 			c, size := utf8.DecodeRuneInString(rest[pos:])
 			if !p.Match(c) {
@@ -250,10 +200,13 @@ func WhileNot(p Predicate) Combinator[string] {
 //
 //	chomp.WhileNotN(chomp.IsLetter, 0).Run("Hello, World!")
 //	// ("Hello, World!", "", nil)
-func WhileNotN(p Predicate, n uint) Combinator[string] {
+func WhileNotN(p Predicate, n int) Combinator[string] {
 	return func(s State) (State, string, error) {
+		if n < 0 {
+			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), Type: "while_not_n"}
+		}
 		rest := s.Rest()
-		pos, runes := 0, uint(0)
+		pos, runes := 0, 0
 		for pos < len(rest) {
 			c, size := utf8.DecodeRuneInString(rest[pos:])
 			if p.Match(c) {
@@ -282,10 +235,13 @@ func WhileNotN(p Predicate, n uint) Combinator[string] {
 //
 //	chomp.WhileNotNM(chomp.IsLetter, 1, 9).Run("20240709 was a great day")
 //	// ("was a great day", "20240709 ", nil)
-func WhileNotNM(p Predicate, n, m uint) Combinator[string] {
+func WhileNotNM(p Predicate, n, m int) Combinator[string] {
 	return func(s State) (State, string, error) {
+		if n < 0 || m < 0 {
+			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got n=%d, m=%d", n, m), Type: "while_not_n_m"}
+		}
 		rest := s.Rest()
-		pos, runes := 0, uint(0)
+		pos, runes := 0, 0
 		for pos < len(rest) {
 			c, size := utf8.DecodeRuneInString(rest[pos:])
 			if p.Match(c) {
