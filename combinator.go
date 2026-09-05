@@ -394,32 +394,6 @@ func (e RangedParserExec) String() string {
 	return buf.String()
 }
 
-// RangeExecution is a utility method for setting a [RangedParserExec].
-//   - With one argument, the [RangeParserExec.Count] is set.
-//   - With two arguments, the [RangeParserExec.Count] and [RangeParserExec.Min]
-//     are set.
-//   - With three arguments, the [RangeParserExec.Count]], [RangeParserExec.Min]
-//     and [RangeParserExec.Max] are set.
-//   - If four or more arguments are provided, a default [RangedParserExec] will
-//     be returned.
-func RangeExecution(i ...int) RangedParserExec {
-	exec := RangedParserExec{}
-
-	switch len(i) {
-	case 1:
-		exec.Count = i[0]
-	case 2:
-		exec.Count = i[0]
-		exec.Min = i[1]
-	case 3:
-		exec.Count = i[0]
-		exec.Min = i[1]
-		exec.Max = i[2]
-	}
-
-	return exec
-}
-
 // Error delegates to the inner error's Error(), for the same reason as
 // [ParserError.Error]. [RangedParserError.Exec] remains available
 // programmatically via [errors.As] for callers that want execution counts.

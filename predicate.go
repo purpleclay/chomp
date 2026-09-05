@@ -138,7 +138,7 @@ func WhileN(p Predicate, n int) Combinator[string] {
 		if runes < n {
 			return s, "", RangedParserError{
 				Err:  CombinatorParseError{State: s, Type: p.String()},
-				Exec: RangeExecution(runes, n),
+				Exec: RangedParserExec{Count: runes, Min: n},
 				Type: "while_n",
 			}
 		}
@@ -172,7 +172,7 @@ func WhileNM(p Predicate, n, m int) Combinator[string] {
 		if runes < n || runes > m {
 			return s, "", RangedParserError{
 				Err:  CombinatorParseError{State: s, Type: p.String()},
-				Exec: RangeExecution(runes, n, m),
+				Exec: RangedParserExec{Count: runes, Min: n, Max: m},
 				Type: "while_n_m",
 			}
 		}
@@ -219,7 +219,7 @@ func WhileNotN(p Predicate, n int) Combinator[string] {
 		if runes < n {
 			return s, "", RangedParserError{
 				Err:  CombinatorParseError{State: s, Type: p.String()},
-				Exec: RangeExecution(runes, n),
+				Exec: RangedParserExec{Count: runes, Min: n},
 				Type: "while_not_n",
 			}
 		}
@@ -254,7 +254,7 @@ func WhileNotNM(p Predicate, n, m int) Combinator[string] {
 		if runes < n || runes > m {
 			return s, "", RangedParserError{
 				Err:  CombinatorParseError{State: s, Type: p.String()},
-				Exec: RangeExecution(runes, n, m),
+				Exec: RangedParserExec{Count: runes, Min: n, Max: m},
 				Type: "while_not_n_m",
 			}
 		}

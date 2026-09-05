@@ -605,3 +605,9 @@ func TestNegativeCountFailsGracefully(t *testing.T) {
 		assertNegativeCountFailsGracefully(t, "ManyN", "abc", chomp.ManyN(chomp.AnyLetter(), -1).Run)
 	})
 }
+
+func TestRepeatRangeInvertedBoundsFailsGracefully(t *testing.T) {
+	t.Parallel()
+
+	assertNegativeCountFailsGracefully(t, "RepeatRange", "abc", chomp.RepeatRange(chomp.AnyLetter(), 8, 1).Run)
+}

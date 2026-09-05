@@ -208,7 +208,7 @@ chomp.Repeat(chomp.Parentheses(), 2).Run("(Hello)(World)(!)")
 
 ### RepeatRange
 
-Matches a combinator between `n` (minimum) and `m` (maximum) times.
+Matches a combinator between `n` (minimum) and `m` (maximum) times. `n` must not exceed `m`.
 
 ```go
 chomp.RepeatRange(chomp.OneOf("Helo"), 1, 8).Run("Hello, World!")
