@@ -78,7 +78,7 @@ func Repeat[T any](c Combinator[T], n int) Combinator[[]T] {
 			if err != nil {
 				return s, nil, RangedParserError{
 					Err:  err,
-					Exec: RangeExecution(i, n),
+					Exec: RangedParserExec{Count: i, Min: n},
 					Type: "repeat",
 				}
 			}
@@ -96,16 +96,17 @@ func Repeat[T any](c Combinator[T], n int) Combinator[[]T] {
 //
 //	chomp.RepeatRange(chomp.OneOf("Hleo"), 1, 8).Run("Hello, World!")
 //	// (", World!", []string{"H", "e", "l", "l", "o"}, nil)
+//
+// n must not exceed m.
 func RepeatRange[T any](c Combinator[T], n, m int) Combinator[[]T] {
 	return func(s State) (State, []T, error) {
 		if n < 0 || m < 0 {
 			return s, nil, ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got n=%d, m=%d", n, m), Type: "repeat_range"}
 		}
-		var ext []T
-
 		if n > m {
-			n, m = m, n
+			return s, nil, ParserError{Err: fmt.Errorf("chomp: n must not exceed m, got n=%d, m=%d", n, m), Type: "repeat_range"}
 		}
+		var ext []T
 
 		rem := s
 		for i := range m {
@@ -116,7 +117,7 @@ func RepeatRange[T any](c Combinator[T], n, m int) Combinator[[]T] {
 				}
 				return s, nil, RangedParserError{
 					Err:  err,
-					Exec: RangeExecution(i, n, m),
+					Exec: RangedParserExec{Count: i, Min: n, Max: m},
 					Type: "repeat_range",
 				}
 			}
@@ -335,7 +336,7 @@ func ManyN[T any](c Combinator[T], n int) Combinator[[]T] {
 		if count < n {
 			return s, nil, RangedParserError{
 				Err:  err,
-				Exec: RangeExecution(count, n),
+				Exec: RangedParserExec{Count: count, Min: n},
 				Type: "many_n",
 			}
 		}
@@ -410,7 +411,7 @@ func SeparatedList[T, U any](c Combinator[T], sep Combinator[U]) Combinator[[]T]
 		if rem, out, err = c(rem); err != nil {
 			return s, nil, RangedParserError{
 				Err:  err,
-				Exec: RangeExecution(0, 1),
+				Exec: RangedParserExec{Count: 0, Min: 1},
 				Type: "separated_list",
 			}
 		}
@@ -512,7 +513,7 @@ func ManyTill[T, U any](c Combinator[T], term Combinator[U]) Combinator[[]T] {
 				if count == 0 {
 					return s, nil, RangedParserError{
 						Err:  CombinatorParseError{State: s, Type: "many_till"},
-						Exec: RangeExecution(0, 1),
+						Exec: RangedParserExec{Count: 0, Min: 1},
 						Type: "many_till",
 					}
 				}
@@ -616,7 +617,7 @@ func FoldMany[S, T any](c Combinator[T], init S, reducer func(S, T) S) Combinato
 		if count == 0 {
 			return s, init, RangedParserError{
 				Err:  err,
-				Exec: RangeExecution(0, 1),
+				Exec: RangedParserExec{Count: 0, Min: 1},
 				Type: "fold_many",
 			}
 		}
@@ -688,7 +689,7 @@ func ManyCount[T any](c Combinator[T]) Combinator[int] {
 		if count == 0 {
 			return s, 0, RangedParserError{
 				Err:  err,
-				Exec: RangeExecution(0, 1),
+				Exec: RangedParserExec{Count: 0, Min: 1},
 				Type: "many_count",
 			}
 		}
