@@ -34,12 +34,13 @@ func Label[T any](name string, c Combinator[T]) Combinator[T] {
 // can never introduce a newline into Error's single-line guarantee.
 var labelReplacer = strings.NewReplacer("\r\n", " ", "\n", " ", "\r", " ")
 
-// addLabel prepends name to the Labels of the [CombinatorParseError]
-// reached by walking down through this package's own wrapper error types,
-// rebuilding the same chain around the updated leaf so Unwrap and
-// errors.As/errors.Is behaviour is unaffected. Errors outside this closed
-// set (e.g. [I]'s index-out-of-bounds error) are returned unchanged, since
-// they carry no position to attach a label to.
+// addLabel prepends name to the Labels of every [CombinatorParseError]
+// reached by walking down through this package's own wrapper error types
+// (an [AlternativesError] fans out to each attempted alternative's own
+// error), rebuilding the same chain/slice around the updated leaves so
+// Unwrap and errors.As/errors.Is behaviour is unaffected. Errors outside
+// this closed set (e.g. [I]'s index-out-of-bounds error) are returned
+// unchanged, since they carry no position to attach a label to.
 func addLabel(err error, name string) error {
 	switch e := err.(type) {
 	case CombinatorParseError:
@@ -53,6 +54,13 @@ func addLabel(err error, name string) error {
 		return e
 	case CutError:
 		e.Err = addLabel(e.Err, name)
+		return e
+	case AlternativesError:
+		errs := make([]error, len(e.Errs))
+		for i := range e.Errs {
+			errs[i] = addLabel(e.Errs[i], name)
+		}
+		e.Errs = errs
 		return e
 	default:
 		return err

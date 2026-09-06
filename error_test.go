@@ -46,7 +46,6 @@ func TestCombinatorParseError_Error(t *testing.T) {
 			Expected: `"Hello"`,
 			State:    chomp.NewState("Goodbye"),
 			Labels:   []string{"manifest", "version"},
-			Type:     "tag",
 		}
 		assert.Equal(t,
 			`chomp: parse error at line 1, column 1 (offset 0): expected "Hello" while parsing manifest > version`,
@@ -59,7 +58,6 @@ func TestCombinatorParseError_Error(t *testing.T) {
 			Expected: "x",
 			State:    chomp.NewState("y"),
 			Labels:   []string{"a", "b"},
-			Type:     "tag",
 		}
 		assert.NotContains(t, err.Error(), "\n")
 	})
@@ -202,7 +200,6 @@ func TestCombinatorParseError_LogValue(t *testing.T) {
 			Expected: "digit",
 			State:    chomp.NewState("version = 1.4.x"),
 			Labels:   []string{"version value", "semver"},
-			Type:     "is_digit",
 		}
 
 		attrs := map[string]slog.Value{}
@@ -273,10 +270,9 @@ func TestZeroValueWrappersDoNotPanic(t *testing.T) {
 	t.Run("ParserError", func(t *testing.T) {
 		t.Parallel()
 		var e chomp.ParserError
-		e.Type = "pair"
 
 		require.NotPanics(t, func() { _ = e.Error() })
-		assert.Equal(t, "chomp: pair parser error with no underlying cause", e.Error())
+		assert.Contains(t, e.Error(), "parser error with no underlying cause")
 		assert.NotContains(t, e.Error(), "\n")
 
 		require.NotPanics(t, func() { _ = e.LogValue() })
@@ -286,10 +282,9 @@ func TestZeroValueWrappersDoNotPanic(t *testing.T) {
 	t.Run("RangedParserError", func(t *testing.T) {
 		t.Parallel()
 		var e chomp.RangedParserError
-		e.Type = "repeat"
 
 		require.NotPanics(t, func() { _ = e.Error() })
-		assert.Equal(t, "chomp: repeat parser error with no underlying cause", e.Error())
+		assert.Contains(t, e.Error(), "parser error with no underlying cause")
 		assert.NotContains(t, e.Error(), "\n")
 
 		require.NotPanics(t, func() { _ = e.LogValue() })

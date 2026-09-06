@@ -63,6 +63,28 @@ func TestFinalizeIsIdempotent(t *testing.T) {
 	assert.Equal(t, pe1.Snippet(), pe2.Snippet())
 }
 
+func TestFinalizeAlternativesErrorDoesNotMutateRetainedCopy(t *testing.T) {
+	t.Parallel()
+
+	first := chomp.First(chomp.Tag("Light"), chomp.Tag("Dark"))
+	_, _, rawErr := first(chomp.NewState("Knight"))
+	require.Error(t, rawErr)
+
+	var retained chomp.AlternativesError
+	require.True(t, errors.As(rawErr, &retained))
+
+	var peBefore chomp.CombinatorParseError
+	require.True(t, errors.As(retained.Errs[0], &peBefore))
+	require.Equal(t, "Knight", peBefore.State.Rest(), "sanity check: State starts live")
+
+	_ = chomp.Finalize(rawErr)
+
+	var peAfter chomp.CombinatorParseError
+	require.True(t, errors.As(retained.Errs[0], &peAfter))
+	assert.Equal(t, "Knight", peAfter.State.Rest(),
+		"finalizing rawErr must not clear State in a separately retained copy's inner errors")
+}
+
 // assertSnippetStableAcrossFinalize proves Snippet renders identically
 // whether read from a raw, unfinalised error (c invoked directly against a
 // State) or from the finalised error Run returns for the same failure.

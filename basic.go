@@ -15,7 +15,7 @@ func Char(c rune) Combinator[string] {
 	return func(s State) (State, string, error) {
 		rest := s.Rest()
 		if rest == "" {
-			return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", c), State: s, Type: "char"}
+			return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", c), State: s, kind: "char"}
 		}
 
 		r, size := utf8.DecodeRuneInString(rest)
@@ -23,7 +23,7 @@ func Char(c rune) Combinator[string] {
 			return s.Advance(size), rest[:size], nil
 		}
 
-		return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", c), State: s, Type: "char"}
+		return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", c), State: s, kind: "char"}
 	}
 }
 
@@ -35,7 +35,7 @@ func AnyChar() Combinator[string] {
 	return func(s State) (State, string, error) {
 		rest := s.Rest()
 		if rest == "" {
-			return s, "", CombinatorParseError{State: s, Type: "any_char"}
+			return s, "", CombinatorParseError{State: s, kind: "any_char"}
 		}
 
 		_, size := utf8.DecodeRuneInString(rest)
@@ -52,7 +52,7 @@ func Satisfy(pred func(rune) bool) Combinator[string] {
 	return func(s State) (State, string, error) {
 		rest := s.Rest()
 		if rest == "" {
-			return s, "", CombinatorParseError{State: s, Type: "satisfy"}
+			return s, "", CombinatorParseError{State: s, kind: "satisfy"}
 		}
 
 		r, size := utf8.DecodeRuneInString(rest)
@@ -60,7 +60,7 @@ func Satisfy(pred func(rune) bool) Combinator[string] {
 			return s.Advance(size), rest[:size], nil
 		}
 
-		return s, "", CombinatorParseError{State: s, Type: "satisfy"}
+		return s, "", CombinatorParseError{State: s, kind: "satisfy"}
 	}
 }
 
@@ -77,7 +77,7 @@ func Tag(str string) Combinator[string] {
 			return s.Advance(len(str)), str, nil
 		}
 
-		return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", str), State: s, Type: "tag"}
+		return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", str), State: s, kind: "tag"}
 	}
 }
 
@@ -101,12 +101,12 @@ func TagNoCase(str string) Combinator[string] {
 		for tagPos < len(str) {
 			want, wantSize := utf8.DecodeRuneInString(str[tagPos:])
 			if pos >= len(rest) || (want == utf8.RuneError && wantSize <= 1) {
-				return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", str), State: s, Type: "tag_no_case"}
+				return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", str), State: s, kind: "tag_no_case"}
 			}
 
 			got, size := utf8.DecodeRuneInString(rest[pos:])
 			if (got == utf8.RuneError && size <= 1) || !foldEqual(got, want) {
-				return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", str), State: s, Type: "tag_no_case"}
+				return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", str), State: s, kind: "tag_no_case"}
 			}
 			pos += size
 			tagPos += wantSize
@@ -163,7 +163,7 @@ func IsA(str string) Combinator[string] {
 			}
 
 			if pos == 0 {
-				return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character in %q", str), State: s, Type: "is_a"}
+				return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character in %q", str), State: s, kind: "is_a"}
 			}
 
 			return s.Advance(pos), rest[:pos], nil
@@ -186,7 +186,7 @@ func IsA(str string) Combinator[string] {
 		}
 
 		if pos == 0 {
-			return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character in %q", str), State: s, Type: "is_a"}
+			return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character in %q", str), State: s, kind: "is_a"}
 		}
 
 		return s.Advance(pos), rest[:pos], nil
@@ -220,7 +220,7 @@ func IsNot(str string) Combinator[string] {
 			}
 
 			if pos == 0 {
-				return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character not in %q", str), State: s, Type: "is_not"}
+				return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character not in %q", str), State: s, kind: "is_not"}
 			}
 
 			return s.Advance(pos), rest[:pos], nil
@@ -242,7 +242,7 @@ func IsNot(str string) Combinator[string] {
 		}
 
 		if pos == 0 {
-			return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character not in %q", str), State: s, Type: "is_not"}
+			return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character not in %q", str), State: s, kind: "is_not"}
 		}
 
 		return s.Advance(pos), rest[:pos], nil
@@ -259,7 +259,7 @@ func OneOf(str string) Combinator[string] {
 	return func(s State) (State, string, error) {
 		rest := s.Rest()
 		if rest == "" {
-			return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character in %q", str), State: s, Type: "one_of"}
+			return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character in %q", str), State: s, kind: "one_of"}
 		}
 
 		r, size := utf8.DecodeRuneInString(rest)
@@ -269,7 +269,7 @@ func OneOf(str string) Combinator[string] {
 			}
 		}
 
-		return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character in %q", str), State: s, Type: "one_of"}
+		return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character in %q", str), State: s, kind: "one_of"}
 	}
 }
 
@@ -283,13 +283,13 @@ func NoneOf(str string) Combinator[string] {
 	return func(s State) (State, string, error) {
 		rest := s.Rest()
 		if rest == "" {
-			return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character not in %q", str), State: s, Type: "none_of"}
+			return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character not in %q", str), State: s, kind: "none_of"}
 		}
 
 		r, size := utf8.DecodeRuneInString(rest)
 		for _, strc := range str {
 			if r == strc {
-				return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character not in %q", str), State: s, Type: "none_of"}
+				return s, "", CombinatorParseError{Expected: fmt.Sprintf("a character not in %q", str), State: s, kind: "none_of"}
 			}
 		}
 
@@ -311,7 +311,7 @@ func Until(str string) Combinator[string] {
 			return s.Advance(idx), rest[:idx], nil
 		}
 
-		return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", str), State: s, Type: "until"}
+		return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", str), State: s, kind: "until"}
 	}
 }
 
@@ -323,13 +323,13 @@ func Until(str string) Combinator[string] {
 func Take(n int) Combinator[string] {
 	return func(s State) (State, string, error) {
 		if n < 0 {
-			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), Type: "take"}
+			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), kind: "take"}
 		}
 		rest := s.Rest()
 		pos := 0
 		for i := 0; i < n; i++ {
 			if pos >= len(rest) {
-				return s, "", CombinatorParseError{State: s, Type: "take"}
+				return s, "", CombinatorParseError{State: s, kind: "take"}
 			}
 			_, size := utf8.DecodeRuneInString(rest[pos:])
 			pos += size
@@ -356,7 +356,7 @@ func TakeUntil1(str string) Combinator[string] {
 			return s.Advance(idx), rest[:idx], nil
 		}
 
-		return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", str), State: s, Type: "take_until_1"}
+		return s, "", CombinatorParseError{Expected: fmt.Sprintf("%q", str), State: s, kind: "take_until_1"}
 	}
 }
 
@@ -394,7 +394,7 @@ func Escaped(normal Combinator[string], escape rune, escapable Combinator[string
 		}
 
 		if cur.Pos() == s.Pos() {
-			return s, "", CombinatorParseError{State: s, Type: "escaped"}
+			return s, "", CombinatorParseError{State: s, kind: "escaped"}
 		}
 
 		return cur, cur.since(s), nil
@@ -449,7 +449,7 @@ func EscapedTransform(normal Combinator[string], escape rune, transform Combinat
 		}
 
 		if result.Len() == 0 {
-			return s, "", CombinatorParseError{State: s, Type: "escaped_transform"}
+			return s, "", CombinatorParseError{State: s, kind: "escaped_transform"}
 		}
 
 		return cur, result.String(), nil
