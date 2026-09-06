@@ -122,7 +122,7 @@ func While(p Predicate) Combinator[string] {
 func WhileN(p Predicate, n int) Combinator[string] {
 	return func(s State) (State, string, error) {
 		if n < 0 {
-			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), Type: "while_n"}
+			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), kind: "while_n"}
 		}
 		rest := s.Rest()
 		pos, runes := 0, 0
@@ -137,9 +137,9 @@ func WhileN(p Predicate, n int) Combinator[string] {
 
 		if runes < n {
 			return s, "", RangedParserError{
-				Err:  CombinatorParseError{State: s, Type: p.String()},
+				Err:  CombinatorParseError{State: s, kind: p.String()},
 				Exec: RangedParserExec{Count: runes, Min: n},
-				Type: "while_n",
+				kind: "while_n",
 			}
 		}
 
@@ -156,7 +156,7 @@ func WhileN(p Predicate, n int) Combinator[string] {
 func WhileNM(p Predicate, n, m int) Combinator[string] {
 	return func(s State) (State, string, error) {
 		if n < 0 || m < 0 {
-			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got n=%d, m=%d", n, m), Type: "while_n_m"}
+			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got n=%d, m=%d", n, m), kind: "while_n_m"}
 		}
 		rest := s.Rest()
 		pos, runes := 0, 0
@@ -171,9 +171,9 @@ func WhileNM(p Predicate, n, m int) Combinator[string] {
 
 		if runes < n || runes > m {
 			return s, "", RangedParserError{
-				Err:  CombinatorParseError{State: s, Type: p.String()},
+				Err:  CombinatorParseError{State: s, kind: p.String()},
 				Exec: RangedParserExec{Count: runes, Min: n, Max: m},
-				Type: "while_n_m",
+				kind: "while_n_m",
 			}
 		}
 
@@ -203,7 +203,7 @@ func WhileNot(p Predicate) Combinator[string] {
 func WhileNotN(p Predicate, n int) Combinator[string] {
 	return func(s State) (State, string, error) {
 		if n < 0 {
-			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), Type: "while_not_n"}
+			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), kind: "while_not_n"}
 		}
 		rest := s.Rest()
 		pos, runes := 0, 0
@@ -218,9 +218,9 @@ func WhileNotN(p Predicate, n int) Combinator[string] {
 
 		if runes < n {
 			return s, "", RangedParserError{
-				Err:  CombinatorParseError{State: s, Type: p.String()},
+				Err:  CombinatorParseError{State: s, kind: p.String()},
 				Exec: RangedParserExec{Count: runes, Min: n},
-				Type: "while_not_n",
+				kind: "while_not_n",
 			}
 		}
 
@@ -238,7 +238,7 @@ func WhileNotN(p Predicate, n int) Combinator[string] {
 func WhileNotNM(p Predicate, n, m int) Combinator[string] {
 	return func(s State) (State, string, error) {
 		if n < 0 || m < 0 {
-			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got n=%d, m=%d", n, m), Type: "while_not_n_m"}
+			return s, "", ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got n=%d, m=%d", n, m), kind: "while_not_n_m"}
 		}
 		rest := s.Rest()
 		pos, runes := 0, 0
@@ -253,9 +253,9 @@ func WhileNotNM(p Predicate, n, m int) Combinator[string] {
 
 		if runes < n || runes > m {
 			return s, "", RangedParserError{
-				Err:  CombinatorParseError{State: s, Type: p.String()},
+				Err:  CombinatorParseError{State: s, kind: p.String()},
 				Exec: RangedParserExec{Count: runes, Min: n, Max: m},
-				Type: "while_not_n_m",
+				kind: "while_not_n_m",
 			}
 		}
 
@@ -417,7 +417,7 @@ func Newline() Combinator[string] {
 		if rest != "" && rest[0] == '\n' {
 			return s.Advance(1), "\n", nil
 		}
-		return s, "", CombinatorParseError{State: s, Type: "newline"}
+		return s, "", CombinatorParseError{State: s, kind: "newline"}
 	}
 }
 
@@ -431,7 +431,7 @@ func Tab() Combinator[string] {
 		if rest != "" && rest[0] == '\t' {
 			return s.Advance(1), "\t", nil
 		}
-		return s, "", CombinatorParseError{State: s, Type: "tab"}
+		return s, "", CombinatorParseError{State: s, kind: "tab"}
 	}
 }
 

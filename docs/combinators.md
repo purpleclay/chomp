@@ -188,7 +188,7 @@ chomp.All(chomp.Tag("Hello"), chomp.Until("W"), chomp.Tag("World!")).Run("Hello,
 
 ### First
 
-Tries each combinator in order, returning the first successful match.
+Tries each combinator in order, returning the first successful match. If every alternative fails, the returned error is a `chomp.AlternativesError` holding each alternative's own error, in the order attempted (`Error()` renders the first one; `errors.Is`/`errors.As` can reach any of them via `Unwrap() []error`).
 
 ```go
 chomp.First(chomp.Tag("Good Morning"), chomp.Tag("Hello")).Run("Hello, World!")
@@ -678,6 +678,17 @@ chomp.Map(chomp.While(chomp.IsDigit), func(in string) int {
 // ext: 123
 ```
 
+### MapRes
+
+Transforms the result of a combinator through a fallible function - like `Map`, but the mapper can fail. The mapper's error is reachable via `errors.Is`/`errors.As` on the returned error, with no chomp-specific vocabulary required.
+
+```go
+chomp.MapRes(chomp.Digit(), strconv.Atoi).Run("99999999999999999999")
+// rem: "99999999999999999999"
+// ext: 9223372036854775807 (math.MaxInt64, strconv.Atoi's own overflow value)
+// error: errors.Is(err, strconv.ErrRange) is true
+```
+
 ### S
 
 Wraps a string result in a slice. Useful for chaining combinators with different return types.
@@ -849,6 +860,25 @@ logger.Error("failed to parse manifest", "err", err)
 ```
 
 `pe.Offset()` and `pe.Position()` give the byte offset and 1-based, rune-aware line/column directly, and work whether or not the error has escaped `Run` - reading `pe.State` directly only works before that point. An error returned by `Run` (or passed through `chomp.Finalize`) no longer references the original input at all, so holding onto it doesn't pin the whole input in memory, however large.
+
+None of these wrapper types expose a string field to classify a failure by - every distinction is either a Go type (`errors.As`) or a value reachable through `Unwrap`:
+
+- **`chomp.ParserError`**, **`chomp.RangedParserError`** - internal wrappers most combinators add; `errors.As` still reaches the underlying `chomp.CombinatorParseError` straight through them.
+- **`chomp.CutError`** - returned once `Cut` has committed to a parsing path; `errors.As(err, &chomp.CutError{})` distinguishes a fatal failure from a recoverable one.
+- **`chomp.AlternativesError`** - returned by `First` when every alternative fails; `Unwrap() []error` (the same multi-error form `errors.Join` uses) lets `errors.Is`/`errors.As` inspect any attempted alternative, not just the one `Error()` renders.
+- **`chomp.CombinatorParseError.Cause`** - set by `MapRes` to the mapper's own error; reachable via `errors.Is`/`errors.As` through `Unwrap`, so a caller can branch on a stdlib sentinel with no chomp-specific vocabulary at all.
+
+Combining position, grammar context, and a stdlib sentinel in one grammar:
+
+```go
+_, _, err := chomp.Label("port", chomp.MapRes(chomp.Digit(), strconv.Atoi)).Run("99999999999999999999")
+
+var pe chomp.CombinatorParseError
+errors.As(err, &pe)
+fmt.Println(pe.Position())  // 1 1
+fmt.Println(pe.Labels)      // [port]
+fmt.Println(errors.Is(err, strconv.ErrRange)) // true
+```
 
 ### Label
 

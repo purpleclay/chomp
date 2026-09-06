@@ -17,12 +17,12 @@ func Pair[A, B any](c1 Combinator[A], c2 Combinator[B]) Combinator[Tuple2[A, B]]
 
 		rem, out1, err := c1(s)
 		if err != nil {
-			return s, def, ParserError{Err: err, Type: "pair"}
+			return s, def, ParserError{Err: err, kind: "pair"}
 		}
 
 		rem, out2, err := c2(rem)
 		if err != nil {
-			return s, def, ParserError{Err: err, Type: "pair"}
+			return s, def, ParserError{Err: err, kind: "pair"}
 		}
 
 		return rem, Tuple2[A, B]{First: out1, Second: out2}, nil
@@ -43,17 +43,17 @@ func SepPair[A, U, B any](c1 Combinator[A], sep Combinator[U], c2 Combinator[B])
 
 		rem, out1, err := c1(s)
 		if err != nil {
-			return s, def, ParserError{Err: err, Type: "sep_pair"}
+			return s, def, ParserError{Err: err, kind: "sep_pair"}
 		}
 
 		rem, _, err = sep(rem)
 		if err != nil {
-			return s, def, ParserError{Err: err, Type: "sep_pair"}
+			return s, def, ParserError{Err: err, kind: "sep_pair"}
 		}
 
 		rem, out2, err := c2(rem)
 		if err != nil {
-			return s, def, ParserError{Err: err, Type: "sep_pair"}
+			return s, def, ParserError{Err: err, kind: "sep_pair"}
 		}
 
 		return rem, Tuple2[A, B]{First: out1, Second: out2}, nil
@@ -68,7 +68,7 @@ func SepPair[A, U, B any](c1 Combinator[A], sep Combinator[U], c2 Combinator[B])
 func Repeat[T any](c Combinator[T], n int) Combinator[[]T] {
 	return func(s State) (State, []T, error) {
 		if n < 0 {
-			return s, nil, ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), Type: "repeat"}
+			return s, nil, ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), kind: "repeat"}
 		}
 		var ext []T
 
@@ -79,7 +79,7 @@ func Repeat[T any](c Combinator[T], n int) Combinator[[]T] {
 				return s, nil, RangedParserError{
 					Err:  err,
 					Exec: RangedParserExec{Count: i, Min: n},
-					Type: "repeat",
+					kind: "repeat",
 				}
 			}
 			rem = tmpRem
@@ -101,10 +101,10 @@ func Repeat[T any](c Combinator[T], n int) Combinator[[]T] {
 func RepeatRange[T any](c Combinator[T], n, m int) Combinator[[]T] {
 	return func(s State) (State, []T, error) {
 		if n < 0 || m < 0 {
-			return s, nil, ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got n=%d, m=%d", n, m), Type: "repeat_range"}
+			return s, nil, ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got n=%d, m=%d", n, m), kind: "repeat_range"}
 		}
 		if n > m {
-			return s, nil, ParserError{Err: fmt.Errorf("chomp: n must not exceed m, got n=%d, m=%d", n, m), Type: "repeat_range"}
+			return s, nil, ParserError{Err: fmt.Errorf("chomp: n must not exceed m, got n=%d, m=%d", n, m), kind: "repeat_range"}
 		}
 		var ext []T
 
@@ -118,7 +118,7 @@ func RepeatRange[T any](c Combinator[T], n, m int) Combinator[[]T] {
 				return s, nil, RangedParserError{
 					Err:  err,
 					Exec: RangedParserExec{Count: i, Min: n, Max: m},
-					Type: "repeat_range",
+					kind: "repeat_range",
 				}
 			}
 			rem = tmpRem
@@ -143,17 +143,17 @@ func Delimited[T, U, V any](left Combinator[T], str Combinator[U], right Combina
 
 		rem, _, err := left(s)
 		if err != nil {
-			return s, def, ParserError{Err: err, Type: "delimited"}
+			return s, def, ParserError{Err: err, kind: "delimited"}
 		}
 
 		rem, ext, err := str(rem)
 		if err != nil {
-			return s, def, ParserError{Err: err, Type: "delimited"}
+			return s, def, ParserError{Err: err, kind: "delimited"}
 		}
 
 		rem, _, err = right(rem)
 		if err != nil {
-			return s, def, ParserError{Err: err, Type: "delimited"}
+			return s, def, ParserError{Err: err, kind: "delimited"}
 		}
 
 		return rem, ext, nil
@@ -229,6 +229,7 @@ func BracketAngled() Combinator[string] {
 //	// (", World!", "Good Morning", nil)
 func First[T any](c ...Combinator[T]) Combinator[T] {
 	return func(s State) (State, T, error) {
+		var errs []error
 		for _, comb := range c {
 			rem, ext, err := comb(s)
 			if err == nil {
@@ -240,10 +241,11 @@ func First[T any](c ...Combinator[T]) Combinator[T] {
 				var out T
 				return s, out, err
 			}
+			errs = append(errs, err)
 		}
 
 		var out T
-		return s, out, CombinatorParseError{State: s, Type: "first"}
+		return s, out, AlternativesError{Errs: errs}
 	}
 }
 
@@ -279,7 +281,7 @@ func All[T any](c ...Combinator[T]) Combinator[[]T] {
 		for _, comb := range c {
 			var out T
 			if rem, out, err = comb(rem); err != nil {
-				return s, nil, ParserError{Err: err, Type: "all"}
+				return s, nil, ParserError{Err: err, kind: "all"}
 			}
 			ext = append(ext, out)
 		}
@@ -309,7 +311,7 @@ func Many[T any](c Combinator[T]) Combinator[[]T] {
 func ManyN[T any](c Combinator[T], n int) Combinator[[]T] {
 	return func(s State) (State, []T, error) {
 		if n < 0 {
-			return s, nil, ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), Type: "many_n"}
+			return s, nil, ParserError{Err: fmt.Errorf("chomp: count must be non-negative, got %d", n), kind: "many_n"}
 		}
 		var ext []T
 		var err error
@@ -325,7 +327,7 @@ func ManyN[T any](c Combinator[T], n int) Combinator[[]T] {
 			}
 			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: cannot make progress, stop to avoid looping forever
-				err = CombinatorParseError{State: rem, Type: "many_n"}
+				err = CombinatorParseError{State: rem, kind: "many_n"}
 				break
 			}
 			rem = tmpRem
@@ -337,7 +339,7 @@ func ManyN[T any](c Combinator[T], n int) Combinator[[]T] {
 			return s, nil, RangedParserError{
 				Err:  err,
 				Exec: RangedParserExec{Count: count, Min: n},
-				Type: "many_n",
+				kind: "many_n",
 			}
 		}
 
@@ -412,7 +414,7 @@ func SeparatedList[T, U any](c Combinator[T], sep Combinator[U]) Combinator[[]T]
 			return s, nil, RangedParserError{
 				Err:  err,
 				Exec: RangedParserExec{Count: 0, Min: 1},
-				Type: "separated_list",
+				kind: "separated_list",
 			}
 		}
 		ext = append(ext, out)
@@ -512,9 +514,9 @@ func ManyTill[T, U any](c Combinator[T], term Combinator[U]) Combinator[[]T] {
 			if tmpRem, _, termErr := term(rem); termErr == nil {
 				if count == 0 {
 					return s, nil, RangedParserError{
-						Err:  CombinatorParseError{State: s, Type: "many_till"},
+						Err:  CombinatorParseError{State: s, kind: "many_till"},
 						Exec: RangedParserExec{Count: 0, Min: 1},
-						Type: "many_till",
+						kind: "many_till",
 					}
 				}
 				return tmpRem, ext, nil
@@ -524,14 +526,14 @@ func ManyTill[T, U any](c Combinator[T], term Combinator[U]) Combinator[[]T] {
 			var out T
 			var tmpRem State
 			if tmpRem, out, err = c(rem); err != nil {
-				return s, nil, ParserError{Err: err, Type: "many_till"}
+				return s, nil, ParserError{Err: err, kind: "many_till"}
 			}
 
 			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: the terminator can never be reached
 				return s, nil, ParserError{
-					Err:  CombinatorParseError{State: rem, Type: "many_till"},
-					Type: "many_till",
+					Err:  CombinatorParseError{State: rem, kind: "many_till"},
+					kind: "many_till",
 				}
 			}
 
@@ -564,14 +566,14 @@ func ManyTill0[T, U any](c Combinator[T], term Combinator[U]) Combinator[[]T] {
 			var out T
 			var tmpRem State
 			if tmpRem, out, err = c(rem); err != nil {
-				return s, nil, ParserError{Err: err, Type: "many_till_0"}
+				return s, nil, ParserError{Err: err, kind: "many_till_0"}
 			}
 
 			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: the terminator can never be reached
 				return s, nil, ParserError{
-					Err:  CombinatorParseError{State: rem, Type: "many_till_0"},
-					Type: "many_till_0",
+					Err:  CombinatorParseError{State: rem, kind: "many_till_0"},
+					kind: "many_till_0",
 				}
 			}
 
@@ -606,7 +608,7 @@ func FoldMany[S, T any](c Combinator[T], init S, reducer func(S, T) S) Combinato
 			}
 			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: cannot make progress, stop to avoid looping forever
-				err = CombinatorParseError{State: rem, Type: "fold_many"}
+				err = CombinatorParseError{State: rem, kind: "fold_many"}
 				break
 			}
 			rem = tmpRem
@@ -618,7 +620,7 @@ func FoldMany[S, T any](c Combinator[T], init S, reducer func(S, T) S) Combinato
 			return s, init, RangedParserError{
 				Err:  err,
 				Exec: RangedParserExec{Count: 0, Min: 1},
-				Type: "fold_many",
+				kind: "fold_many",
 			}
 		}
 
@@ -679,7 +681,7 @@ func ManyCount[T any](c Combinator[T]) Combinator[int] {
 			}
 			if tmpRem.Pos() == rem.Pos() {
 				// zero-width success: cannot make progress, stop to avoid looping forever
-				err = CombinatorParseError{State: rem, Type: "many_count"}
+				err = CombinatorParseError{State: rem, kind: "many_count"}
 				break
 			}
 			rem = tmpRem
@@ -690,7 +692,7 @@ func ManyCount[T any](c Combinator[T]) Combinator[int] {
 			return s, 0, RangedParserError{
 				Err:  err,
 				Exec: RangedParserExec{Count: 0, Min: 1},
-				Type: "many_count",
+				kind: "many_count",
 			}
 		}
 
@@ -743,7 +745,7 @@ func LengthCount[T any](length Combinator[int], c Combinator[T]) Combinator[[]T]
 	return func(s State) (State, []T, error) {
 		rem, count, err := length(s)
 		if err != nil {
-			return s, nil, ParserError{Err: err, Type: "length_count"}
+			return s, nil, ParserError{Err: err, kind: "length_count"}
 		}
 
 		rem, ext, err := Repeat(c, count)(rem)
@@ -778,7 +780,7 @@ func Verify[T any](c Combinator[T], predicate func(T) bool) Combinator[T] {
 		}
 
 		if !predicate(out) {
-			return s, def, CombinatorParseError{State: s, Type: "verify"}
+			return s, def, CombinatorParseError{State: s, kind: "verify"}
 		}
 
 		return rem, out, nil
@@ -841,7 +843,7 @@ func Eof() Combinator[string] {
 		if s.Rest() == "" {
 			return s, "", nil
 		}
-		return s, "", CombinatorParseError{State: s, Type: "eof"}
+		return s, "", CombinatorParseError{State: s, kind: "eof"}
 	}
 }
 
@@ -865,7 +867,7 @@ func AllConsuming[T any](c Combinator[T]) Combinator[T] {
 		if rem.Rest() != "" {
 			return s, def, CombinatorParseError{
 				State: rem,
-				Type:  "all_consuming",
+				kind:  "all_consuming",
 			}
 		}
 
@@ -997,7 +999,7 @@ func PeekNot[T any](c Combinator[T]) Combinator[string] {
 	return func(s State) (State, string, error) {
 		_, _, err := c(s)
 		if err == nil {
-			return s, "", CombinatorParseError{State: s, Type: "peek_not"}
+			return s, "", CombinatorParseError{State: s, kind: "peek_not"}
 		}
 		return s, "", nil
 	}
