@@ -121,7 +121,6 @@ func TestLabel_UnwrapChainIntact(t *testing.T) {
 
 		var wrapped chomp.ParserError
 		require.True(t, errors.As(err, &wrapped))
-		assert.Equal(t, "pair", wrapped.Type)
 
 		var pe chomp.CombinatorParseError
 		require.True(t, errors.As(err, &pe))
@@ -135,7 +134,6 @@ func TestLabel_UnwrapChainIntact(t *testing.T) {
 
 		var wrapped chomp.RangedParserError
 		require.True(t, errors.As(err, &wrapped))
-		assert.Equal(t, "repeat", wrapped.Type)
 
 		var pe chomp.CombinatorParseError
 		require.True(t, errors.As(err, &pe))

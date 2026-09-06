@@ -2,6 +2,7 @@ package chomp_test
 
 import (
 	"errors"
+	"strconv"
 	"testing"
 	"unicode"
 
@@ -118,7 +119,7 @@ func TestContract_FailureNonConsuming(t *testing.T) {
 	t.Run("EscapedTransform", func(t *testing.T) {
 		t.Parallel()
 		transform := func(s chomp.State) (chomp.State, string, error) {
-			return s, "", chomp.CombinatorParseError{State: s, Type: "test_transform"}
+			return s, "", chomp.CombinatorParseError{State: s}
 		}
 		assertFailureNonConsuming(t, "EscapedTransform", "123",
 			chomp.EscapedTransform(chomp.While(chomp.IsLetter), '\\', transform).Run)
@@ -403,6 +404,10 @@ func TestContract_FailureNonConsuming(t *testing.T) {
 		t.Parallel()
 		assertFailureNonConsuming(t, "Map", "xyz",
 			chomp.Map(chomp.While(chomp.IsDigit), func(in string) int { return len(in) }).Run)
+	})
+	t.Run("MapRes", func(t *testing.T) {
+		t.Parallel()
+		assertFailureNonConsuming(t, "MapRes", "xyz", chomp.MapRes(chomp.While(chomp.IsDigit), strconv.Atoi).Run)
 	})
 	t.Run("S", func(t *testing.T) {
 		t.Parallel()

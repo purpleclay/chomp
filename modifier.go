@@ -25,6 +25,32 @@ func Map[S, T any](c Combinator[T], mapper func(in T) S) Combinator[S] {
 	}
 }
 
+// MapRes maps the result of a [Combinator] through a fallible function -
+// like [Map], but the mapper itself can fail. The mapper's error is
+// reachable via errors.Is/errors.As on the returned error (through
+// [CombinatorParseError.Cause]), with no chomp-specific vocabulary
+// required.
+//
+//	chomp.MapRes(chomp.Digit(), strconv.Atoi).Run("99999999999999999999")
+//	// ("", 0, error) - errors.Is(err, strconv.ErrRange) is true
+func MapRes[S, T any](c Combinator[T], mapper func(in T) (S, error)) Combinator[S] {
+	return func(s State) (State, S, error) {
+		var mapped S
+
+		rem, out, err := c(s)
+		if err != nil {
+			return s, mapped, err
+		}
+
+		mapped, mapErr := mapper(out)
+		if mapErr != nil {
+			return s, mapped, CombinatorParseError{State: s, Cause: mapErr, kind: "map_res"}
+		}
+
+		return rem, mapped, nil
+	}
+}
+
 // Opt allows a [Combinator] to be optional by discarding its returned
 // error and not modifying the input text upon failure. The inner
 // combinator's remainder is never trusted on failure, even if it
@@ -80,7 +106,7 @@ func I(c Combinator[[]string], i int) Combinator[string] {
 		if i < 0 || i >= len(ext) {
 			return s, "", ParserError{
 				Err:  fmt.Errorf("chomp: index %d is out of bounds within string slice of %d elements", i, len(ext)),
-				Type: "i",
+				kind: "i",
 			}
 		}
 
@@ -116,7 +142,7 @@ func Flatten(c Combinator[[]string]) Combinator[string] {
 	return func(s State) (State, string, error) {
 		rem, ext, err := c(s)
 		if err != nil {
-			return s, "", ParserError{Err: err, Type: "flatten"}
+			return s, "", ParserError{Err: err, kind: "flatten"}
 		}
 		return rem, strings.Join(ext, ""), nil
 	}

@@ -48,14 +48,14 @@ func (c Combinator[T]) Run(input string) (string, T, error) { //nolint:ireturn /
 // should apply it at their own boundary.
 //
 // For every [CombinatorParseError] reached through err's chain (walking
-// down through [ParserError], [RangedParserError] and [CutError], the only
-// wrapper types this package produces), it captures the failure's position
-// once and clones Snippet's bounded display window into its own backing
-// array, then drops the reference to the original input. An escaped error
-// therefore holds O(1) memory regardless of input size, rather than
-// pinning the entire input for as long as the error lives. Errors outside
-// this closed set are returned unchanged. Applying Finalize more than once
-// is a no-op.
+// down through [ParserError], [RangedParserError], [CutError], and
+// [AlternativesError], the only wrapper types this package produces), it
+// captures the failure's position once and clones Snippet's bounded
+// display window into its own backing array, then drops the reference to
+// the original input. An escaped error therefore holds O(1) memory
+// regardless of input size, rather than pinning the entire input for as
+// long as the error lives. Errors outside this closed set are returned
+// unchanged. Applying Finalize more than once is a no-op.
 func Finalize(err error) error {
 	switch e := err.(type) {
 	case CombinatorParseError:
@@ -68,6 +68,11 @@ func Finalize(err error) error {
 		return e
 	case CutError:
 		e.Err = Finalize(e.Err)
+		return e
+	case AlternativesError:
+		for i := range e.Errs {
+			e.Errs[i] = Finalize(e.Errs[i])
+		}
 		return e
 	default:
 		return err
@@ -99,13 +104,27 @@ type CombinatorParseError struct {
 	// first. Always empty until a caller wraps a combinator with Label.
 	Labels []string
 
-	// Type of [Combinator] that failed.
-	Type string
+	// Cause, when non-nil, is the underlying error a semantic check (see
+	// [MapRes]) failed with. Reachable via errors.Is/errors.As through
+	// [CombinatorParseError.Unwrap], so a caller can branch on a stdlib
+	// sentinel with no chomp-specific vocabulary.
+	Cause error
+
+	// kind identifies which combinator produced this error; used
+	// internally to derive a fallback for Expected. Not exported: it is
+	// deliberately not part of the public error-classification surface.
+	kind string
 
 	// finalized caches a bounded, self-contained snapshot of the failure
 	// position once Finalize runs, so Error/Snippet/LogValue no longer
 	// need State (and the input it retains) to keep working.
 	finalized *errSnapshot
+}
+
+// Unwrap returns Cause. Returns nil when unset, the same as every other
+// leaf failure that doesn't wrap an underlying cause.
+func (e CombinatorParseError) Unwrap() error {
+	return e.Cause
 }
 
 // errSnapshot is the O(1), input-independent view [CombinatorParseError]
@@ -186,7 +205,7 @@ func (e CombinatorParseError) finalize() CombinatorParseError {
 	return e
 }
 
-// typeFallback maps a Type with no natural literal to quote, and no "is_"
+// typeFallback maps a kind with no natural literal to quote, and no "is_"
 // predicate prefix, to a human phrase completing "expected ___".
 var typeFallback = map[string]string{
 	"satisfy":           "a matching character",
@@ -198,7 +217,6 @@ var typeFallback = map[string]string{
 	"eof":               "end of input",
 	"all_consuming":     "end of input",
 	"peek_not":          "no match",
-	"first":             "one of the alternatives",
 	"many_n":            "further progress",
 	"many_till":         "further progress",
 	"many_till_0":       "further progress",
@@ -207,18 +225,22 @@ var typeFallback = map[string]string{
 }
 
 // expected resolves the human phrase completing "expected ___": Expected
-// if set, otherwise a description derived from Type.
+// if set, then Cause's own message, otherwise a description derived from
+// kind.
 func (e CombinatorParseError) expected() string {
 	if e.Expected != "" {
 		return e.Expected
 	}
-	if after, ok := strings.CutPrefix(e.Type, "is_"); ok {
+	if e.Cause != nil {
+		return e.Cause.Error()
+	}
+	if after, ok := strings.CutPrefix(e.kind, "is_"); ok {
 		return strings.ReplaceAll(after, "_", " ")
 	}
-	if phrase, ok := typeFallback[e.Type]; ok {
+	if phrase, ok := typeFallback[e.kind]; ok {
 		return phrase
 	}
-	return strings.ReplaceAll(e.Type, "_", " ")
+	return strings.ReplaceAll(e.kind, "_", " ")
 }
 
 // labelSuffix returns " while parsing A > B" when Labels is non-empty
@@ -324,8 +346,9 @@ type ParserError struct {
 	// Err contains the [CombinatorParseError] that caused the parser to fail.
 	Err error
 
-	// Type of [Parser] that failed.
-	Type string
+	// kind identifies which combinator produced this error. Not exported:
+	// deliberately not part of the public error-classification surface.
+	kind string
 }
 
 // Error delegates to the inner error's Error(). Only the leaf
@@ -334,7 +357,7 @@ type ParserError struct {
 // [CombinatorParseError.Error] produces, regardless of wrapping depth.
 func (e ParserError) Error() string {
 	if e.Err == nil {
-		return fmt.Sprintf("chomp: %s parser error with no underlying cause", e.Type)
+		return fmt.Sprintf("chomp: %s parser error with no underlying cause", e.kind)
 	}
 	return e.Err.Error()
 }
@@ -363,8 +386,9 @@ type RangedParserError struct {
 	// Range contains the execution details of the ranged parser.
 	Exec RangedParserExec
 
-	// Type of [Parser] that failed.
-	Type string
+	// kind identifies which combinator produced this error. Not exported:
+	// deliberately not part of the public error-classification surface.
+	kind string
 }
 
 // RangedParserExec details how a ranged [Combinator] was executed.
@@ -399,7 +423,7 @@ func (e RangedParserExec) String() string {
 // programmatically via [errors.As] for callers that want execution counts.
 func (e RangedParserError) Error() string {
 	if e.Err == nil {
-		return fmt.Sprintf("chomp: %s parser error with no underlying cause", e.Type)
+		return fmt.Sprintf("chomp: %s parser error with no underlying cause", e.kind)
 	}
 	return e.Err.Error()
 }
@@ -413,6 +437,46 @@ func (e RangedParserError) Unwrap() error {
 // [slog.LogValuer], otherwise falls back to its Error() string.
 func (e RangedParserError) LogValue() slog.Value {
 	if lv, ok := e.Err.(slog.LogValuer); ok {
+		return lv.LogValue()
+	}
+	return slog.StringValue(e.Error())
+}
+
+// AlternativesError is returned by [First] when every alternative fails.
+// Unwrap exposes each alternative's own error, in the order attempted, via
+// the multi-error form (the same shape [errors.Join] uses) so
+// errors.Is/errors.As can inspect any of them, not just the first.
+type AlternativesError struct {
+	// Errs contains each attempted alternative's own error, in the order
+	// [First] tried them. Never includes an alternative past a [CutError]:
+	// a cut exits immediately rather than continuing to the next
+	// alternative.
+	Errs []error
+}
+
+// Error renders the first attempted alternative's own message. Unlike
+// [errors.Join], this stays single-line: joining every alternative's
+// message would break Error's single-line guarantee.
+func (e AlternativesError) Error() string {
+	if len(e.Errs) == 0 {
+		return "chomp: no alternatives matched"
+	}
+	return e.Errs[0].Error()
+}
+
+// Unwrap returns every attempted alternative's error, letting
+// errors.Is/errors.As reach any of them.
+func (e AlternativesError) Unwrap() []error {
+	return e.Errs
+}
+
+// LogValue delegates to the first alternative's LogValue if it implements
+// [slog.LogValuer], otherwise falls back to its Error() string.
+func (e AlternativesError) LogValue() slog.Value {
+	if len(e.Errs) == 0 {
+		return slog.StringValue(e.Error())
+	}
+	if lv, ok := e.Errs[0].(slog.LogValuer); ok {
 		return lv.LogValue()
 	}
 	return slog.StringValue(e.Error())
