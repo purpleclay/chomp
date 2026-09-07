@@ -33,6 +33,34 @@ func TestMap(t *testing.T) {
 	assert.Equal(t, 2, out.Y)
 }
 
+func TestMapRes(t *testing.T) {
+	t.Parallel()
+
+	rem, out, err := chomp.MapRes(chomp.Digit(), strconv.Atoi).Run("123abc")
+
+	require.NoError(t, err)
+	assert.Equal(t, "abc", rem)
+	assert.Equal(t, 123, out)
+}
+
+func TestMapResMapperFails(t *testing.T) {
+	t.Parallel()
+
+	rem, out, err := chomp.MapRes(chomp.Digit(), strconv.Atoi).Run("99999999999999999999")
+	require.Error(t, err)
+	assert.Equal(t, "99999999999999999999", rem)
+	assert.Equal(t, 0, out, "failure must produce the zero value, not the mapper's partial result")
+
+	var numErr *strconv.NumError
+	require.ErrorAs(t, err, &numErr)
+	assert.ErrorIs(t, err, strconv.ErrRange)
+
+	var pe chomp.CombinatorParseError
+	require.ErrorAs(t, err, &pe)
+	assert.Equal(t, 0, pe.Offset())
+	assert.NotContains(t, err.Error(), "\n")
+}
+
 func TestOpt(t *testing.T) {
 	t.Parallel()
 

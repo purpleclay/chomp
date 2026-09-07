@@ -158,6 +158,26 @@ func TestFirst(t *testing.T) {
 	assert.Equal(t, "Dark", ext)
 }
 
+func TestFirstAllAlternativesFail(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.First(chomp.Tag("Light"), chomp.Tag("Dark"), chomp.Tag("Bright")).Run("Knight")
+	require.Error(t, err)
+
+	var altErr chomp.AlternativesError
+	require.ErrorAs(t, err, &altErr)
+	require.Len(t, altErr.Errs, 3)
+
+	for i, tag := range []string{"Light", "Dark", "Bright"} {
+		var pe chomp.CombinatorParseError
+		require.ErrorAsf(t, altErr.Errs[i], &pe, "alternative %d", i)
+		assert.Equalf(t, `"`+tag+`"`, pe.Expected, "alternative %d", i)
+	}
+
+	assert.Equal(t, altErr.Errs[0].Error(), err.Error(), "Error() must match the first alternative's message")
+	assert.NotContains(t, err.Error(), "\n")
+}
+
 func TestAll(t *testing.T) {
 	t.Parallel()
 

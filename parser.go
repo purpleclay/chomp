@@ -18,7 +18,7 @@ func Crlf() Combinator[string] {
 			return s.Advance(2), rest[:2], nil
 		}
 
-		return s, "", CombinatorParseError{State: s, Type: "crlf"}
+		return s, "", CombinatorParseError{State: s, kind: "crlf"}
 	}
 }
 
@@ -42,7 +42,7 @@ func LineEnding() Combinator[string] {
 			return s.Advance(2), rest[:2], nil
 		}
 
-		return s, "", CombinatorParseError{State: s, Type: "line_ending"}
+		return s, "", CombinatorParseError{State: s, kind: "line_ending"}
 	}
 }
 

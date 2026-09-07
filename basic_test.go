@@ -739,7 +739,7 @@ func TestEscapedTransform(t *testing.T) {
 	transform := func(s chomp.State) (chomp.State, string, error) {
 		rest := s.Rest()
 		if rest == "" {
-			return s, "", chomp.CombinatorParseError{State: s, Type: "transform"}
+			return s, "", chomp.CombinatorParseError{State: s}
 		}
 		switch rest[0] {
 		case 'n':
@@ -749,7 +749,7 @@ func TestEscapedTransform(t *testing.T) {
 		case '\\':
 			return s.Advance(1), "\\", nil
 		}
-		return s, "", chomp.CombinatorParseError{State: s, Type: "transform"}
+		return s, "", chomp.CombinatorParseError{State: s}
 	}
 
 	tests := []struct {
@@ -811,7 +811,7 @@ func TestEscapedTransformUnicode(t *testing.T) {
 	transform := func(s chomp.State) (chomp.State, string, error) {
 		rest := s.Rest()
 		if rest == "" {
-			return s, "", chomp.CombinatorParseError{State: s, Type: "transform"}
+			return s, "", chomp.CombinatorParseError{State: s}
 		}
 		r, size := utf8.DecodeRuneInString(rest)
 		switch r {
@@ -820,7 +820,7 @@ func TestEscapedTransformUnicode(t *testing.T) {
 		case 'に':
 			return s.Advance(size), "】", nil
 		}
-		return s, "", chomp.CombinatorParseError{State: s, Type: "transform"}
+		return s, "", chomp.CombinatorParseError{State: s}
 	}
 
 	tests := []struct {

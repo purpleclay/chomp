@@ -47,6 +47,29 @@ func TestLabel_NestedOutermostFirst(t *testing.T) {
 		err.Error())
 }
 
+func TestLabel_WrapsAlternativesError(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := chomp.Label("value",
+		chomp.First(chomp.Tag("true"), chomp.Tag("false"))).Run("123")
+	require.Error(t, err)
+
+	var altErr chomp.AlternativesError
+	require.True(t, errors.As(err, &altErr))
+	require.Len(t, altErr.Errs, 2)
+
+	for i, tag := range []string{"true", "false"} {
+		var pe chomp.CombinatorParseError
+		require.Truef(t, errors.As(altErr.Errs[i], &pe), "alternative %d", i)
+		assert.Equalf(t, `"`+tag+`"`, pe.Expected, "alternative %d", i)
+		assert.Equalf(t, []string{"value"}, pe.Labels, "alternative %d", i)
+	}
+
+	assert.Equal(t,
+		`chomp: parse error at line 1, column 1 (offset 0): expected "true" while parsing value`,
+		err.Error())
+}
+
 func TestLabel_NameWithNewlineDoesNotBreakSingleLine(t *testing.T) {
 	t.Parallel()
 
@@ -121,7 +144,6 @@ func TestLabel_UnwrapChainIntact(t *testing.T) {
 
 		var wrapped chomp.ParserError
 		require.True(t, errors.As(err, &wrapped))
-		assert.Equal(t, "pair", wrapped.Type)
 
 		var pe chomp.CombinatorParseError
 		require.True(t, errors.As(err, &pe))
@@ -135,7 +157,6 @@ func TestLabel_UnwrapChainIntact(t *testing.T) {
 
 		var wrapped chomp.RangedParserError
 		require.True(t, errors.As(err, &wrapped))
-		assert.Equal(t, "repeat", wrapped.Type)
 
 		var pe chomp.CombinatorParseError
 		require.True(t, errors.As(err, &pe))
